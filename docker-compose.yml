@@ -1,0 +1,139 @@
+# =========================================================
+# PharmaQuick - Docker Compose Configuration
+# Stack: LEMP (Linux, Nginx, MySQL 8.0, PHP 8.2-FPM)
+# Version: 1.0.0
+# =========================================================
+
+services:
+  # ------------------------------------------------------------
+  # PHP 8.2-FPM Service
+  # ------------------------------------------------------------
+  php:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    container_name: pharma_php
+    restart: unless-stopped
+    volumes:
+      - ./src:/var/www/html/src:rw
+      - ./public:/var/www/html/public:rw
+    environment:
+      - PHP_MEMORY_LIMIT=256M
+      - PHP_UPLOAD_MAX_FILESIZE=50M
+      - PHP_POST_MAX_SIZE=50M
+    networks:
+      - pharma_network
+    depends_on:
+      - mysql
+    healthcheck:
+      test: ["CMD-SHELL", "php-fpm -t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ------------------------------------------------------------
+  # Nginx Web Server
+  # ------------------------------------------------------------
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: pharma_nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./public:/var/www/html/public:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/nginx/logs:/var/log/nginx:rw
+    networks:
+      - pharma_network
+    depends_on:
+      php:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ------------------------------------------------------------
+  # MySQL 8.0 Database
+  # ------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: pharma_mysql
+    restart: unless-stopped
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_pharma_2024
+      - MYSQL_DATABASE=pharma_master
+    volumes:
+      - mysql_data:/var/lib/mysql:rw
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-time-zone='+00:00'
+    networks:
+      - pharma_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot_pharma_2024"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ------------------------------------------------------------
+  # phpMyAdmin (Gestion de Base de Datos)
+  # ------------------------------------------------------------
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: pharma_phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+      - PMA_USER=root
+      - PMA_PASSWORD=root_pharma_2024
+      - PMA_ARBITRARY=1
+    networks:
+      - pharma_network
+    depends_on:
+      - mysql
+    volumes:
+      - phpmyadmin_data:/var/www/html/tmp:rw
+
+  # ------------------------------------------------------------
+  # Composer Service (para instalaciones posteriores)
+  # ------------------------------------------------------------
+  composer:
+    image: composer:2.6
+    container_name: pharma_composer
+    volumes:
+      - ./src:/app/src:rw
+      - ./composer.json:/app/composer.json:ro
+      - composer_data:/tmp/composer:rw
+    working_dir: /app
+    command: ["true"]
+    networks:
+      - pharma_network
+
+# ------------------------------------------------------------
+# Networks
+# ------------------------------------------------------------
+networks:
+  pharma_network:
+    driver: bridge
+
+# ------------------------------------------------------------
+# Volumes (Persistencia)
+# ------------------------------------------------------------
+volumes:
+  mysql_data:
+    driver: local
+  composer_data:
+    driver: local
+  phpmyadmin_data:
+    driver: local
