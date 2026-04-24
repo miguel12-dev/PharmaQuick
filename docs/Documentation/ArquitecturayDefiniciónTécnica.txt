@@ -1,0 +1,117 @@
+
+1. Arquitectura y Definición Técnica
+Estrategia Multi-Tenant (Database Clustering)
+Para balancear el aislamiento de datos y la eficiencia de recursos, implementaremos un Middleware de Conexión Dinámica:
+Mecanismo: El sistema contará con una base de datos central (pharma_master) que mapea cada farmacia_id a un clúster específico.
+Conexión: Al iniciar sesión, el servicio de autenticación identifica el clúster (ej. db_cluster_1 para las farmacias 1 a 5). Se utiliza un PDO Factory que instancia la conexión basándose en el prefijo de la base de datos del clúster, permitiendo que 5 farmacias compartan recursos de servidor pero mantengan independencia lógica.
+Flujo de Inventario (Kardex-Driven)
+La integridad no reside en la aplicación, sino en la base de datos mediante el Trigger Centralizado:
+Single Source of Truth: Ningún proceso (Venta, Reserva o Ajuste) modifica la tabla lotes directamente. Todos deben insertar un registro en movimientos_inventario.
+Garantía de Integridad: El trigger trg_kardex_stock asegura que la suma de movimientos siempre coincida con el stock actual, evitando inconsistencias por cierres inesperados del navegador o fallos de red.
+Stack Técnico
+PHP 8.x Nativo: Elegido por su bajísimo overhead y facilidad de despliegue en servidores locales (XAMPP/Docker) en zonas de baja conectividad.
+Librerías Composer:
+phpoffice/phpspreadsheet: Gestión robusta de lectura de plantillas de inventario y exportación de reportes.
+dompdf/dompdf: Generación de facturas y reportes de farmacovigilancia en PDF desde plantillas HTML/CSS.
+
+2. Especificación de APIs y Vistas
+Backend (API-First)
+Verbo
+Ruta
+Parámetros
+Respuesta JSON (Success)
+POST
+/api/auth/login
+email, password
+{token, user_data, farmacia_id}
+GET
+/api/inventario/fefo
+producto_id
+[{lote_id, stock, fecha_venc, dias_restantes}]
+POST
+/api/inventario/movimiento
+lote_id, tipo, cantidad
+{msg: "Stock actualizado", nuevo_stock}
+POST
+/api/ventas/crear
+cliente_id, items:[]
+{venta_id, total, link_pdf}
+GET
+/api/public/buscar
+lat, lng, query
+[{farmacia, producto, precio, distancia}]
+
+Frontend (Vistas)
+Dashboard Operativo: Resumen de lotes por vencer (Semáforo FEFO) y ventas del día. Consumo: /api/inventario/alertas.
+Punto de Venta (POS): Interfaz optimizada para teclado. Sugiere automáticamente lotes más próximos a vencer. Consumo: /api/inventario/fefo.
+Buscador Público: Interfaz móvil para clientes. Muestra precios y permite reservas rápidas. Consumo: /api/public/buscar.
+
+3. Cronograma de Desarrollo (Sprint de 14 días)
+Día
+Backend (BE)
+Frontend (FE)
+Integración y Críticas (INT)
+1-2
+Setup Docker, Migraciones BD, Auth.
+Layout Base, Login, Sidebar.
+Conexión Clúster/Tenant.
+3-4
+CRUD Productos y Precios.
+Gestión de Catálogo.
+Validaciones de Formulario.
+5-6
+Lógica de Lotes y Trigger Kardex.
+Vista de Inventario por Lotes.
+Pruebas de Stress de Trigger.
+7-8
+Parser de Excel (PhpSpreadsheet).
+Modal de Carga Masiva.
+Crítica: Importación de catálogos.
+9-10
+Lógica de Ventas y Reservas.
+POS (Punto de Venta).
+Crítica: Lógica FEFO en selección.
+11
+Motor de búsqueda geolocalizada.
+Buscador Público (Mapa/Lista).
+Integración con GeoAPI.
+12
+Generación de PDF (Dompdf).
+Reportes de Inventario y Ventas.
+Crítica: Reporte Farmacovigilancia.
+13
+Logs de Auditoría (Habeas Data).
+Perfil de Usuario y Auditoría.
+Cifrado de datos sensibles.
+14
+Refactorización y Cleanup.
+Ajustes UX/UI Finales.
+Despliegue: Imagen Docker Final.
+
+
+
+4. Matriz de Tareas (Backlog)
+Tarea
+Prioridad
+Entregable Técnico
+Implementación Stock Engine
+Alta
+Trigger MySQL funcionando para 4 tipos de movimientos.
+Algoritmo de Selección FEFO
+Alta
+Query optimizada con idx_fefo_lookup para sugerir lotes.
+Carga Masiva de Inventario
+Media
+Script PHP que procesa .xlsx y genera registros en lotes.
+Módulo de Reservas Expirables
+Media
+Job/Script que libera stock (LIBERACION) si la reserva vence.
+Cifrado Habeas Data
+Alta
+Capa de servicio para cifrado AES-256 en campos sensibles.
+Reporte PDF de Ventas
+Baja
+Template HTML transformado a PDF con firma de la farmacia.
+
+Nota del Arquitecto: Se enfatiza que el cumplimiento de la Resolución 1403 es el pilar del sistema. La interfaz debe impedir cualquier venta de productos sin lote o fecha de vencimiento asignada, asegurando que PharmaQuick sea una herramienta de cumplimiento legal además de comercial.
+

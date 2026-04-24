@@ -1,0 +1,74 @@
+
+Cronograma De desarrollo:
+
+Semana 1: El Núcleo (Infraestructura y Catálogo)
+Fase 1: Cimientos y Seguridad (Días 1 - 2)
+Backend (BE): * Configuración de entorno Docker (PHP 8.2 + MySQL 8.0 + Nginx).
+Implementación del PDOFactory para Database Clustering (selección dinámica de BD según el prefijo del clúster).
+Migración del esquema SQL y activación del Trigger trg_kardex_stock.
+Endpoint /api/auth/login con validación contra la tabla usuarios.
+Frontend (FE):
+Maquetación de Layout base (Sidebar/Navbar) con Vanilla JS/Bootstrap.
+Pantalla de Login con manejo de sesiones (LocalStorage del farmacia_id).
+Integración (INT): Pruebas de conexión multi-tenant; asegurar que el usuario X solo vea datos de la farmacia Y.
+Fase 2: Gestión de Productos y Precios (Días 3 - 4)
+Backend (BE):
+Endpoints CRUD para /api/productos.
+Lógica de /api/precios: Servicio que asegura que al activar un precio (activo = 1), los demás para esa farmacia pasen a 0.
+Frontend (FE):
+Vista de Catálogo de Productos (Tabla con filtros).
+Formulario de creación de productos y asignación de precios rápidos.
+Integración (INT): Validación de unicidad de códigos de barras.
+Fase 3: Inventario y "Stock Engine" (Días 5 - 7)
+Backend (BE):
+Implementación de /api/inventario/movimiento: Endpoint que inserta en movimientos_inventario.
+Carga Masiva: Integración con PhpSpreadsheet para leer archivos .xlsx y poblar las tablas lotes e insertar el movimiento de ENTRADA inicial.
+Frontend (FE):
+Vista de Inventario por Lotes con "Semáforo FEFO" (Cálculo visual: Rojo < 3 meses).
+Modal de carga de archivos Excel con feedback de errores.
+Integración (INT): Prueba de Fuego: Verificar que tras importar el Excel, el stock_actual en la tabla lotes coincida exactamente con la suma del Kardex.
+
+Semana 2: Operación, Cliente y Cierre
+Fase 4: Ventas y Reservas (Días 8 - 10)
+Backend (BE):
+Endpoint /api/inventario/fefo: Query que utiliza idx_fefo_lookup para sugerir qué lote vender primero.
+Endpoint /api/ventas/crear: Transacción que crea la venta, el detalle_venta y el movimiento de SALIDA en el Kardex.
+Lógica de /api/reservas: Inserción de movimiento RESERVA para bloquear stock.
+Frontend (FE):
+Punto de Venta (POS): Interfaz de facturación rápida con buscador de productos y selección automática de lote sugerido.
+Módulo de gestión de reservas activas.
+Integración (INT): Simulación de venta de un producto reservado para validar que el stock disponible es real.
+Fase 5: Módulo Público y Reportes (Días 11 - 12)
+Backend (BE):
+Endpoint /api/public/buscar: Lógica de geolocalización simple (fórmula de Haversine en SQL) para encontrar farmacias cercanas.
+Integración con Dompdf: Generación de factura de venta y reporte de farmacovigilancia (productos próximos a vencer).
+Frontend (FE):
+Vista pública: Buscador minimalista para el cliente final.
+Botón de "Descargar Reporte" en el Dashboard administrativo.
+Integración (INT): Verificación de formato de PDF y precisión de la ubicación geográfica.
+Fase 6: Auditoría, Seguridad y Cierre (Días 13 - 14)
+Backend (BE):
+Capa de cifrado para la tabla clientes (AES-256).
+Middleware de Logs: Cada petición POST/UPDATE genera un registro en la tabla logs (JSON).
+Frontend (FE):
+Vista de auditoría para el administrador.
+Pulido de UI (UX en móviles).
+Integración (INT): Prueba de "Habeas Data" (verificar que los datos sensibles no sean legibles directamente en la BD).
+Finalización: Limpieza de volúmenes de Docker, documentación de variables de entorno (.env) y entrega.
+
+Resumen de Entregables por Capa
+Capa
+Tareas Principales
+Herramientas Clave
+Backend
+API REST, Triggers SQL, Clustering de BD, PDF/Excel.
+PHP 8.2, PDO, Composer.
+Frontend
+POS, Dashboard FEFO, Buscador Público, Panel Auditor.
+Bootstrap 5, Fetch API.
+DevOps
+Containerización, Scripts de Backup de Clústeres.
+Docker, Docker-Compose.
+
+Nota Crítica del Analista: Durante los Días 9 y 10, no se debe avanzar a reportes hasta que el flujo de Ventas -> Kardex esté 100% libre de bugs. El éxito de PharmaQuick depende de que el inventario sea infalible.
+

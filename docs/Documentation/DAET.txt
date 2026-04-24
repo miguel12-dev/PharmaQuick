@@ -1,0 +1,59 @@
+Documento de Análisis y Especificación Técnica (DAET)
+
+ 1. FICHA TÉCNICA Y ARQUITECTURA DE DATOS (FEFO: Lo Crítico Primero)
+El sistema PharmaQuick no es solo un CRM comercial; es una barrera de seguridad activa contra riesgos sanitarios. Por ello, la gestión de inventarios es el núcleo del diseño.
+ 1.1. Modelo de Base de Datos (Estrategia Multi-Tenant)
+Para cumplir con los requisitos de rendimiento y aislamiento de datos, se utilizará una arquitectura de Base de Datos por Clúster (1 BD por cada 5 farmacias).
+Razón del uso: Garantiza la escalabilidad rápida y la portabilidad. Si una farmacia crece masivamente, puede ser migrada a su propia base de datos sin afectar a las demás, manteniendo la latencia mínima exigida para la región del Caquetá.
+Normalización: Aplicación estricta de 3ra Forma Normal (3RD FN) para evitar redundancia y anomalías en la actualización de precios y stocks.
+ 1.2. Algoritmo FEFO (First Expired, First Out)
+El sistema priorizará automáticamente en el punto de venta y en los reportes los lotes cuya fecha de vencimiento sea más cercana.
+Trigger de Seguridad: Bloqueo automático de lotes con menos de 15 días de vigencia (parametrizable según normativa).
+Alertas: Semáforo de criticidad (Rojo: <3 meses, Amarillo: <6 meses, Verde: Vigente).
+
+ 2. STACK TECNOLÓGICO Y JUSTIFICACIÓN (Agilidad con IA)
+Dada la necesidad de un desarrollo rápido y nativo, se ha seleccionado un stack que minimiza la sobrecarga (overhead) del servidor:
+Tecnología
+Rol en PharmaQuick
+Por qué se usa
+PHP 8.x Nativo
+Backend
+Máximo rendimiento, compatibilidad nativa y facilidad de despliegue en entornos locales.
+MySQL 8.0
+Motor de BD
+Robusto, soporte nativo para transacciones ACID (crucial en salud).
+Docker
+Contenerización
+Garantiza que el entorno de desarrollo sea idéntico al de producción, facilitando el despliegue en el Caquetá.
+Composer
+Dependencias
+Manejo de librerías para generación de PDF y carga de Excel (PhpSpreadsheet).
+OpenCode / IA
+Acelerador
+Uso de agentes de IA para la generación de boilerplate de código y refactoring bajo principios SOLID.
+
+
+ 3. REQUERIMIENTOS FUNCIONALES (Dualidad de Interfaz)
+ 3.1. Módulo Farmacéutico (Gestor)
+Carga Masiva (Excel): Importación de catálogos mediante plantillas .xlsx para agilizar la entrada de inventario inicial.
+Gestión de Lotes: Registro obligatorio de Fecha de Vencimiento y Lote (Resolución 1403 de 2007).
+Reportes Dinámicos: Descarga en Excel de inventarios críticos y reportes de farmacovigilancia.
+ 3.2. Módulo Cliente (Web Pública)
+Buscador Geolocalizado: El cliente ve inventarios y precios en tiempo real de las farmacias cercanas.
+Reserva de Medicamentos: Interfaz minimalista para asegurar la disponibilidad del producto antes del desplazamiento.
+
+ 4. DISEÑO DE LA SOLUCIÓN (UML)
+Para asegurar la "Mantenibilidad como Garantía de Continuidad", el sistema se divide en servicios desacoplados:
+
+ 5. CRONOGRAMA DE EJECUCIÓN (Fase de Desarrollo Rápido)
+Utilizando herramientas de IA para la generación de código nativo, se estima el siguiente cronograma:
+Semana 1: Modelado de BD (3RD FN), Configuración de Docker y Autenticación RBAC (Control de Acceso Basado en Roles).
+Semana 2: Módulo Core de Inventario (FEFO) e implementación de lógica de carga/descarga masiva de Excel.
+Semana 3: Interfaz de Cliente Web y buscador de precios.
+Semana 4: Pruebas de integridad de datos, seguridad de la Ley 1581 (Habeas Data) y despliegue inicial.
+ 6. ANÁLISIS DE SEGURIDAD (Privacy by Design)
+De acuerdo con el artículo de Cortes Duarte (2026), PharmaQuick no trata los datos como simples registros contables. Se implementará:
+Cifrado AES-256 para datos sensibles del paciente.
+Logs de Auditoría: Registro inalterable de quién modificó un inventario o una fecha de vencimiento (Trazabilidad legal).
+Nota del Analista: El uso de PHP Nativo no significa código desordenado. Se aplicará Clean Architecture para que el acceso a datos esté separado de la lógica de negocio (FEFO), permitiendo que PharmaQuick crezca conforme a las necesidades del departamento del Caquetá.
+
