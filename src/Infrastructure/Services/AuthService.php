@@ -14,27 +14,43 @@ declare(strict_types=1);
 class AuthService
 {
     private $pdo;
+    private JwtService $jwtService;
 
     public function __construct(int $farmaciaId) {
         // Obtener conexion al cluster correcto
         $cluster = (int) ceil($farmaciaId / 5);
         if ($cluster < 1) $cluster = 1;
         
-        $this->pdo = \PharmaQuick\Infrastructure\Persistence\PDOFactory::getCluster($cluster);
+        $this->pdo = PDOFactory::getCluster($cluster);
+        $this->jwtService = new JwtService();
     }
 
     public function login(string $email, string $password): array {
         if (empty($email) || empty($password)) {
-            throw new \PharmaQuick\Core\Exceptions\AuthenticationException('Email y contrasena son requeridos');
+            throw new AuthenticationException('Email y contrasena son requeridos');
         }
 
         $email = trim($email);
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new \PharmaQuick\Core\Exceptions\AuthenticationException('Formato de email invalido');
+            throw new AuthenticationException('Formato de email invalido');
         }
 
-        $repo = new \PharmaQuick\Infrastructure\Persistence\UsuarioRepository($this->pdo);
-        return $repo->authenticate($email, $password);
+        $repo = new UsuarioRepository($this->pdo);
+        $userData = $repo->authenticate($email, $password);
+
+        // Generar JWT con datos del usuario
+        $jwtPayload = [
+            'sub' => $userData['id'],
+            'email' => $userData['email'],
+            'farmacia_id' => $userData['farmacia_id'],
+        ];
+
+        $token = $this->jwtService->generate($jwtPayload);
+
+        return [
+            'user' => $userData,
+            'token' => $token,
+        ];
     }
 }

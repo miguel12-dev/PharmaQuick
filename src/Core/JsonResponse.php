@@ -15,12 +15,16 @@ class JsonResponse {
         self::send(['success' => false, 'message' => $message], $statusCode);
     }
 
-    public static function authSuccess(int $farmaciaId, array $userData, string $message): void {
+    public static function authSuccess(int $farmaciaId, array $userData, string $token, string $message): void {
+        // Estructura compatible con el frontend existente
         self::send([
             'success' => true,
             'message' => $message,
-            'farmacia_id' => $farmaciaId,
-            'user' => $userData,
+            'data' => [
+                'usuario' => $userData,
+                'farmacia_id' => $farmaciaId,
+                'token' => $token,
+            ]
         ], 200);
     }
 
