@@ -1,6 +1,6 @@
 /**
  * PharmaQuick - HTTP Error Handler
- * Handles HTTP errors (401, 403, 404, 500)
+ * Handles HTTP errors (401, 403, 404, 500) for SPA
  */
 
 const HttpErrorHandler = {
@@ -12,7 +12,12 @@ const HttpErrorHandler = {
         if (typeof Toast !== 'undefined') {
             Toast.error('Sesión expirada. Inicie sesión nuevamente.');
         }
-        window.location.href = '/login';
+        // Usar Router para SPA
+        if (typeof Router !== 'undefined') {
+            Router.redirectToLogin();
+        } else {
+            window.location.href = '/login';
+        }
     },
 
     /**
@@ -22,13 +27,18 @@ const HttpErrorHandler = {
         if (typeof Toast !== 'undefined') {
             Toast.error(message);
         }
+        // Opcional: mostrar en modal o toast
     },
 
     /**
      * Handle 404 - Not Found
      */
     handle404(message = 'Recurso no encontrado') {
-        window.location.href = '/pages/404.html?msg=' + encodeURIComponent(message);
+        if (typeof Router !== 'undefined') {
+            Router.navigate('/404');
+        } else {
+            window.location.href = '/pages/404.html?msg=' + encodeURIComponent(message);
+        }
     },
 
     /**

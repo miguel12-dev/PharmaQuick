@@ -1,41 +1,25 @@
 /**
- * PharmaQuick - Products Page
- * Página de productos para SPA con renderizado dinámico
+ * PharmaQuick - Not Found Page
+ * Página 404 para SPA
  */
 
-const ProductsPage = {
-    productView: null,
-    priceView: null,
-    
+const NotFoundPage = {
     /**
-     * Inicializar página de productos
+     * Inicializar página 404
      */
     async init(container) {
-        // Verificar autenticación
-        if (!Router.isAuthenticated()) {
-            Router.navigate('/login');
-            return;
-        }
-        
         // Renderizar layout
         this.renderLayout(container);
         
-        // Inicializar layout después de renderizar
+        // Inicializar layout
         this.initLayout();
-        
-        // Inicializar ProductView
-        this.initProductView();
-        
-        // Inicializar PriceView
-        this.initPriceView();
     },
     
     /**
-     * Renderizar layout (navbar + sidebar + content)
+     * Renderizar layout (navbar + sidebar)
      */
     renderLayout(container) {
         const template = document.getElementById('template-layout');
-        const productsTemplate = document.getElementById('template-productos');
         
         if (template) {
             container.innerHTML = template.innerHTML;
@@ -43,12 +27,10 @@ const ProductsPage = {
             container.innerHTML = this.getLayoutHtml();
         }
         
-        // Insertar contenido de productos en el contenedor correcto
+        // Insertar contenido 404
         const pageContent = container.querySelector('.page-content');
-        if (pageContent && productsTemplate) {
-            pageContent.innerHTML = productsTemplate.innerHTML;
-        } else if (pageContent) {
-            pageContent.innerHTML = this.getProductsContentHtml();
+        if (pageContent) {
+            pageContent.innerHTML = this.get404ContentHtml();
         }
         
         // Cargar info del usuario
@@ -96,7 +78,7 @@ const ProductsPage = {
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" href="/productos" data-page="productos">
+                            <a class="nav-link" href="/productos" data-page="productos">
                                 <i class="bi bi-box-seam"></i>Productos
                             </a>
                         </li>
@@ -113,17 +95,21 @@ const ProductsPage = {
     },
     
     /**
-     * Obtener HTML del contenido de productos
+     * Obtener HTML del contenido 404
      */
-    getProductsContentHtml() {
+    get404ContentHtml() {
         return `
-            <div id="productsContainer"></div>
-            <div id="pricesContainer" class="d-none"></div>
+            <div class="text-center py-5">
+                <i class="bi bi-exclamation-circle text-warning" style="font-size: 4rem;"></i>
+                <h2 class="mt-3">Página no encontrada</h2>
+                <p class="text-muted">La página que buscas no existe.</p>
+                <a href="/dashboard" class="btn btn-primary mt-3">Volver al Dashboard</a>
+            </div>
         `;
     },
     
     /**
-     * Inicializar layout (toggle sidebar, etc)
+     * Inicializar layout
      */
     initLayout() {
         const sidebar = document.getElementById('sidebar');
@@ -152,15 +138,6 @@ const ProductsPage = {
                     }
                 }
             });
-            
-            // Cerrar sidebar al hacer click fuera en móvil
-            document.addEventListener('click', (e) => {
-                if (isMobile && sidebar.classList.contains('show')) {
-                    if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
-                        sidebar.classList.remove('show');
-                    }
-                }
-            });
         }
         
         // Logout
@@ -173,7 +150,7 @@ const ProductsPage = {
         }
         
         // Set active nav
-        this.setActiveNav('productos');
+        this.setActiveNav('');
     },
     
     /**
@@ -194,38 +171,9 @@ const ProductsPage = {
     setActiveNav(page) {
         document.querySelectorAll('.sidebar .nav-link').forEach(link => {
             link.classList.remove('active');
-            
-            const dataPage = link.dataset.page;
-            if (dataPage === page) {
-                link.classList.add('active');
-            }
         });
-    },
-    
-    /**
-     * Inicializar ProductView
-     */
-    initProductView() {
-        const container = document.querySelector('#productsContainer');
-        if (!container) {
-            console.error('ProductsPage: productsContainer no encontrado');
-            return;
-        }
-        
-        // Crear instancia del controller
-        this.productView = new ProductView('#productsContainer');
-    },
-    
-    /**
-     * Inicializar PriceView
-     */
-    initPriceView() {
-        const container = document.querySelector('#pricesContainer');
-        if (container) {
-            this.priceView = new PriceView('#pricesContainer');
-        }
     }
 };
 
 // Exportar
-window.ProductsPage = ProductsPage;
+window.NotFoundPage = NotFoundPage;

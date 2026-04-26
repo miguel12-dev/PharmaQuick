@@ -1,6 +1,6 @@
 /**
  * PharmaQuick - HTTP Client
- * Centralized HTTP requests with JWT
+ * Centralized HTTP requests with JWT and global error handling
  */
 
 const API_BASE = '/api';
@@ -37,13 +37,24 @@ class HttpClient {
         }
     }
 
+    /**
+     * Require authentication - returns false if not authenticated
+     */
     requireAuth() {
         const session = this.getSession();
         if (!session || !session.token) {
-            window.location.href = '/login';
+            Router.redirectToLogin();
             return false;
         }
         return true;
+    }
+
+    /**
+     * Verificar si hay sesión válida
+     */
+    hasValidSession() {
+        const session = this.getSession();
+        return !!(session && session.token && session.farmaciaId);
     }
 
     async get(endpoint, params = {}) {
@@ -93,6 +104,9 @@ class HttpClient {
         return this.handleResponse(response);
     }
 
+    /**
+     * Handle response and global errors
+     */
     async handleResponse(response) {
         let data;
         const isJson = response.headers.get('content-type')?.includes('application/json');
@@ -101,9 +115,44 @@ class HttpClient {
             data = await response.json();
         }
 
-        // Check for HTTP errors
-        if (httpErrorHandler.process(response, data)) {
-            throw new Error(data?.message || 'Error');
+        // Global error handling - BEFORE checking response.ok
+        if (response.status === 401) {
+            // No autorizado - clear session and redirect to login
+            console.warn('HttpClient: 401 Unauthorized');
+            localStorage.removeItem('pharmaSession');
+            Router.redirectToLogin();
+            throw new Error('Sesión expirada. Por favor inicie sesión nuevamente.');
+        }
+        
+        if (response.status === 403) {
+            // Prohibido
+            console.warn('HttpClient: 403 Forbidden');
+            if (typeof Toast !== 'undefined') {
+                Toast.error('No tienes permisos para realizar esta acción');
+            }
+            throw new Error('No tienes permisos');
+        }
+        
+        if (response.status === 404) {
+            // No encontrado
+            console.warn('HttpClient: 404 Not Found');
+            throw new Error(data?.message || 'Recurso no encontrado');
+        }
+        
+        if (response.status >= 500) {
+            // Error del servidor
+            console.error('HttpClient: Server Error', response.status);
+            if (typeof Toast !== 'undefined') {
+                Toast.error('Error del servidor. Intenta más tarde.');
+            }
+            throw new Error(data?.message || 'Error del servidor');
+        }
+
+        // Check httpErrorHandler from HttpErrorHandler.js
+        if (typeof httpErrorHandler !== 'undefined' && httpErrorHandler.process) {
+            if (httpErrorHandler.process(response, data)) {
+                throw new Error(data?.message || 'Error');
+            }
         }
 
         if (!response.ok) {
