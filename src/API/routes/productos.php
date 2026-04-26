@@ -119,13 +119,8 @@ function handlePostProductos(): void {
         return;
     }
 
-    // Los métodosglobals requieren validación de email/del usuario
-    // Por seguridad, restringimos creación de productos globales
-    $email = Auth::email();
-    $isAdmin = $email && str_contains($email, 'admin');
-    
-    if (!$isAdmin) {
-        // Usuarios normales no pueden crear productos
+    // Verificar rol desde BD (no desde email)
+    if (!Auth::isAdmin()) {
         JsonResponse::error('No tiene permisos para crear productos', 403);
         return;
     }
@@ -189,11 +184,8 @@ function handlePutProductos(int $id): void {
         return;
     }
 
-    // Verificar permisos de admin
-    $email = Auth::email();
-    $isAdmin = $email && str_contains($email, 'admin');
-    
-    if (!$isAdmin) {
+    // Verificar rol desde BD
+    if (!Auth::isAdmin()) {
         JsonResponse::error('No tiene permisos para modificar productos', 403);
         return;
     }
@@ -246,11 +238,8 @@ function handleDeleteProductos(int $id): void {
         return;
     }
 
-    // Verificar permisos de admin
-    $email = Auth::email();
-    $isAdmin = $email && str_contains($email, 'admin');
-    
-    if (!$isAdmin) {
+    // Verificar rol desde BD
+    if (!Auth::isAdmin()) {
         JsonResponse::error('No tiene permisos para eliminar productos', 403);
         return;
     }

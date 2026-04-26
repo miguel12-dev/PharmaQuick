@@ -17,6 +17,8 @@ CREATE TABLE usuarios (
     farmacia_id INT UNSIGNED NOT NULL,
     email VARCHAR(150) NOT NULL,
     password_hash VARCHAR(255),
+    rol ENUM('USUARIO','ADMINISTRADOR') DEFAULT 'USUARIO',
+    activo BOOLEAN DEFAULT TRUE,
 
     UNIQUE (farmacia_id, email),
 

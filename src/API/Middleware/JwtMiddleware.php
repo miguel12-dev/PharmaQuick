@@ -36,14 +36,41 @@ class JwtMiddleware {
             return false;
         }
 
+        // Obtener el ROL desde la base de datos (no desde JWT)
+        $rol = $this->obtenerRol($payload['sub'], (int)$payload['farmacia_id']);
+        
         // Inyectar contexto de autenticación en $_REQUEST
         $_REQUEST['auth'] = [
             'sub' => $payload['sub'],
             'email' => $payload['email'],
-            'farmacia_id' => $payload['farmacia_id'],
+            'farmacia_id' => (int)$payload['farmacia_id'],
+            'rol' => $rol, // Rol basado en BD
         ];
 
         return true;
+    }
+
+    /**
+     * Obtiene el rol del usuario desde la base de datos
+     */
+    private function obtenerRol(int $userId, int $farmaciaId): string {
+        try {
+            // Usar cluster basado en farmacia_id
+            $cluster = (int) ceil($farmaciaId / 5);
+            if ($cluster < 1) $cluster = 1;
+            
+            require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
+            require_once SRC_PATH . '/Infrastructure/Persistence/UsuarioRepository.php';
+            
+            $pdo = PDOFactory::getCluster($cluster);
+            $repo = new UsuarioRepository($pdo);
+            $user = $repo->findById($userId);
+            
+            return $user['rol'] ?? 'USUARIO';
+        } catch (\Throwable $e) {
+            // En caso de error, default a USUARIO
+            return 'USUARIO';
+        }
     }
 
     /**
@@ -98,6 +125,21 @@ class Auth {
     public static function email(): ?string {
         $auth = self::user();
         return $auth ? $auth['email'] : null;
+    }
+
+    /**
+     * Obtiene el rol del usuario (desde BD)
+     */
+    public static function rol(): ?string {
+        $auth = self::user();
+        return $auth ? ($auth['rol'] ?? 'USUARIO') : null;
+    }
+
+    /**
+     * Verifica si el usuario es ADMINISTRADOR
+     */
+    public static function isAdmin(): bool {
+        return self::rol() === 'ADMINISTRADOR';
     }
 
     /**
