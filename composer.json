@@ -1,0 +1,24 @@
+{
+    "name": "pharmaquick/core",
+    "description": "PharmaQuick - Sistema Multi-Tenant para Farmacias",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.2"
+    },
+    "require-dev": {},
+    "autoload": {
+        "psr-4": {
+            "PharmaQuick\\Core\\": "src/Core/",
+            "PharmaQuick\\Infrastructure\\": "src/Infrastructure/",
+            "PharmaQuick\\API\\": "src/API/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
