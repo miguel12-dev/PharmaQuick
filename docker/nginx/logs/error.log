@@ -890,3 +890,17 @@
 2026/04/24 16:08:08 [error] 31#31: *3 open() "/var/www/html/public/favicon.ico" failed (2: No such file or directory), client: 172.21.0.1, server: localhost, request: "GET /favicon.ico HTTP/1.1", host: "localhost:8080", referrer: "http://localhost:8080/index.html"
 2026/04/24 16:08:46 [error] 31#31: *3 access forbidden by rule, client: 172.21.0.1, server: localhost, request: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1", host: "localhost:8080"
 2026/04/24 16:15:38 [error] 32#32: *5 access forbidden by rule, client: 172.21.0.1, server: localhost, request: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1", host: "localhost:8080"
+2026/04/26 15:48:59 [notice] 1#1: using the "epoll" event method
+2026/04/26 15:48:59 [notice] 1#1: nginx/1.25.5
+2026/04/26 15:48:59 [notice] 1#1: built by gcc 13.2.1 20231014 (Alpine 13.2.1_git20231014) 
+2026/04/26 15:48:59 [notice] 1#1: OS: Linux 5.15.153.1-microsoft-standard-WSL2
+2026/04/26 15:48:59 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2026/04/26 15:48:59 [notice] 1#1: start worker processes
+2026/04/26 15:48:59 [notice] 1#1: start worker process 29
+2026/04/26 15:48:59 [notice] 1#1: start worker process 30
+2026/04/26 15:48:59 [notice] 1#1: start worker process 31
+2026/04/26 15:48:59 [notice] 1#1: start worker process 32
+2026/04/26 15:48:59 [notice] 1#1: start worker process 33
+2026/04/26 15:48:59 [notice] 1#1: start worker process 34
+2026/04/26 15:48:59 [notice] 1#1: start worker process 35
+2026/04/26 15:48:59 [notice] 1#1: start worker process 36
