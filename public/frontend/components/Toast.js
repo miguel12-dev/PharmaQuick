@@ -4,7 +4,7 @@
  */
 
 const Toast = {
-    static show(message, type = 'info', duration = Config.TOAST_DURATION) {
+    show(message, type = 'info', duration = 3000) {
         const container = this._getContainer();
         
         const toast = document.createElement('div');
@@ -49,7 +49,7 @@ const Toast = {
             if (toast.parentNode) {
                 toast.parentNode.removeChild(toast);
             }
-        }, Config.ANIMATION_DURATION);
+        }, 250);
     },
     
     _getContainer() {
