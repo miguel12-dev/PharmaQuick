@@ -1,35 +1,19 @@
 /**
- * PharmaQuick - ProductsPage
- * Página de Productos
+ * PharmaQuick - Products Page Initialization
+ * Page entry point for productos.html
  */
 
-class ProductsPage {
-    constructor() {
-        this.view = null;
+document.addEventListener('DOMContentLoaded', function() {
+    // Check auth
+    const session = JSON.parse(localStorage.getItem('pharmaSession') || '{}');
+    if (!session.token || !session.farmaciaId) {
+        window.location.href = '/login';
+        return;
     }
-    
-    /**
-     * Inicializar página
-     */
-    init() {
-        // Verificar autenticación
-        if (!authService.requireAuth()) {
-            return;
-        }
-        
-        // Inicializar ProductView
-        const container = document.getElementById('productsContainer');
-        if (container) {
-            this.view = new ProductView('#productsContainer');
-        }
-        
-        // Inicializar PriceView también
-        new PriceView('#pricesContainer');
-    }
-}
 
-// Inicializar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', () => {
-    const page = new ProductsPage();
-    page.init();
+    // Initialize ProductView
+    window.productView = new ProductView('#productsContainer');
+
+    // Initialize PriceView
+    new PriceView('#pricesContainer');
 });

@@ -21,7 +21,8 @@ const App = {
                     this.session = session;
                     this.session.isAuthenticated = true;
                     const path = window.location.pathname;
-                    if (path === '/' || path === '/login.html' || path === '/login') {
+                    // Redirigir al dashboard si está en login o raíz
+                    if (path === '/' || path === '/index.html' || path === '/login.html' || path === '/login') {
                         this.redirectToDashboard();
                     }
                 }
@@ -75,11 +76,15 @@ const App = {
 
     logout() {
         this.clearSession();
-        window.location.href = '/index.html';
+        window.location.href = '/login';
     },
 
     redirectToDashboard() {
         window.location.href = '/pages/dashboard.html';
+    },
+
+    redirectToProductos() {
+        window.location.href = '/pages/productos.html';
     },
 
     getFarmaciaId() {
@@ -88,7 +93,7 @@ const App = {
 
     requireAuth() {
         if (!this.session.isAuthenticated) {
-            window.location.href = '/index.html';
+            window.location.href = '/login';
             return false;
         }
         return true;
@@ -135,9 +140,10 @@ const Login = {
         try {
             const result = await App.login(email, password);
             this.showSuccess('Autenticación exitosa, redireccionando...');
+            // Redirigir al dashboard después de login exitoso
             setTimeout(() => {
-                window.location.href = '/';
-            }, 1000);
+                window.location.href = '/pages/dashboard.html';
+            }, 800);
         } catch (error) {
             this.showError(error.message);
         } finally {

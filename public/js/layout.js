@@ -14,6 +14,7 @@ const Layout = {
         this.loadUserInfo();
         this.setupLogout();
         this.setCurrentDate();
+        this.setActiveNavLink();
     },
 
     checkScreenSize() {
@@ -100,6 +101,7 @@ const Layout = {
             logoutBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 App.clearSession();
+                // Redirigir a login
                 window.location.href = '/login';
             });
         }
@@ -107,12 +109,17 @@ const Layout = {
 
     setActiveNavLink() {
         const currentPath = window.location.pathname;
-        const navLinks = document.querySelectorAll('.sidebar .nav-link');
-
-        navLinks.forEach(link => {
+        
+        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
             link.classList.remove('active');
-            if (link.getAttribute('href') === currentPath || link.getAttribute('href') === currentPath.replace('/pages/', '')) {
-                link.classList.add('active');
+            
+            const href = link.getAttribute('href');
+            if (href) {
+                // Match exact path or path without extension
+                if (currentPath.includes(href.replace('.html', '').replace('/pages/', '/')) || 
+                    (currentPath === '/' && href === '/pages/dashboard.html')) {
+                    link.classList.add('active');
+                }
             }
         });
     }
@@ -121,6 +128,5 @@ const Layout = {
 document.addEventListener('DOMContentLoaded', () => {
     if (App.requireAuth()) {
         Layout.init();
-        Layout.setActiveNavLink();
     }
 });
