@@ -132,15 +132,15 @@ function handlePutPrecios(int $id): void {
         $productoRepo = new ProductoRepository($pdo);
         $service = new PrecioService($repo, $productoRepo);
 
-        // Necesitamos el producto_id para la operación
-        $precios = $repo->findAllByProducto($id, $farmaciaId);
+        // Verificar que el precio existe y pertenece a la farmacia (USANDO findById correcto)
+        $precio = $repo->findById($id, $farmaciaId);
         
-        if (empty($precios)) {
+        if (!$precio) {
             JsonResponse::error('Precio no encontrado', 404);
             return;
         }
 
-        $productoId = $precios[0]['producto_id'];
+        $productoId = $precio['producto_id'];
 
         if ($activar) {
             $resultado = $service->activar($id, $productoId, $farmaciaId);
@@ -171,18 +171,25 @@ function handleDeletePrecios(int $id): void {
     try {
         require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
         require_once SRC_PATH . '/Infrastructure/Persistence/PrecioRepository.php';
-        require_once SRC_PATH . '/Domain/Services/PrecioService.php';
 
         $pdo = PDOFactory::getCluster(1);
         $repo = new PrecioRepository($pdo);
-        $service = new PrecioService($repo);
 
-        $success = $service->eliminar($id, $farmaciaId);
+        // Verificar que el precio existe y pertenece a la farmacia (usando findById correcto)
+        $precio = $repo->findById($id, $farmaciaId);
+        
+        if (!$precio) {
+            JsonResponse::error('Precio no encontrado', 404);
+            return;
+        }
+
+        // Eliminar solo si pertenece a la farmacia (ya verificado por findById)
+        $success = $repo->delete($id, $farmaciaId);
 
         if ($success) {
             JsonResponse::success(['message' => 'Precio eliminado']);
         } else {
-            JsonResponse::error('Precio no encontrado', 404);
+            JsonResponse::error('Error al eliminar', 500);
         }
 
     } catch (\Throwable $e) {

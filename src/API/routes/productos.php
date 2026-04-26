@@ -54,10 +54,11 @@ function handleGetProductoById(int $id): void {
         // Primero buscar con filtro de farmacia (productos con lotes)
         $producto = $repo->findById($id, $farmaciaId);
         
-        // Si no tiene lotes, buscar en catálogo global
+        // Si no tiene lotes, buscar en catálogo global PERO solo si el producto está activo
+        // Esto es necesario para crear precios de productos nuevos
         if (!$producto) {
             $producto = $repo->findByIdGlobal($id);
-            if ($producto) {
+            if ($producto && isset($producto['activo']) && $producto['activo']) {
                 $producto['stock_total'] = 0;
                 $producto['codigo'] = $producto['codigo_barras'];
             }
