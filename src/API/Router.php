@@ -129,6 +129,13 @@ class PharmaRouter {
             return;
         }
 
+        // POST /api/productos/{id}/imagen - Subir imagen
+        if ($this->method === 'POST' && preg_match('#^/api/productos/(\d+)/imagen$#', $this->uri, $matches)) {
+            require_once ROUTES_PATH . '/upload.php';
+            handleUploadProductImage((int) $matches[1]);
+            return;
+        }
+
         // Búsqueda: /api/productos/search?q=...
         if ($this->uri === '/api/productos/search' && $this->method === 'GET') {
             require_once ROUTES_PATH . '/productos.php';

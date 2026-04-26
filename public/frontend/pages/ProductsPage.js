@@ -1,9 +1,21 @@
 /**
- * PharmaQuick - Products Page (Simplificado)
- * Página de productos para SPA con renderizado dinámico
+ * PharmaQuick - Products Page (Mejorado)
+ * Página de productos con cards, paginación y búsqueda
  */
 
 const ProductsPage = {
+    // Estado
+    productos: [],
+    productosFiltrados: [],
+    paginaActual: 1,
+    productosPorPagina: 12,
+    cargando: false,
+    
+    // Categorías únicas
+    categorias: [],
+    categoriaSeleccionada: null,
+    busqueda: '',
+    
     /**
      * Inicializar página de productos
      */
@@ -12,36 +24,38 @@ const ProductsPage = {
         
         // Verificar autenticación
         if (!Router.isAuthenticated()) {
-            console.log('ProductsPage: No autenticado, redirigiendo a login');
             Router.navigate('/login');
             return;
         }
         
-        // Renderizar layout básico primero
-        this.renderBasicLayout(container);
+        // Renderizar layout
+        this.renderLayout(container);
         
-        // Luego cargar datos
+        // Cargar datos
         await this.loadData();
     },
     
     /**
-     * Renderizar layout básico
+     * Renderizar layout completo
      */
-    renderBasicLayout(container) {
-        console.log('ProductsPage: Renderizando layout');
-        
+    renderLayout(container) {
         container.innerHTML = `
+            <!-- Navbar -->
             <nav class="navbar navbar-expand-lg navbar-light fixed-top" style="z-index: 1030;">
                 <div class="container-fluid">
                     <a class="navbar-brand" href="/dashboard">
                         <i class="bi bi-capsule"></i> PharmaQuick
                     </a>
-                    <div class="d-flex">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary btn-sm" id="newProductBtn">
+                            <i class="bi bi-plus-lg"></i> Nuevo
+                        </button>
                         <button class="btn btn-outline-danger btn-sm" id="logoutBtn">Cerrar Sesión</button>
                     </div>
                 </div>
             </nav>
             
+            <!-- Sidebar -->
             <nav class="sidebar" id="sidebar" style="margin-top: 56px;">
                 <ul class="nav flex-column">
                     <li class="nav-item">
@@ -53,24 +67,180 @@ const ProductsPage = {
                 </ul>
             </nav>
             
+            <!-- Main Content -->
             <main class="main-content" id="mainContent" style="margin-top: 56px; padding: 20px;">
                 <div class="container-fluid">
-                    <h2>Productos</h2>
-                    <div id="productsContainer">
-                        <p>Cargando productos...</p>
+                    <!-- Header -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2><i class="bi bi-box-seam"></i> Productos</h2>
+                        <span class="badge bg-secondary" id="totalProductos">0</span>
                     </div>
-                    <div id="productsTableContainer"></div>
+                    
+                    <!-- Buscador y Filtros -->
+                    <div class="row mb-4 g-2">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" id="searchInput" 
+                                       placeholder="Buscar productos...">
+                                <button class="btn btn-outline-secondary" id="clearSearch">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select" id="categoriaFilter">
+                                <option value="">Todas las categorías</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="perPageSelect">
+                                <option value="12" selected>12 por página</option>
+                                <option value="24">24 por página</option>
+                                <option value="48">48 por página</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Grid de Productos -->
+                    <div id="productsGrid" class="row g-3">
+                        <div class="col-12 text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Cargando productos...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Paginación -->
+                    <nav id="paginationNav" class="mt-4 d-none">
+                        <ul class="pagination justify-content-center" id="pagination"></ul>
+                    </nav>
                 </div>
             </main>
+            
+            <!-- Modal para Nuevo Producto -->
+            <div class="modal fade" id="productModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Nuevo Producto</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="productForm">
+                                <div class="row g-3">
+                                    <div class="col-md-8">
+                                        <label class="form-label">Nombre *</label>
+                                        <input type="text" class="form-control" name="nombre" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Código de Barras</label>
+                                        <input type="text" class="form-control" name="codigo_barras">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Categoría</label>
+                                        <input type="text" class="form-control" name="categoria" list="categoriasList">
+                                        <datalist id="categoriasList"></datalist>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Presentación</label>
+                                        <input type="text" class="form-control" name="presentacion">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Descripción</label>
+                                        <textarea class="form-control" name="descripcion" rows="3"></textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label"> Imagen del Producto</label>
+                                        <div class="border rounded p-3 text-center">
+                                            <input type="file" id="productImage" accept="image/*" class="d-none">
+                                            <label for="productImage" class="btn btn-outline-secondary mb-2">
+                                                <i class="bi bi-upload"></i> Subir Imagen
+                                            </label>
+                                            <div id="imagePreview" class="mt-2"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="button" class="btn btn-primary" id="saveProductBtn">Guardar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         `;
         
-        // Setup logout
+        this.setupEventListeners();
+    },
+    
+    /**
+     * Configurar event listeners
+     */
+    setupEventListeners() {
+        // Logout
         const logoutBtn = document.getElementById('logoutBtn');
         if (logoutBtn) {
-            logoutBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                Router.logout();
+            logoutBtn.addEventListener('click', () => Router.logout());
+        }
+        
+        // Nuevo producto
+        const newProductBtn = document.getElementById('newProductBtn');
+        if (newProductBtn) {
+            newProductBtn.addEventListener('click', () => this.openProductModal());
+        }
+        
+        // Buscador
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.busqueda = e.target.value;
+                this.filtrarProductos();
             });
+        }
+        
+        // Limpiar búsqueda
+        const clearSearch = document.getElementById('clearSearch');
+        if (clearSearch) {
+            clearSearch.addEventListener('click', () => {
+                searchInput.value = '';
+                this.busqueda = '';
+                this.filtrarProductos();
+            });
+        }
+        
+        // Filtro categoría
+        const categoriaFilter = document.getElementById('categoriaFilter');
+        if (categoriaFilter) {
+            categoriaFilter.addEventListener('change', (e) => {
+                this.categoriaSeleccionada = e.target.value || null;
+                this.filtrarProductos();
+            });
+        }
+        
+        // Productos por página
+        const perPageSelect = document.getElementById('perPageSelect');
+        if (perPageSelect) {
+            perPageSelect.addEventListener('change', (e) => {
+                this.productosPorPagina = parseInt(e.target.value) || 12;
+                this.paginaActual = 1;
+                this.renderPagination();
+                this.renderProducts();
+            });
+        }
+        
+        // Imagen preview
+        const productImage = document.getElementById('productImage');
+        if (productImage) {
+            productImage.addEventListener('change', (e) => this.handleImagePreview(e));
+        }
+        
+        // Guardar producto
+        const saveProductBtn = document.getElementById('saveProductBtn');
+        if (saveProductBtn) {
+            saveProductBtn.addEventListener('click', () => this.saveProduct());
         }
     },
     
@@ -78,88 +248,346 @@ const ProductsPage = {
      * Cargar datos desde API
      */
     async loadData() {
-        console.log('ProductsPage: Cargando datos...');
+        const grid = document.getElementById('productsGrid');
+        if (!grid) return;
         
-        const container = document.getElementById('productsContainer');
-        if (!container) {
-            console.error('ProductsPage: productsContainer no encontrado');
-            return;
-        }
-        
-        const token = AuthService.getToken();
-        
-        if (!token) {
-            container.innerHTML = '<div class="alert alert-warning">No hay sesión. <a href="/login">Iniciar sesión</a></div>';
-            return;
-        }
+        this.cargando = true;
         
         try {
-            console.log('ProductsPage: Llamando API /api/productos');
-            
+            const token = AuthService.getToken();
             const response = await fetch('/api/productos', {
-                headers: {
-                    'Authorization': 'Bearer ' + token
-                }
+                headers: { 'Authorization': 'Bearer ' + token }
             });
             
-            console.log('ProductsPage: Respuesta recibida', response.status);
-            
             const data = await response.json();
-            console.log('ProductsPage: Data', data);
             
             if (data.success) {
-                this.renderProducts(data.data?.productos || []);
+                this.productos = data.data?.productos || [];
+                this.productosFiltrados = [...this.productos];
+                
+                // Extraer categorías únicas
+                this.categorias = [...new Set(this.productos.map(p => p.categoria).filter(Boolean))].sort();
+                
+                this.renderCategoriaFilter();
+                this.renderProducts();
+                this.renderPagination();
             } else {
-                container.innerHTML = '<div class="alert alert-danger">Error: ' + (data.message || 'Desconocido') + '</div>';
+                grid.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
             }
             
         } catch (error) {
-            console.error('ProductsPage: Error', error);
-            container.innerHTML = '<div class="alert alert-danger">Error de conexión: ' + error.message + '</div>';
+            console.error('Error cargando productos:', error);
+            grid.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+        } finally {
+            this.cargando = false;
         }
     },
     
     /**
-     * Renderizar lista de productos
+     * Filtrar productos
      */
-    renderProducts(productos) {
-        console.log('ProductsPage: Renderizando', productos.length, 'productos');
+    filtrarProductos() {
+        let filtrados = [...this.productos];
         
-        const container = document.getElementById('productsContainer');
-        const tableContainer = document.getElementById('productsTableContainer');
+        // Filtrar por búsqueda
+        if (this.busqueda) {
+            const search = this.busqueda.toLowerCase();
+            filtrados = filtrados.filter(p => 
+                (p.nombre && p.nombre.toLowerCase().includes(search)) ||
+                (p.codigo_barras && p.codigo_barras.toLowerCase().includes(search)) ||
+                (p.categoria && p.categoria.toLowerCase().includes(search))
+            );
+        }
         
-        if (!tableContainer) return;
+        // Filtrar por categoría
+        if (this.categoriaSeleccionada) {
+            filtrados = filtrados.filter(p => p.categoria === this.categoriaSeleccionada);
+        }
         
-        if (!productos || productos.length === 0) {
-            tableContainer.innerHTML = '<div class="alert alert-info">No hay productos</div>';
+        this.productosFiltrados = filtrados;
+        this.paginaActual = 1;
+        
+        this.renderProducts();
+        this.renderPagination();
+    },
+    
+    /**
+     * Renderizar filtro de categorías
+     */
+    renderCategoriaFilter() {
+        const select = document.getElementById('categoriaFilter');
+        const datalist = document.getElementById('categoriasList');
+        
+        if (select) {
+            const options = this.categorias.map(c => 
+                `<option value="${c}">${c}</option>`
+            ).join('');
+            select.innerHTML = `<option value="">Todas las categorías</option>${options}`;
+        }
+        
+        if (datalist) {
+            datalist.innerHTML = this.categorias.map(c => 
+                `<option value="${c}">`
+            ).join('');
+        }
+    },
+    
+    /**
+     * Renderizar productos como cards
+     */
+    renderProducts() {
+        const grid = document.getElementById('productsGrid');
+        const total = document.getElementById('totalProductos');
+        
+        if (!grid) return;
+        
+        // Actualizar total
+        if (total) {
+            total.textContent = this.productosFiltrados.length;
+        }
+        
+        if (this.productosFiltrados.length === 0) {
+            grid.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                    <p class="mt-2 text-muted">No se encontraron productos</p>
+                </div>
+            `;
             return;
         }
         
-        const rows = productos.map(p => `
-            <tr>
-                <td>${p.id || p.producto_id || '-'}</td>
-                <td>${p.nombre || '-'}</td>
-                <td>${p.categoria || '-'}</td>
-                <td>${p.codigo_barras || p.codigo || '-'}</td>
-            </tr>
-        `).join('');
+        // Calcular paginación
+        const inicio = (this.paginaActual - 1) * this.productosPorPagina;
+        const fin = inicio + this.productosPorPagina;
+        const productosPagina = this.productosFiltrados.slice(inicio, fin);
         
-        tableContainer.innerHTML = `
-            <table class="table table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Categoría</th>
-                        <th>Código</th>
-                    </tr>
-                </thead>
-                <tbody>${rows}</tbody>
-            </table>
-            <p class="text-muted">Total: ${productos.length} productos</p>
+        const cards = productosPagina.map(producto => this.renderProductCard(producto)).join('');
+        
+        grid.innerHTML = cards;
+    },
+    
+    /**
+     * Renderizar un card de producto
+     */
+    renderProductCard(producto) {
+        const imagen = producto.imagen || producto.foto || null;
+        const imgUrl = imagen 
+            ? `/uploads/productos/${imagen}` 
+            : null;
+        
+        const imgHtml = imgUrl 
+            ? `<img src="${imgUrl}" class="card-img-top" alt="${producto.nombre}" style="height: 150px; object-fit: cover;">`
+            : `<div class="bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
+                <i class="bi bi-box text-muted" style="font-size: 3rem;"></i>
+               </div>`;
+        
+        return `
+            <div class="col-md-6 col-lg-4 col-xl-3">
+                <div class="card h-100 shadow-sm product-card" style="cursor: pointer;">
+                    ${imgHtml}
+                    <div class="card-body">
+                        <h6 class="card-title mb-1">${producto.nombre || 'Sin nombre'}</h6>
+                        <p class="text-muted small mb-1">${producto.categoria || 'Sin categoría'}</p>
+                        <p class="small mb-0 text-muted">
+                            <i class="bi bi-upc"></i> ${producto.codigo_barras || producto.codigo || 'Sin código'}
+                        </p>
+                    </div>
+                    <div class="card-footer bg-transparent border-top-0">
+                        <button class="btn btn-sm btn-outline-primary w-100" 
+                                onclick="ProductsPage.editProduct(${producto.id})">
+                            <i class="bi bi-pencil"></i> Editar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+    
+    /**
+     * Renderizar paginación
+     */
+    renderPagination() {
+        const pagination = document.getElementById('pagination');
+        const nav = document.getElementById('paginationNav');
+        
+        if (!pagination || !nav) return;
+        
+        const totalPaginas = Math.ceil(this.productosFiltrados.length / this.productosPorPagina);
+        
+        if (totalPaginas <= 1) {
+            nav.classList.add('d-none');
+            return;
+        }
+        
+        nav.classList.remove('d-none');
+        
+        let html = '';
+        
+        // Anterior
+        html += `
+            <li class="page-item ${this.paginaActual === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="event.preventDefault(); ProductsPage.irPagina(${this.paginaActual - 1})">
+                    &laquo;
+                </a>
+            </li>
         `;
         
-        container.innerHTML = '';
+        // Números de página
+        for (let i = 1; i <= totalPaginas; i++) {
+            if (i === 1 || i === totalPaginas || (i >= this.paginaActual - 1 && i <= this.paginaActual + 1)) {
+                html += `
+                    <li class="page-item ${i === this.paginaActual ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="event.preventDefault(); ProductsPage.irPagina(${i})">${i}</a>
+                    </li>
+                `;
+            } else if (i === this.paginaActual - 2 || i === this.paginaActual + 2) {
+                html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            }
+        }
+        
+        // Siguiente
+        html += `
+            <li class="page-item ${this.paginaActual === totalPaginas ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="event.preventDefault(); ProductsPage.irPagina(${this.paginaActual + 1})">
+                    &raquo;
+                </a>
+            </li>
+        `;
+        
+        pagination.innerHTML = html;
+    },
+    
+    /**
+     * Ir a una página específica
+     */
+    irPagina(pagina) {
+        const totalPaginas = Math.ceil(this.productosFiltrados.length / this.productosPorPagina);
+        
+        if (pagina < 1 || pagina > totalPaginas) return;
+        
+        this.paginaActual = pagina;
+        this.renderProducts();
+        this.renderPagination();
+        
+        // Scroll al inicio de la grid
+        document.getElementById('productsGrid')?.scrollIntoView({ behavior: 'smooth' });
+    },
+    
+    /**
+     * Preview de imagen
+     */
+    handleImagePreview(event) {
+        const file = event.target.files[0];
+        const preview = document.getElementById('imagePreview');
+        
+        if (!file || !preview) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            preview.innerHTML = `
+                <img src="${e.target.result}" class="img-thumbnail" style="max-height: 150px;">
+                <button type="button" class="btn btn-sm btn-outline-danger position-absolute top-0 end-0 m-2" 
+                        onclick="this.parentElement.innerHTML = ''; document.getElementById('productImage').value = '';">
+                    <i class="bi bi-x"></i>
+                </button>
+            `;
+        };
+        reader.readAsDataURL(file);
+    },
+    
+    /**
+     * Abrir modal para nuevo producto
+     */
+    openProductModal() {
+        const modal = new bootstrap.Modal(document.getElementById('productModal'));
+        modal.show();
+    },
+    
+    /**
+     * Guardar producto
+     */
+    async saveProduct() {
+        const form = document.getElementById('productForm');
+        const formData = new FormData(form);
+        
+        const data = Object.fromEntries(formData.entries());
+        
+        try {
+            const token = AuthService.getToken();
+            const response = await fetch('/api/productos', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // Cerrar modal
+                bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
+                
+                // Verificar si hay imagen para subir
+                const imageInput = document.getElementById('productImage');
+                if (imageInput && imageInput.files[0] && result.data?.producto_id) {
+                    await this.uploadImage(result.data.producto_id, imageInput.files[0]);
+                }
+                
+                // Recargar
+                await this.loadData();
+                
+                // Mostrar éxito
+                if (typeof Toast !== 'undefined') {
+                    Toast.success('Producto creado correctamente');
+                }
+            } else {
+                alert(result.message || 'Error al crear producto');
+            }
+            
+        } catch (error) {
+            console.error('Error guardando producto:', error);
+            alert('Error: ' + error.message);
+        }
+    },
+    
+    /**
+     * Subir imagen de producto
+     */
+    async uploadImage(productoId, file) {
+        const formData = new FormData();
+        formData.append('imagen', file);
+        
+        try {
+            const token = AuthService.getToken();
+            const response = await fetch(`/api/productos/${productoId}/imagen`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                console.log('Imagen subida:', result.data);
+            } else {
+                console.warn('Error subiendo imagen:', result.message);
+            }
+            
+        } catch (error) {
+            console.error('Error upload image:', error);
+        }
+    },
+    
+    /**
+     * Editar producto
+     */
+    editProduct(id) {
+        console.log('Editar producto:', id);
+        // Por implementar - abrir modal de edición
     }
 };
 
