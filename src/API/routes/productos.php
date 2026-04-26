@@ -97,3 +97,146 @@ function handleSearchProductos(): void {
         JsonResponse::error('Error: ' . $e->getMessage(), 500);
     }
 }
+
+function handlePostProductos(): void {
+    $farmaciaId = Auth::farmaciaId();
+    
+    if (!$farmaciaId) {
+        JsonResponse::error('No autenticado', 401);
+        return;
+    }
+
+    // Leer JSON del body
+    $input = json_decode(file_get_contents('php://input'), true);
+    
+    if (!$input) {
+        JsonResponse::error('JSON inválido en el body', 400);
+        return;
+    }
+
+    // Validar campos requeridos
+    $nombre = isset($input['nombre']) ? trim($input['nombre']) : '';
+    
+    if (empty($nombre)) {
+        JsonResponse::error('nombre es requerido', 400);
+        return;
+    }
+
+    // Validar código de barras único (si se proporciona)
+    $codigoBarras = isset($input['codigo_barras']) ? trim($input['codigo_barras']) : null;
+
+    try {
+        require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
+        require_once SRC_PATH . '/Infrastructure/Persistence/ProductoRepository.php';
+
+        $pdo = PDOFactory::getCluster(1);
+        $repo = new ProductoRepository($pdo);
+
+        $productoId = $repo->create([
+            'nombre' => $nombre,
+            'codigo_barras' => $codigoBarras,
+            'descripcion' => $input['descripcion'] ?? null,
+            'categoria' => $input['categoria'] ?? null,
+            'presentacion' => $input['presentacion'] ?? null,
+            'activo' => $input['activo'] ?? true,
+        ]);
+
+        JsonResponse::success([
+            'message' => 'Producto creado',
+            'producto_id' => $productoId,
+        ], 201);
+
+    } catch (\PDOException $e) {
+        if ($e->getCode() == 23000) {
+            JsonResponse::error('El código de barras ya existe', 400);
+        } else {
+            JsonResponse::error('Error: ' . $e->getMessage(), 500);
+        }
+    } catch (\Throwable $e) {
+        JsonResponse::error('Error: ' . $e->getMessage(), 500);
+    }
+}
+
+function handlePutProductos(int $id): void {
+    $farmaciaId = Auth::farmaciaId();
+    
+    if (!$farmaciaId) {
+        JsonResponse::error('No autenticado', 401);
+        return;
+    }
+
+    $input = json_decode(file_get_contents('php://input'), true);
+    
+    if (!$input) {
+        JsonResponse::error('JSON inválido en el body', 400);
+        return;
+    }
+
+    try {
+        require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
+        require_once SRC_PATH . '/Infrastructure/Persistence/ProductoRepository.php';
+
+        $pdo = PDOFactory::getCluster(1);
+        $repo = new ProductoRepository($pdo);
+
+        // Verificar que existe el producto
+        $producto = $repo->findByIdGlobal($id);
+        if (!$producto) {
+            JsonResponse::error('Producto no encontrado', 404);
+            return;
+        }
+
+        $success = $repo->update($id, $input);
+
+        if ($success) {
+            JsonResponse::success(['message' => 'Producto actualizado']);
+        } else {
+            JsonResponse::error('Error al actualizar', 500);
+        }
+
+    } catch (\PDOException $e) {
+        if ($e->getCode() == 23000) {
+            JsonResponse::error('El código de barras ya existe', 400);
+        } else {
+            JsonResponse::error('Error: ' . $e->getMessage(), 500);
+        }
+    } catch (\Throwable $e) {
+        JsonResponse::error('Error: ' . $e->getMessage(), 500);
+    }
+}
+
+function handleDeleteProductos(int $id): void {
+    $farmaciaId = Auth::farmaciaId();
+    
+    if (!$farmaciaId) {
+        JsonResponse::error('No autenticado', 401);
+        return;
+    }
+
+    try {
+        require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
+        require_once SRC_PATH . '/Infrastructure/Persistence/ProductoRepository.php';
+
+        $pdo = PDOFactory::getCluster(1);
+        $repo = new ProductoRepository($pdo);
+
+        // Verificar que existe (usando método global)
+        $producto = $repo->findByIdGlobal($id);
+        if (!$producto) {
+            JsonResponse::error('Producto no encontrado', 404);
+            return;
+        }
+
+        // En lugar de eliminar, marcar como inactivo
+        $success = $repo->update($id, ['activo' => false]);
+
+        if ($success) {
+            JsonResponse::success(['message' => 'Producto eliminado (inactivado)']);
+        } else {
+            JsonResponse::error('Error al eliminar', 500);
+        }
+
+    } catch (\Throwable $e) {
+        JsonResponse::error('Error: ' . $e->getMessage(), 500);
+    }
+}

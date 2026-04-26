@@ -110,4 +110,98 @@ class ProductoRepository {
         
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    /**
+     * Crea un nuevo producto en el catálogo global
+     * NOTA: Solo admins deberían crear productos globales
+     */
+    public function create(array $data): int {
+        $stmt = $this->pdo->prepare("
+            INSERT INTO productos (nombre, codigo_barras, descripcion, categoria, presentacion, activo)
+            VALUES (:nombre, :codigo_barras, :descripcion, :categoria, :presentacion, :activo)
+        ");
+        
+        $stmt->execute([
+            ':nombre' => $data['nombre'],
+            ':codigo_barras' => $data['codigo_barras'] ?? null,
+            ':descripcion' => $data['descripcion'] ?? null,
+            ':categoria' => $data['categoria'] ?? null,
+            ':presentacion' => $data['presentacion'] ?? null,
+            ':activo' => $data['activo'] ?? true,
+        ]);
+        
+        return (int) $this->pdo->lastInsertId();
+    }
+
+    /**
+     * Actualiza un producto existente
+     */
+    public function update(int $id, array $data): bool {
+        $fields = [];
+        $params = [':id' => $id];
+        
+        if (isset($data['nombre'])) {
+            $fields[] = 'nombre = :nombre';
+            $params[':nombre'] = $data['nombre'];
+        }
+        if (isset($data['codigo_barras'])) {
+            $fields[] = 'codigo_barras = :codigo_barras';
+            $params[':codigo_barras'] = $data['codigo_barras'];
+        }
+        if (isset($data['descripcion'])) {
+            $fields[] = 'descripcion = :descripcion';
+            $params[':descripcion'] = $data['descripcion'];
+        }
+        if (isset($data['categoria'])) {
+            $fields[] = 'categoria = :categoria';
+            $params[':categoria'] = $data['categoria'];
+        }
+        if (isset($data['presentacion'])) {
+            $fields[] = 'presentacion = :presentacion';
+            $params[':presentacion'] = $data['presentacion'];
+        }
+        if (isset($data['activo'])) {
+            $fields[] = 'activo = :activo';
+            $params[':activo'] = $data['activo'] ? 1 : 0;
+        }
+        
+        if (empty($fields)) {
+            return false;
+        }
+        
+        $sql = "UPDATE productos SET " . implode(', ', $fields) . " WHERE id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Busca un producto por ID sin filtro de farmacia (para crear lotes)
+     */
+    public function findByIdGlobal(int $id): ?array {
+        $stmt = $this->pdo->prepare("
+            SELECT id, nombre, codigo_barras, descripcion, categoria, presentacion, activo
+            FROM productos
+            WHERE id = :id
+        ");
+        
+        $stmt->execute([':id' => $id]);
+        $producto = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return $producto ?: null;
+    }
+
+    /**
+     * Lista todos los productos (catálogo global - solo para admins)
+     */
+    public function findAllGlobal(): array {
+        $stmt = $this->pdo->query("
+            SELECT id, nombre, codigo_barras, descripcion, categoria, presentacion, activo
+            FROM productos
+            ORDER BY nombre ASC
+        ");
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

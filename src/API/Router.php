@@ -90,34 +90,96 @@ class PharmaRouter {
     }
 
     private function dispatchRoutes(): void {
-        // Productos
-        if ($this->uri === '/api/productos') {
+        // ===================
+        // PRODUCTOS
+        // ===================
+        
+        // GET /api/productos - Listar productos por farmacia
+        if ($this->uri === '/api/productos' && $this->method === 'GET') {
             require_once ROUTES_PATH . '/productos.php';
-            
-            if ($this->method === 'GET') {
-                handleGetProductos();
-                return;
-            }
+            handleGetProductos();
+            return;
         }
 
-        // Producto individual: /api/productos/{id}
-        if (preg_match('#^/api/productos/(\d+)$#', $this->uri, $matches)) {
+        // POST /api/productos - Crear producto
+        if ($this->uri === '/api/productos' && $this->method === 'POST') {
             require_once ROUTES_PATH . '/productos.php';
-            
-            if ($this->method === 'GET') {
-                handleGetProductoById((int) $matches[1]);
-                return;
-            }
+            handlePostProductos();
+            return;
+        }
+
+        // GET /api/productos/{id} - Obtener producto por ID
+        if ($this->method === 'GET' && preg_match('#^/api/productos/(\d+)$#', $this->uri, $matches)) {
+            require_once ROUTES_PATH . '/productos.php';
+            handleGetProductoById((int) $matches[1]);
+            return;
+        }
+
+        // PUT /api/productos/{id} - Actualizar producto
+        if ($this->method === 'PUT' && preg_match('#^/api/productos/(\d+)$#', $this->uri, $matches)) {
+            require_once ROUTES_PATH . '/productos.php';
+            handlePutProductos((int) $matches[1]);
+            return;
+        }
+
+        // DELETE /api/productos/{id} - Eliminar producto
+        if ($this->method === 'DELETE' && preg_match('#^/api/productos/(\d+)$#', $this->uri, $matches)) {
+            require_once ROUTES_PATH . '/productos.php';
+            handleDeleteProductos((int) $matches[1]);
+            return;
         }
 
         // Búsqueda: /api/productos/search?q=...
-        if ($this->uri === '/api/productos/search') {
+        if ($this->uri === '/api/productos/search' && $this->method === 'GET') {
             require_once ROUTES_PATH . '/productos.php';
-            
-            if ($this->method === 'GET') {
-                handleSearchProductos();
-                return;
-            }
+            handleSearchProductos();
+            return;
+        }
+
+        // ===================
+        // PRECIOS
+        // ===================
+
+        // GET /api/precios - Listar todos los precios de la farmacia
+        if ($this->uri === '/api/precios' && $this->method === 'GET') {
+            require_once ROUTES_PATH . '/precios.php';
+            handleGetPrecios();
+            return;
+        }
+
+        // POST /api/precios - Crear precio
+        if ($this->uri === '/api/precios' && $this->method === 'POST') {
+            require_once ROUTES_PATH . '/precios.php';
+            handlePostPrecios();
+            return;
+        }
+
+        // GET /api/precios/{id} - Obtener precio por ID
+        if ($this->method === 'GET' && preg_match('#^/api/precios/(\d+)$#', $this->uri, $matches)) {
+            require_once ROUTES_PATH . '/precios.php';
+            handleGetPreciosById((int) $matches[1]);
+            return;
+        }
+
+        // PUT /api/precios/{id} - Actualizar precio o activar
+        if ($this->method === 'PUT' && preg_match('#^/api/precios/(\d+)$#', $this->uri, $matches)) {
+            require_once ROUTES_PATH . '/precios.php';
+            handlePutPrecios((int) $matches[1]);
+            return;
+        }
+
+        // DELETE /api/precios/{id} - Eliminar precio
+        if ($this->method === 'DELETE' && preg_match('#^/api/precios/(\d+)$#', $this->uri, $matches)) {
+            require_once ROUTES_PATH . '/precios.php';
+            handleDeletePrecios((int) $matches[1]);
+            return;
+        }
+
+        // GET /api/precios/producto/{productoId} - Obtener precios por producto
+        if ($this->method === 'GET' && preg_match('#^/api/precios/producto/(\d+)$#', $this->uri, $matches)) {
+            require_once ROUTES_PATH . '/precios.php';
+            handleGetPreciosByProducto((int) $matches[1]);
+            return;
         }
 
         JsonResponse::error('Recurso no encontrado', 404);

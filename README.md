@@ -17,7 +17,7 @@
 
 ```powershell
 # 1. Navegar al directorio del proyecto
-cd C:\Users\Miguel\Desktop\Projects\ing_Yudy\PharmaQuick
+cd C:\"Tu Carpeta"
 
 # 2. Construir imagenes (primera vez)
 docker-compose build
