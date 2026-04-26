@@ -1,6 +1,10 @@
 -- PharmaQuick - Base de Datos Master (pharma_master)
 -- Catalogo central de farmacias
--- Version: 1.0.0
+-- Version: 1.0.1
+-- 
+-- Notas de version 1.0.1:
+-- - Actualizado sistema de roles para совпадать con backend Fase 2
+-- - rol: ADMINISTRADOR | USUARIO
 
 CREATE DATABASE IF NOT EXISTS pharma_master;
 USE pharma_master;
@@ -24,13 +28,16 @@ CREATE TABLE IF NOT EXISTS farmacias (
     INDEX idx_activo (activo)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Sistema deroles actualizado para Fase 2
+-- ADMINISTRADOR: puede crear/editar/eliminar productos del catalogo global
+-- USUARIO: acceso basico a productos y precios de su farmacia
 CREATE TABLE IF NOT EXISTS usuarios (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     farmacia_id INT UNSIGNED NOT NULL,
     email VARCHAR(150) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     nombre VARCHAR(100) DEFAULT NULL,
-    rol ENUM('ADMIN', 'VENDEDOR', 'AUXILIAR') DEFAULT 'VENDEDOR',
+    rol ENUM('ADMINISTRADOR', 'USUARIO') DEFAULT 'USUARIO',
     activo BOOLEAN DEFAULT TRUE,
     ultimo_login TIMESTAMP NULL,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -71,7 +78,7 @@ CREATE TABLE IF NOT EXISTS logs (
 
 SET FOREIGN_KEY_CHECKS = 1;
 
--- DATOS DE PRUEBA: Farmacias
+-- Datos de prueba: Farmacias
 INSERT INTO farmacias (id, codigo_sucursal, nombre, direccion, telefono) VALUES
 (1, 'F001', 'PharmaQuick Central', 'Calle 100 #15-20, Bogota', '+57 601 555 0100'),
 (2, 'F002', 'PharmaQuick Norte', 'Av. Americas #45-30, Bogota', '+57 601 555 0200'),
@@ -89,8 +96,14 @@ INSERT INTO cluster_farmacias (farmacia_id, cluster_prefix) VALUES
 (5, 'db_cluster_1'),
 (6, 'db_cluster_2');
 
--- Usuarios de prueba (password: 'password')
+-- Usuarios de prueba (password: 'password' para todos)
+-- Rol ADMINISTRADOR: acceso completo a productos (crear/editar/eliminar catalogo global)
+-- Rol USUARIO: acceso basico a productos y precios de su farmacia
 INSERT INTO usuarios (farmacia_id, email, password_hash, nombre, rol) VALUES
-(1, 'admin@pharmaquick.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Administrador General', 'ADMIN'),
-(1, 'vendedor@pharmaquick.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Vendedor Principal', 'VENDEDOR'),
-(2, 'vendedor2@pharmaquick.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Vendedor Norte', 'VENDEDOR');
+(1, 'admin@pharmaquick.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Administrador Central', 'ADMINISTRADOR'),
+(1, 'vendedor@pharmaquick.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Vendedor Principal', 'USUARIO'),
+(2, 'vendedor2@pharmaquick.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Vendedor Norte', 'USUARIO'),
+(3, 'vendedor3@pharmaquick.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Vendedor Cedritos', 'USUARIO'),
+(4, 'vendedor4@pharmaquick.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Vendedor Chapinero', 'USUARIO'),
+(5, 'vendedor5@pharmaquick.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Vendedor Calle 80', 'USUARIO'),
+(6, 'vendedor6@pharmaquick.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Vendedor Alamos', 'USUARIO');
