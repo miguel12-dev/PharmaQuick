@@ -69,11 +69,13 @@ function handlePostPrecios(): void {
     try {
         require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
         require_once SRC_PATH . '/Infrastructure/Persistence/PrecioRepository.php';
+        require_once SRC_PATH . '/Infrastructure/Persistence/ProductoRepository.php';
         require_once SRC_PATH . '/Domain/Services/PrecioService.php';
 
         $pdo = PDOFactory::getCluster(1);
         $repo = new PrecioRepository($pdo);
-        $service = new PrecioService($repo);
+        $productoRepo = new ProductoRepository($pdo);
+        $service = new PrecioService($repo, $productoRepo);
 
         if ($activar) {
             // Crear y activar (lógica de único precio activo)
@@ -122,11 +124,13 @@ function handlePutPrecios(int $id): void {
     try {
         require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
         require_once SRC_PATH . '/Infrastructure/Persistence/PrecioRepository.php';
+        require_once SRC_PATH . '/Infrastructure/Persistence/ProductoRepository.php';
         require_once SRC_PATH . '/Domain/Services/PrecioService.php';
 
         $pdo = PDOFactory::getCluster(1);
         $repo = new PrecioRepository($pdo);
-        $service = new PrecioService($repo);
+        $productoRepo = new ProductoRepository($pdo);
+        $service = new PrecioService($repo, $productoRepo);
 
         // Necesitamos el producto_id para la operación
         $precios = $repo->findAllByProducto($id, $farmaciaId);
@@ -197,11 +201,13 @@ function handleGetPreciosByProducto(int $productoId): void {
     try {
         require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
         require_once SRC_PATH . '/Infrastructure/Persistence/PrecioRepository.php';
+        require_once SRC_PATH . '/Infrastructure/Persistence/ProductoRepository.php';
         require_once SRC_PATH . '/Domain/Services/PrecioService.php';
 
         $pdo = PDOFactory::getCluster(1);
         $repo = new PrecioRepository($pdo);
-        $service = new PrecioService($repo);
+        $productoRepo = new ProductoRepository($pdo);
+        $service = new PrecioService($repo, $productoRepo);
 
         $todos = $service->getTodos($productoId, $farmaciaId);
         $activo = $service->getPrecioActivo($productoId, $farmaciaId);
@@ -233,15 +239,15 @@ function handleGetPreciosById(int $id): void {
         $pdo = PDOFactory::getCluster(1);
         $repo = new PrecioRepository($pdo);
 
-        // Buscar el precio
-        $precios = $repo->findAllByProducto($id, $farmaciaId);
+        // Buscar el precio por ID (con filtro de farmacia)
+        $precio = $repo->findById($id, $farmaciaId);
         
-        if (empty($precios)) {
+        if (!$precio) {
             JsonResponse::error('Precio no encontrado', 404);
             return;
         }
 
-        JsonResponse::success($precios[0]);
+        JsonResponse::success($precio);
 
     } catch (\Throwable $e) {
         JsonResponse::error('Error: ' . $e->getMessage(), 500);

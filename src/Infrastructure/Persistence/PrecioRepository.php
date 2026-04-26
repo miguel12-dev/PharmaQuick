@@ -18,6 +18,26 @@ class PrecioRepository {
     }
 
     /**
+     * Busca un precio por ID (verificando que pertenezca a la farmacia)
+     */
+    public function findById(int $precioId, int $farmaciaId): ?array {
+        $stmt = $this->pdo->prepare("
+            SELECT id, producto_id, farmacia_id, precio, activo
+            FROM precios
+            WHERE id = :id 
+                AND farmacia_id = :farmacia_id
+        ");
+        
+        $stmt->execute([
+            ':id' => $precioId,
+            ':farmacia_id' => $farmaciaId,
+        ]);
+        
+        $precio = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $precio ?: null;
+    }
+
+    /**
      * Crea un nuevo precio para un producto/farmacia
      */
     public function create(int $productoId, int $farmaciaId, float $precio, bool $activo = false): int {

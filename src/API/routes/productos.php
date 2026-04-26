@@ -50,7 +50,18 @@ function handleGetProductoById(int $id): void {
 
         $pdo = PDOFactory::getCluster(1);
         $repo = new ProductoRepository($pdo);
+        
+        // Primero buscar con filtro de farmacia (productos con lotes)
         $producto = $repo->findById($id, $farmaciaId);
+        
+        // Si no tiene lotes, buscar en catálogo global
+        if (!$producto) {
+            $producto = $repo->findByIdGlobal($id);
+            if ($producto) {
+                $producto['stock_total'] = 0;
+                $producto['codigo'] = $producto['codigo_barras'];
+            }
+        }
 
         if (!$producto) {
             JsonResponse::error('Producto no encontrado', 404);
@@ -100,9 +111,21 @@ function handleSearchProductos(): void {
 
 function handlePostProductos(): void {
     $farmaciaId = Auth::farmaciaId();
+    $userId = Auth::userId();
     
     if (!$farmaciaId) {
         JsonResponse::error('No autenticado', 401);
+        return;
+    }
+
+    // Los métodosglobals requieren validación de email/del usuario
+    // Por seguridad, restringimos creación de productos globales
+    $email = Auth::email();
+    $isAdmin = $email && str_contains($email, 'admin');
+    
+    if (!$isAdmin) {
+        // Usuarios normales no pueden crear productos
+        JsonResponse::error('No tiene permisos para crear productos', 403);
         return;
     }
 
@@ -165,6 +188,15 @@ function handlePutProductos(int $id): void {
         return;
     }
 
+    // Verificar permisos de admin
+    $email = Auth::email();
+    $isAdmin = $email && str_contains($email, 'admin');
+    
+    if (!$isAdmin) {
+        JsonResponse::error('No tiene permisos para modificar productos', 403);
+        return;
+    }
+
     $input = json_decode(file_get_contents('php://input'), true);
     
     if (!$input) {
@@ -210,6 +242,15 @@ function handleDeleteProductos(int $id): void {
     
     if (!$farmaciaId) {
         JsonResponse::error('No autenticado', 401);
+        return;
+    }
+
+    // Verificar permisos de admin
+    $email = Auth::email();
+    $isAdmin = $email && str_contains($email, 'admin');
+    
+    if (!$isAdmin) {
+        JsonResponse::error('No tiene permisos para eliminar productos', 403);
         return;
     }
 

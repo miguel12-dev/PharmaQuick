@@ -204,4 +204,54 @@ class ProductoRepository {
         
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    /**
+     * Busca productos en el catálogo global (sin filtro de farmacia)
+     * Útil para gestión de precios cuando el producto no tiene lotes
+     */
+    public function searchGlobal(string $query): array {
+        $searchTerm = "%{$query}%";
+        $stmt = $this->pdo->prepare("
+            SELECT id, nombre, codigo_barras, descripcion, categoria, presentacion, activo
+            FROM productos
+            WHERE nombre LIKE :query OR codigo_barras LIKE :query
+            ORDER BY nombre ASC
+            LIMIT 50
+        ");
+        
+        $stmt->execute([':query' => $searchTerm]);
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Obtiene un producto global con su precio activo en una farmacia
+     */
+    public function findByIdWithPrecio(int $productoId, int $farmaciaId): ?array {
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                p.id,
+                p.nombre,
+                p.codigo_barras AS codigo,
+                p.descripcion,
+                p.categoria,
+                p.presentacion,
+                p.activo,
+                pr.precio AS precio_activo,
+                pr.id AS precio_id
+            FROM productos p
+            LEFT JOIN precios pr ON p.id = pr.producto_id 
+                AND pr.farmacia_id = :farmacia_id_tienda
+                AND pr.activo = 1
+            WHERE p.id = :id
+        ");
+        
+        $stmt->execute([
+            ':id' => $productoId,
+            ':farmacia_id_tienda' => $farmaciaId,
+        ]);
+        
+        $producto = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $producto ?: null;
+    }
 }

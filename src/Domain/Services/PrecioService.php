@@ -12,9 +12,18 @@ declare(strict_types=1);
 
 class PrecioService {
     private PrecioRepository $repository;
+    private ?ProductoRepository $productoRepository;
 
-    public function __construct(PrecioRepository $repository) {
+    public function __construct(PrecioRepository $repository, ?ProductoRepository $productoRepository = null) {
         $this->repository = $repository;
+        $this->productoRepository = $productoRepository;
+    }
+
+    /**
+     * Permite injectar ProductoRepository para validaciones
+     */
+    public function setProductoRepository(ProductoRepository $repo): void {
+        $this->productoRepository = $repo;
     }
 
     /**
@@ -114,10 +123,16 @@ class PrecioService {
      * Valida que un producto existe
      */
     private function validarProducto(int $productoId): void {
-        // La validación se hace en el controller/repositorio
-        // lanzamos excepción si ID no es válido
         if ($productoId <= 0) {
             throw new InvalidArgumentException('ID de producto inválido');
+        }
+        
+        // Si tenemos ProductoRepository, verificamos existencia real
+        if ($this->productoRepository !== null) {
+            $producto = $this->productoRepository->findByIdGlobal($productoId);
+            if (!$producto) {
+                throw new InvalidArgumentException('Producto no existe');
+            }
         }
     }
 }
