@@ -37,14 +37,21 @@ class JwtMiddleware {
         }
 
         // Obtener el ROL desde la base de datos (no desde JWT)
-        $rol = $this->obtenerRol($payload['sub'], (int)$payload['farmacia_id']);
+        // y verificar que el usuario esté activo
+        $userData = $this->obtenerRol($payload['sub'], (int)$payload['farmacia_id']);
+        
+        // Si usuario no está activo o no existe, denegar acceso
+        if (!$userData) {
+            JsonResponse::error('Usuario inactivo o no encontrado. Contacte al administrador.', 401);
+            return false;
+        }
         
         // Inyectar contexto de autenticación en $_REQUEST
         $_REQUEST['auth'] = [
             'sub' => $payload['sub'],
             'email' => $payload['email'],
             'farmacia_id' => (int)$payload['farmacia_id'],
-            'rol' => $rol, // Rol basado en BD
+            'rol' => $userData['rol'], // Rol basado en BD y verificado activo
         ];
 
         return true;
@@ -52,8 +59,9 @@ class JwtMiddleware {
 
     /**
      * Obtiene el rol del usuario desde la base de datos
+     * Verifica que el usuario esté activo
      */
-    private function obtenerRol(int $userId, int $farmaciaId): string {
+    private function obtenerRol(int $userId, int $farmaciaId): ?array {
         try {
             // Usar cluster basado en farmacia_id
             $cluster = (int) ceil($farmaciaId / 5);
@@ -66,10 +74,18 @@ class JwtMiddleware {
             $repo = new UsuarioRepository($pdo);
             $user = $repo->findById($userId);
             
-            return $user['rol'] ?? 'USUARIO';
+            // Si usuario no existe o está inactivo, retornar null
+            if (!$user || !isset($user['activo']) || !$user['activo']) {
+                return null; // Usuario inactivo o no existente
+            }
+            
+            return [
+                'rol' => $user['rol'] ?? 'USUARIO',
+                'activo' => (bool) $user['activo'],
+            ];
         } catch (\Throwable $e) {
-            // En caso de error, default a USUARIO
-            return 'USUARIO';
+            // En caso de error, denegar acceso
+            return null;
         }
     }
 

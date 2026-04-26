@@ -1,0 +1,32 @@
+<?php
+// Debug script
+require '/var/www/html/src/Core/Exceptions.php';
+require '/var/www/html/src/Infrastructure/Persistence/PDOFactory.php';
+require '/var/www/html/src/Infrastructure/Persistence/UsuarioRepository.php';
+require '/var/www/html/src/Infrastructure/Services/JwtService.php';
+require '/var/www/html/src/Infrastructure/Services/AuthService.php';
+
+echo "=== DEBUG LOGIN ===\n";
+
+try {
+    $pdo = PDOFactory::getCluster(1);
+    echo "[OK] PDO connected\n";
+    
+    // Try authenticate
+    echo "\n=== Test Authenticate ===\n";
+    $repo = new UsuarioRepository($pdo);
+    $user = $repo->authenticate('admin@pharmaquick.com', 'password');
+    echo "User authenticated:\n";
+    print_r($user);
+    
+    // Try AuthService
+    echo "\n=== Test AuthService ===\n";
+    $authService = new AuthService(1);
+    $result = $authService->login('admin@pharmaquick.com', 'password');
+    echo "Login success:\n";
+    print_r($result);
+    
+} catch (Exception $e) {
+    echo "ERROR: " . get_class($e) . " - " . $e->getMessage() . "\n";
+    echo "Trace: " . $e->getTraceAsString() . "\n";
+}

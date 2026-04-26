@@ -113,10 +113,10 @@ function handlePutPrecios(int $id): void {
         return;
     }
 
-    $precio = isset($input['precio']) ? (float) $input['precio'] : 0;
+    $precioInput = isset($input['precio']) ? (float) $input['precio'] : 0;
     $activar = isset($input['activar']) ? (bool) $input['activar'] : false;
 
-    if ($precio <= 0 && !$activar) {
+    if ($precioInput <= 0 && !$activar) {
         JsonResponse::error('Debe proporcionar precio o activar=true', 400);
         return;
     }
@@ -132,15 +132,15 @@ function handlePutPrecios(int $id): void {
         $productoRepo = new ProductoRepository($pdo);
         $service = new PrecioService($repo, $productoRepo);
 
-        // Verificar que el precio existe y pertenece a la farmacia (USANDO findById correcto)
-        $precio = $repo->findById($id, $farmaciaId);
+        // Verificar que el precio existe y pertenece a la farmacia
+        $precioObj = $repo->findById($id, $farmaciaId);
         
-        if (!$precio) {
+        if (!$precioObj) {
             JsonResponse::error('Precio no encontrado', 404);
             return;
         }
 
-        $productoId = $precio['producto_id'];
+        $productoId = $precioObj['producto_id'];
 
         if ($activar) {
             $resultado = $service->activar($id, $productoId, $farmaciaId);
@@ -148,8 +148,8 @@ function handlePutPrecios(int $id): void {
                 'message' => 'Precio activado',
                 'precio' => $resultado,
             ]);
-        } elseif ($precio > 0) {
-            $service->actualizar($id, $farmaciaId, $precio);
+        } elseif ($precioInput > 0) {
+            $service->actualizar($id, $farmaciaId, $precioInput);
             JsonResponse::success([
                 'message' => 'Precio actualizado',
             ]);

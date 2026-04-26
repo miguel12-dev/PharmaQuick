@@ -36,12 +36,13 @@ class UsuarioRepository {
 
     /**
      * Busca un usuario por ID (para obtener rol en middleware)
+     * Incluye activo para verificar estado
      */
     public function findById(int $userId): ?array {
         $stmt = $this->pdo->prepare("
-            SELECT id, farmacia_id, email, rol 
+            SELECT id, farmacia_id, email, rol, activo 
             FROM usuarios 
-            WHERE id = :id AND activo = 1
+            WHERE id = :id
         ");
         $stmt->execute([':id' => $userId]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
