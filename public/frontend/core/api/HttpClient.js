@@ -19,8 +19,12 @@ class HttpClient {
         return HttpClient.instance;
     }
 
-    getHeaders() {
-        const headers = { 'Content-Type': 'application/json' };
+    getHeaders(isFormData = false) {
+        const headers = {};
+        if (!isFormData) {
+            headers['Content-Type'] = 'application/json';
+        }
+        
         const session = this.getSession();
         if (session && session.token) {
             headers['Authorization'] = 'Bearer ' + session.token;
@@ -75,10 +79,13 @@ class HttpClient {
     async post(endpoint, data) {
         if (!this.requireAuth()) throw new Error('No autenticado');
 
+        const isFormData = data instanceof FormData;
+        const body = isFormData ? data : JSON.stringify(data);
+
         const response = await fetch(this.baseURL + endpoint, {
             method: 'POST',
-            headers: this.getHeaders(),
-            body: JSON.stringify(data)
+            headers: this.getHeaders(isFormData),
+            body: body
         });
         return this.handleResponse(response);
     }
