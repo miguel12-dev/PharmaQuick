@@ -57,7 +57,7 @@ async function initApp() {
         }
         
         // Verificar autenticación
-        if (!authService.isAuthenticated()) {
+        if (typeof authService !== 'undefined' && !authService.isAuthenticated()) {
             const currentPath = window.location.pathname;
             if (!currentPath.includes('login')) {
                 authService.redirectToLogin();
@@ -80,10 +80,39 @@ async function initApp() {
             await loadScript(file);
         }
         
+        // Inicializar UI Global (Sidebar, etc)
+        initGlobalUI();
+        
         console.log('PharmaQuick Frontend initialized');
         
     } catch (error) {
         console.error('Error initializing app:', error);
+    }
+}
+
+/**
+ * Inicializa elementos globales de la interfaz
+ */
+function initGlobalUI() {
+    // Sidebar Toggle
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    
+    if (sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            document.body.classList.toggle('sidebar-collapsed');
+            
+            // Guardar preferencia
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            localStorage.setItem('sidebarCollapsed', isCollapsed);
+        });
+        
+        // Restaurar estado previo
+        if (localStorage.getItem('sidebarCollapsed') === 'true') {
+            sidebar.classList.add('collapsed');
+            document.body.classList.add('sidebar-collapsed');
+        }
     }
 }
 

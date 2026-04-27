@@ -58,8 +58,10 @@ function handleUploadProductImage(int $productoId): void {
     }
     
     try {
-        // Crear directorio si no existe
-        $uploadDir = '/var/www/html/public/uploads/productos';
+        // Segmentación por farmacia (Requisito: /public/uploads/productos/{id_farmacia}/imagenes)
+        $relativeDir = "/uploads/productos/" . $farmaciaId . "/imagenes";
+        $uploadDir = BASE_PATH . "/public" . $relativeDir;
+        
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
@@ -75,21 +77,24 @@ function handleUploadProductImage(int $productoId): void {
             return;
         }
         
+        // Guardar la ruta relativa completa en la DB para fácil acceso
+        $dbRuta = $relativeDir . '/' . $nombreArchivo;
+        
         // Eliminar imagen anterior si existe
         if (!empty($producto['imagen'])) {
-            $imagenAnterior = '/var/www/html/public/uploads/productos/' . $producto['imagen'];
+            $imagenAnterior = BASE_PATH . "/public" . $producto['imagen'];
             if (file_exists($imagenAnterior)) {
                 unlink($imagenAnterior);
             }
         }
         
         // Actualizar registro
-        $success = $repo->update($productoId, ['imagen' => $nombreArchivo]);
+        $success = $repo->update($productoId, ['imagen' => $dbRuta]);
         
         if ($success) {
             JsonResponse::success([
                 'imagen' => $nombreArchivo,
-                'url' => '/uploads/productos/' . $nombreArchivo,
+                'url' => $dbRuta,
                 'message' => 'Imagen subida correctamente'
             ]);
         } else {
@@ -99,6 +104,6 @@ function handleUploadProductImage(int $productoId): void {
         }
         
     } catch (\Throwable $e) {
-        JsonResponse::error('Error: ' . $e->getMessage(), 500);
+        JsonResponse::error('Error de servidor: ' . $e->getMessage(), 500);
     }
 }

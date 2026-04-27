@@ -36,137 +36,150 @@ const ProductsPage = {
     },
     
     /**
-     * Renderizar layout completo
+     * Render layout completo
      */
     renderLayout(container) {
         container.innerHTML = `
-            <!-- Navbar -->
-            <nav class="navbar navbar-expand-lg navbar-light fixed-top" style="z-index: 1030;">
-                <div class="container-fluid">
-                    <a class="navbar-brand" href="/dashboard">
-                        <i class="bi bi-capsule"></i> PharmaQuick
-                    </a>
+            <div class="view-container p-4">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="h3 fw-bold text-dark m-0">
+                            <i class="fas fa-pills text-primary me-2"></i>Catálogo de Productos
+                        </h2>
+                        <p class="text-muted small mb-0">Gestione su inventario de medicamentos y productos</p>
+                    </div>
                     <div class="d-flex gap-2">
-                        <button class="btn btn-primary btn-sm" id="newProductBtn">
-                            <i class="bi bi-plus-lg"></i> Nuevo
+                        <button class="btn btn-primary d-flex align-items-center gap-2" id="newProductBtn" style="background-color: var(--pq-primary); border: none; border-radius: 10px; padding: 10px 20px;">
+                            <i class="fas fa-plus"></i>
+                            <span>Nuevo Producto</span>
                         </button>
-                        <button class="btn btn-outline-danger btn-sm" id="logoutBtn">Cerrar Sesión</button>
                     </div>
                 </div>
-            </nav>
-            
-            <!-- Sidebar -->
-            <nav class="sidebar" id="sidebar" style="margin-top: 56px;">
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/dashboard">Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/productos">Productos</a>
-                    </li>
-                </ul>
-            </nav>
-            
-            <!-- Main Content -->
-            <main class="main-content" id="mainContent" style="margin-top: 56px; padding: 20px;">
-                <div class="container-fluid">
-                    <!-- Header -->
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2><i class="bi bi-box-seam"></i> Productos</h2>
-                        <span class="badge bg-secondary" id="totalProductos">0</span>
-                    </div>
-                    
-                    <!-- Buscador y Filtros -->
-                    <div class="row mb-4 g-2">
+                
+                <!-- Buscador y Filtros -->
+                <div class="bg-white p-3 rounded-3 shadow-sm mb-4">
+                    <div class="row g-3">
                         <div class="col-md-6">
                             <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                <input type="text" class="form-control" id="searchInput" 
-                                       placeholder="Buscar productos...">
-                                <button class="btn btn-outline-secondary" id="clearSearch">
-                                    <i class="bi bi-x-lg"></i>
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                                <input type="text" class="form-control border-start-0 ps-0" id="searchInput" 
+                                       placeholder="Buscar por nombre, código o categoría...">
+                                <button class="btn btn-outline-secondary border-start-0" id="clearSearch">
+                                    <i class="fas fa-times"></i>
                                 </button>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <select class="form-select" id="categoriaFilter">
                                 <option value="">Todas las categorías</option>
                             </select>
                         </div>
-                        <div class="col-md-2">
-                            <select class="form-select" id="perPageSelect">
-                                <option value="12" selected>12 por página</option>
-                                <option value="24">24 por página</option>
-                                <option value="48">48 por página</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <!-- Grid de Productos -->
-                    <div id="productsGrid" class="row g-3">
-                        <div class="col-12 text-center py-5">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Cargando...</span>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center gap-2 h-100 justify-content-end">
+                                <span class="text-muted small">Mostrar:</span>
+                                <select class="form-select form-select-sm" id="perPageSelect" style="width: auto;">
+                                    <option value="12" selected>12</option>
+                                    <option value="24">24</option>
+                                    <option value="48">48</option>
+                                </select>
                             </div>
-                            <p class="mt-2 text-muted">Cargando productos...</p>
                         </div>
                     </div>
-                    
-                    <!-- Paginación -->
-                    <nav id="paginationNav" class="mt-4 d-none">
-                        <ul class="pagination justify-content-center" id="pagination"></ul>
-                    </nav>
                 </div>
-            </main>
+                
+                <!-- Stats Summary -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm rounded-3">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary-subtle p-2 rounded-3 me-3">
+                                        <i class="fas fa-box text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small">Total Productos</div>
+                                        <div class="h5 fw-bold mb-0" id="totalProductos">0</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Grid de Productos -->
+                <div id="productsGrid" class="row g-4">
+                    <div class="col-12 text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Cargando productos...</p>
+                    </div>
+                </div>
+                
+                <!-- Paginación -->
+                <nav id="paginationNav" class="mt-5 d-none">
+                    <ul class="pagination justify-content-center" id="pagination"></ul>
+                </nav>
+            </div>
             
             <!-- Modal para Nuevo Producto -->
             <div class="modal fade" id="productModal" tabindex="-1">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Nuevo Producto</h5>
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                        <div class="modal-header bg-light border-0 py-3">
+                            <h5 class="modal-title fw-bold text-dark">
+                               <i class="fas fa-box-open me-2 text-primary"></i>Gestión de Producto
+                            </h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
-                        <div class="modal-body">
+                        <div class="modal-body p-4">
                             <form id="productForm">
-                                <div class="row g-3">
-                                    <div class="col-md-8">
-                                        <label class="form-label">Nombre *</label>
-                                        <input type="text" class="form-control" name="nombre" required>
-                                    </div>
+                                <div class="row g-4">
                                     <div class="col-md-4">
-                                        <label class="form-label">Código de Barras</label>
-                                        <input type="text" class="form-control" name="codigo_barras">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Categoría</label>
-                                        <input type="text" class="form-control" name="categoria" list="categoriasList">
-                                        <datalist id="categoriasList"></datalist>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Presentación</label>
-                                        <input type="text" class="form-control" name="presentacion">
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label">Descripción</label>
-                                        <textarea class="form-control" name="descripcion" rows="3"></textarea>
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label"> Imagen del Producto</label>
-                                        <div class="border rounded p-3 text-center">
+                                        <div class="text-center p-3 border rounded-4 bg-light" style="border-style: dashed !important;">
+                                            <div id="imagePreview" class="mb-3 d-flex align-items-center justify-content-center" style="height: 180px; background: white; border-radius: 12px; overflow: hidden;">
+                                                <i class="fas fa-image fa-4x text-light"></i>
+                                            </div>
                                             <input type="file" id="productImage" accept="image/*" class="d-none">
-                                            <label for="productImage" class="btn btn-outline-secondary mb-2">
-                                                <i class="bi bi-upload"></i> Subir Imagen
+                                            <label for="productImage" class="btn btn-sm btn-outline-primary w-100 rounded-pill">
+                                                <i class="fas fa-upload me-1"></i> Seleccionar Imagen
                                             </label>
-                                            <div id="imagePreview" class="mt-2"></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <div class="row g-3">
+                                            <div class="col-12">
+                                                <label class="form-label fw-semibold small text-muted">Nombre del Medicamento *</label>
+                                                <input type="text" class="form-control rounded-3" name="nombre" placeholder="Ej. Aspirina 500mg" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold small text-muted">Código / SKU</label>
+                                                <input type="text" class="form-control rounded-3" name="codigo_barras" placeholder="EAN-13">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold small text-muted">Categoría</label>
+                                                <input type="text" class="form-control rounded-3" name="categoria" list="categoriasList" placeholder="Seleccione o escriba...">
+                                                <datalist id="categoriasList"></datalist>
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label fw-semibold small text-muted">Presentación</label>
+                                                <input type="text" class="form-control rounded-3" name="presentacion" placeholder="Caja x 30 unidades">
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label fw-semibold small text-muted">Descripción</label>
+                                                <textarea class="form-control rounded-3" name="descripcion" rows="3" placeholder="Detalles descriptivos del producto..."></textarea>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </form>
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="button" class="btn btn-primary" id="saveProductBtn">Guardar</button>
+                        <div class="modal-footer bg-light border-0 p-3">
+                            <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="button" class="btn btn-primary px-4 fw-semibold" id="saveProductBtn" style="border-radius: 10px; background-color: var(--pq-primary); border: none;">Guardar Producto</button>
                         </div>
                     </div>
                 </div>
@@ -371,31 +384,29 @@ const ProductsPage = {
      */
     renderProductCard(producto) {
         const imagen = producto.imagen || producto.foto || null;
-        const imgUrl = imagen 
-            ? `/uploads/productos/${imagen}` 
-            : null;
+        const imgUrl = (imagen && imagen.startsWith('/')) ? imagen : (imagen ? `/uploads/productos/${imagen}` : '');
         
-        const imgHtml = imgUrl 
-            ? `<img src="${imgUrl}" class="card-img-top" alt="${producto.nombre}" style="height: 150px; object-fit: cover;">`
+        const imgHtml = imagen 
+            ? `<img src="${imgUrl}" class="card-img-top" alt="${producto.nombre}" style="height: 150px; object-fit: cover;" onerror="this.src='/public/assets/img/no-image.png'">`
             : `<div class="bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
-                <i class="bi bi-box text-muted" style="font-size: 3rem;"></i>
+                <i class="fas fa-pills text-muted opacity-25" style="font-size: 3rem;"></i>
                </div>`;
         
         return `
             <div class="col-md-6 col-lg-4 col-xl-3">
-                <div class="card h-100 shadow-sm product-card" style="cursor: pointer;">
+                <div class="card h-100 border-0 shadow-sm product-card transition-all" style="cursor: pointer; border-radius: 12px; overflow: hidden;">
                     ${imgHtml}
                     <div class="card-body">
-                        <h6 class="card-title mb-1">${producto.nombre || 'Sin nombre'}</h6>
-                        <p class="text-muted small mb-1">${producto.categoria || 'Sin categoría'}</p>
+                        <h6 class="card-title fw-bold text-dark mb-1">${producto.nombre || 'Sin nombre'}</h6>
+                        <p class="text-primary small mb-2 fw-medium">${producto.categoria || 'Sin categoría'}</p>
                         <p class="small mb-0 text-muted">
-                            <i class="bi bi-upc"></i> ${producto.codigo_barras || producto.codigo || 'Sin código'}
+                            <i class="fas fa-barcode me-1"></i> ${producto.codigo_barras || producto.codigo || 'Sin código'}
                         </p>
                     </div>
-                    <div class="card-footer bg-transparent border-top-0">
-                        <button class="btn btn-sm btn-outline-primary w-100" 
+                    <div class="card-footer bg-white border-0 pt-0 pb-3">
+                        <button class="btn btn-sm btn-light w-100 border rounded-pill text-primary fw-medium" 
                                 onclick="ProductsPage.editProduct(${producto.id})">
-                            <i class="bi bi-pencil"></i> Editar
+                            <i class="fas fa-edit me-1"></i> Editar
                         </button>
                     </div>
                 </div>

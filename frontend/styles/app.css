@@ -8,71 +8,44 @@
    ======================================== */
 
 :root {
-    /* Colores - Verde menta */
-    --color-primary: #2dd4bf;
-    --color-primary-dark: #14b8a6;
-    --color-primary-light: #5eead4;
-    --color-primary-bg: rgba(45, 212, 191, 0.1);
+    /* Colores - Verde menta Premium */
+    --color-primary: #14b8a6; /* Un poco más profundo para mejor contraste */
+    --color-primary-hover: #0d9488;
+    --color-primary-light: #2dd4bf;
+    --color-primary-soft: rgba(20, 184, 166, 0.08);
     
     /* Colores secundarios */
-    --color-secondary: #60a5fa;
-    --color-secondary-dark: #3b82f6;
+    --color-secondary: #0f172a;
+    --color-secondary-light: #1e293b;
     
     /* Estados */
     --color-success: #10b981;
     --color-warning: #f59e0b;
     --color-error: #ef4444;
-    --color-info: #3b82f6;
+    --color-info: #0ea5e9;
     
     /* Texto */
-    --color-text: #374151;
-    --color-text-secondary: #6b7280;
+    --color-text-main: #111827;
+    --color-text-secondary: #4b5563;
     --color-text-muted: #9ca3af;
     
     /* Fondo */
-    --color-bg: #ffffff;
-    --color-bg-surface: #f9fafb;
-    --color-bg-hover: #f3f4f6;
+    --color-bg-base: #f9fafb;
+    --color-bg-surface: #ffffff;
+    --color-bg-sidebar: #013530; /* Verde muy oscuro para el Sidebar */
     
-    /* Bordes */
+    /* Bordes y Sombras */
     --color-border: #e5e7eb;
-    --color-border-focus: #2dd4bf;
-    
-    /* Sombras */
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    --shadow-premium: 0 4px 20px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    --shadow-focus: 0 0 0 4px rgba(20, 184, 166, 0.15);
     
     /* Radio */
-    --radius-sm: 4px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --radius-xl: 16px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
     
-    /* Transiciones */
-    --transition-fast: 150ms ease;
-    --transition-base: 250ms ease;
-    --transition-slow: 350ms ease;
-    
-    /* Espaciado */
-    --space-xs: 4px;
-    --space-sm: 8px;
-    --space-md: 16px;
-    --space-lg: 24px;
-    --space-xl: 32px;
-    
-    /* Tipografía */
-    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --font-size-xs: 12px;
-    --font-size-sm: 14px;
-    --font-size-md: 16px;
-    --font-size-lg: 18px;
-    --font-size-xl: 24px;
-    --font-weight-normal: 400;
-    --font-weight-medium: 500;
-    --font-weight-semibold: 600;
-    --font-weight-bold: 700;
+    /* Dimensiones */
+    --sidebar-width: 260px;
+    --sidebar-width-collapsed: 80px;
 }
 
 /* ========================================
@@ -275,14 +248,14 @@ a:hover {
 .form-select,
 .form-textarea {
     width: 100%;
-    padding: var(--space-sm) var(--space-md);
+    padding: 10px 14px;
     font-family: var(--font-family);
     font-size: var(--font-size-sm);
-    color: var(--color-text);
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
+    color: var(--color-text-main);
+    background: var(--color-bg-surface);
+    border: 1.5px solid var(--color-border);
     border-radius: var(--radius-md);
-    transition: all var(--transition-fast);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .form-input:focus,
@@ -290,7 +263,7 @@ a:hover {
 .form-textarea:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px var(--color-primary-bg);
+    box-shadow: var(--shadow-focus);
 }
 
 .form-input::placeholder {

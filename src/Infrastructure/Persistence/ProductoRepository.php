@@ -24,7 +24,7 @@ class ProductoRepository {
     }
 
     /**
-     * Obtiene productos activos de una farmacia (JOIN con lotes)
+     * Obtiene productos activos de una farmacia (incluye sin stock)
      */
     public function findAllByFarmacia(int $farmaciaId): array {
         $stmt = $this->pdo->prepare("
@@ -36,13 +36,12 @@ class ProductoRepository {
                 p.categoria,
                 p.presentacion,
                 p.activo,
-                SUM(l.stock_actual) AS stock_total
+                p.imagen,
+                COALESCE(SUM(l.stock_actual), 0) AS stock_total
             FROM productos p
-            INNER JOIN lotes l ON p.id = l.producto_id
-            WHERE l.farmacia_id = :farmacia_id 
-                AND p.activo = 1
-                AND l.stock_actual > 0
-            GROUP BY p.id, p.nombre, p.codigo_barras, p.descripcion, p.categoria, p.presentacion, p.activo
+            LEFT JOIN lotes l ON p.id = l.producto_id AND l.farmacia_id = :farmacia_id
+            WHERE p.activo = 1
+            GROUP BY p.id, p.nombre, p.codigo_barras, p.descripcion, p.categoria, p.presentacion, p.activo, p.imagen
             ORDER BY p.nombre ASC
         ");
         $stmt->execute([':farmacia_id' => $farmaciaId]);
