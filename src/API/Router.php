@@ -18,6 +18,9 @@ if (!defined('ROUTES_PATH')) define('ROUTES_PATH', SRC_PATH . DIRECTORY_SEPARATO
 require_once SRC_PATH . '/Core/App.php';
 require_once SRC_PATH . '/Core/JsonResponse.php';
 require_once SRC_PATH . '/Core/Exceptions.php';
+// Precarga de firmas de rutas para análisis estático (y para evitar require condicional en editores).
+require_once ROUTES_PATH . '/lotes.php';
+require_once ROUTES_PATH . '/inventario.php';
 
 class PharmaRouter {
     private string $method;
@@ -186,6 +189,61 @@ class PharmaRouter {
         if ($this->method === 'GET' && preg_match('#^/api/precios/producto/(\d+)$#', $this->uri, $matches)) {
             require_once ROUTES_PATH . '/precios.php';
             handleGetPreciosByProducto((int) $matches[1]);
+            return;
+        }
+
+        // ===================
+        // LOTES
+        // ===================
+        // GET /api/lotes?producto_id=123 - Listar lotes por producto (farmacia actual)
+        if ($this->uri === '/api/lotes' && $this->method === 'GET') {
+            require_once ROUTES_PATH . '/lotes.php';
+            handleGetLotes();
+            return;
+        }
+
+        // POST /api/lotes - Crear lote (opcional: stock_inicial -> ENTRADA en Kardex)
+        if ($this->uri === '/api/lotes' && $this->method === 'POST') {
+            require_once ROUTES_PATH . '/lotes.php';
+            handlePostLotes();
+            return;
+        }
+
+        // GET /api/lotes/{id} - Obtener lote por ID
+        if ($this->method === 'GET' && preg_match('#^/api/lotes/(\d+)$#', $this->uri, $matches)) {
+            require_once ROUTES_PATH . '/lotes.php';
+            handleGetLoteById((int) $matches[1]);
+            return;
+        }
+
+        // PUT /api/lotes/{id} - Actualizar metadata del lote (NO stock)
+        if ($this->method === 'PUT' && preg_match('#^/api/lotes/(\d+)$#', $this->uri, $matches)) {
+            require_once ROUTES_PATH . '/lotes.php';
+            handlePutLote((int) $matches[1]);
+            return;
+        }
+
+        // ===================
+        // INVENTARIO (KARDEX + FEFO)
+        // ===================
+        // GET /api/inventario/fefo?producto_id=123 - sugerencia FEFO (lotes disponibles)
+        if ($this->uri === '/api/inventario/fefo' && $this->method === 'GET') {
+            require_once ROUTES_PATH . '/inventario.php';
+            handleGetFefo();
+            return;
+        }
+
+        // POST /api/inventario/movimiento - inserta movimiento en Kardex
+        if ($this->uri === '/api/inventario/movimiento' && $this->method === 'POST') {
+            require_once ROUTES_PATH . '/inventario.php';
+            handlePostMovimientoInventario();
+            return;
+        }
+
+        // GET /api/inventario/alertas - lotes por vencer (semáforo)
+        if ($this->uri === '/api/inventario/alertas' && $this->method === 'GET') {
+            require_once ROUTES_PATH . '/inventario.php';
+            handleGetAlertasInventario();
             return;
         }
 
