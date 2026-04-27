@@ -24,6 +24,7 @@ final class Autoloader
     /** @var array Mapeo de namespaces a paths */
     private static $paths = [
         'PharmaQuick\\Core\\' => __DIR__ . '/../src/Core/',
+        'PharmaQuick\\Domain\\' => __DIR__ . '/../src/Domain/',
         'PharmaQuick\\Infrastructure\\' => __DIR__ . '/../src/Infrastructure/',
         'PharmaQuick\\API\\' => __DIR__ . '/../src/API/',
     ];

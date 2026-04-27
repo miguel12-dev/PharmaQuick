@@ -247,6 +247,13 @@ class PharmaRouter {
             return;
         }
 
+        // POST /api/inventario/import-excel - carga masiva vía Excel
+        if ($this->uri === '/api/inventario/import-excel' && $this->method === 'POST') {
+            require_once ROUTES_PATH . '/inventario.php';
+            handlePostImportExcel();
+            return;
+        }
+
         JsonResponse::error('Recurso no encontrado', 404);
     }
 

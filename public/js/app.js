@@ -14,6 +14,7 @@
         '/login': LoginPage,
         '/dashboard': DashboardPage,
         '/productos': ProductsPage,
+        '/inventario': InventoryPage,
         '/404': NotFoundPage
     };
     

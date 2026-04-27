@@ -113,6 +113,15 @@ function handleGetFefo(): void {
     }
 }
 
+
+use PharmaQuick\Infrastructure\Persistence\PDOFactory;
+use PharmaQuick\Infrastructure\Persistence\LoteRepository;
+use PharmaQuick\Infrastructure\Persistence\MovimientoInventarioRepository;
+use PharmaQuick\Infrastructure\Persistence\ProductoRepository;
+use PharmaQuick\Domain\Services\InventarioMovimientoService;
+use PharmaQuick\Domain\Services\InventarioImportService;
+use PharmaQuick\Infrastructure\Services\ExcelXlsxReader;
+
 /**
  * POST /api/inventario/movimiento
  * Body JSON: {lote_id, tipo, cantidad}
@@ -132,82 +141,32 @@ function handlePostMovimientoInventario(): void {
     }
 
     $input = json_decode(file_get_contents('php://input'), true) ?: [];
-    $loteId = isset($input['lote_id']) ? (int)$input['lote_id'] : 0;
-    $tipo = isset($input['tipo']) ? strtoupper(trim((string)$input['tipo'])) : '';
-    $cantidad = isset($input['cantidad']) ? (float)$input['cantidad'] : 0.0;
-
-    $allowed = ['ENTRADA', 'SALIDA', 'RESERVA', 'LIBERACION'];
-    if ($loteId <= 0) {
-        JsonResponse::error('lote_id es requerido', 400);
-        return;
-    }
-    if (!in_array($tipo, $allowed, true)) {
-        JsonResponse::error('tipo inválido', 400);
-        return;
-    }
-    if ($cantidad <= 0) {
-        JsonResponse::error('cantidad debe ser > 0', 400);
-        return;
-    }
-
-    $minDias = inventarioMinDiasBloqueo();
-
+    
     try {
         require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
         $pdo = PDOFactory::getCluster(1);
 
-        // Validar pertenencia + política de vencimiento para SALIDA/RESERVA
-        $lote = fetchLoteOrFail($pdo, $loteId, $farmaciaId);
+        // Instanciar dependencias
+        $loteRepo = new LoteRepository($pdo);
+        $movRepo = new MovimientoInventarioRepository($pdo);
+        $service = new InventarioMovimientoService($loteRepo, $movRepo);
 
-        if (in_array($tipo, ['SALIDA', 'RESERVA'], true)) {
-            $fechaVenc = $lote['fecha_vencimiento'] ?? null;
-            if (loteEstaBloqueadoPorVencimiento($fechaVenc ? (string)$fechaVenc : null, $minDias)) {
-                JsonResponse::error("Movimiento bloqueado: lote vence en menos de {$minDias} días", 409);
-                return;
-            }
-        }
-
-        // Reglas de disponibilidad (aplicación) para evitar negativos antes del trigger
-        $stockActual = (float)($lote['stock_actual'] ?? 0);
-        $stockReservado = (float)($lote['stock_reservado'] ?? 0);
-
-        if ($tipo === 'SALIDA') {
-            if ($cantidad - $stockActual > 0.0005) {
-                JsonResponse::error('Stock insuficiente en el lote', 409);
-                return;
-            }
-        }
-        if ($tipo === 'RESERVA') {
-            if ($cantidad - $stockActual > 0.0005) {
-                JsonResponse::error('Stock insuficiente para reservar', 409);
-                return;
-            }
-        }
-        if ($tipo === 'LIBERACION') {
-            if ($cantidad - $stockReservado > 0.0005) {
-                JsonResponse::error('No hay suficiente stock reservado para liberar', 409);
-                return;
-            }
-        }
-
-        $stmt = $pdo->prepare("
-            INSERT INTO movimientos_inventario (lote_id, farmacia_id, usuario_id, tipo, cantidad)
-            VALUES (:lote_id, :farmacia_id, :usuario_id, :tipo, :cantidad)
-        ");
-        $stmt->execute([
-            ':lote_id' => $loteId,
-            ':farmacia_id' => $farmaciaId,
-            ':usuario_id' => $usuarioId,
-            ':tipo' => $tipo,
-            ':cantidad' => $cantidad,
+        // Ejecutar servicio
+        $movId = $service->registrarMovimiento([
+            'lote_id' => $input['lote_id'] ?? 0,
+            'farmacia_id' => $farmaciaId,
+            'usuario_id' => $usuarioId,
+            'tipo' => $input['tipo'] ?? '',
+            'cantidad' => $input['cantidad'] ?? 0,
+            'descripcion' => $input['descripcion'] ?? null
         ]);
 
-        // Leer nuevo estado de lote (ya actualizado por trigger)
-        $lote2 = fetchLoteOrFail($pdo, $loteId, $farmaciaId);
+        // Leer nuevo estado de lote
+        $lote2 = fetchLoteOrFail($pdo, (int)$input['lote_id'], $farmaciaId);
 
         JsonResponse::success([
             'message' => 'Movimiento registrado',
-            'movimiento_id' => (int)$pdo->lastInsertId(),
+            'movimiento_id' => $movId,
             'lote' => [
                 'id' => (int)$lote2['id'],
                 'stock_actual' => (float)$lote2['stock_actual'],
@@ -215,7 +174,60 @@ function handlePostMovimientoInventario(): void {
             ],
         ], 201);
     } catch (\Throwable $e) {
-        JsonResponse::error('Error: ' . $e->getMessage(), 500);
+        $code = ($e instanceof \RuntimeException) ? 400 : 500;
+        JsonResponse::error($e->getMessage(), $code);
+    }
+}
+
+/**
+ * POST /api/inventario/import-excel
+ * Multipart form: file
+ */
+function handlePostImportExcel(): void {
+    $farmaciaId = Auth::farmaciaId();
+    if (!$farmaciaId) {
+        JsonResponse::error('No autenticado', 401);
+        return;
+    }
+
+    $usuarioId = (int)(Auth::userId() ?? 0);
+    if ($usuarioId <= 0) {
+        JsonResponse::error('Usuario no autenticado', 401);
+        return;
+    }
+
+    if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+        JsonResponse::error('Archivo no recibido o con errores', 400);
+        return;
+    }
+
+    try {
+        require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
+        $pdo = PDOFactory::getCluster(1);
+
+        // Instanciar dependencias
+        $excelReader = new ExcelXlsxReader();
+        $productoRepo = new ProductoRepository($pdo);
+        $loteRepo = new LoteRepository($pdo);
+        $movRepo = new MovimientoInventarioRepository($pdo);
+        $movService = new InventarioMovimientoService($loteRepo, $movRepo);
+        
+        $importService = new InventarioImportService(
+            $excelReader,
+            $productoRepo,
+            $loteRepo,
+            $movService,
+            $pdo
+        );
+
+        $summary = $importService->import($_FILES['file']['tmp_name'], $farmaciaId, $usuarioId);
+
+        JsonResponse::success([
+            'message' => 'Proceso de importación finalizado',
+            'summary' => $summary
+        ]);
+    } catch (\Throwable $e) {
+        JsonResponse::error('Error en la importación: ' . $e->getMessage(), 500);
     }
 }
 
@@ -280,4 +292,5 @@ function handleGetAlertasInventario(): void {
         JsonResponse::error('Error: ' . $e->getMessage(), 500);
     }
 }
+
 

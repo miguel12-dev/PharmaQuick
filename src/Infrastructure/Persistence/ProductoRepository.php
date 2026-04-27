@@ -272,4 +272,21 @@ class ProductoRepository {
         $producto = $stmt->fetch(PDO::FETCH_ASSOC);
         return $producto ?: null;
     }
+
+    /**
+     * Busca un producto por su código de barras exacto
+     */
+    public function findByCodigoBarras(string $codigoBarras): ?array {
+        $stmt = $this->pdo->prepare("
+            SELECT id, nombre, codigo_barras, descripcion, categoria, presentacion, activo, imagen
+            FROM productos
+            WHERE codigo_barras = :codigo_barras
+            LIMIT 1
+        ");
+        
+        $stmt->execute([':codigo_barras' => $codigoBarras]);
+        $producto = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return $producto ?: null;
+    }
 }
