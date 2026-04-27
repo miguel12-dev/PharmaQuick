@@ -10,10 +10,10 @@ declare(strict_types=1);
  * @version 1.0.0
  */
 
-define('BASE_PATH', '/var/www/html');
-define('SRC_PATH', BASE_PATH . '/src');
-define('PUBLIC_PATH', BASE_PATH . '/public');
-define('ROUTES_PATH', SRC_PATH . '/API/routes');
+if (!defined('BASE_PATH')) define('BASE_PATH', dirname(__DIR__, 2));
+if (!defined('SRC_PATH')) define('SRC_PATH', BASE_PATH . DIRECTORY_SEPARATOR . 'src');
+if (!defined('PUBLIC_PATH')) define('PUBLIC_PATH', BASE_PATH . DIRECTORY_SEPARATOR . 'public');
+if (!defined('ROUTES_PATH')) define('ROUTES_PATH', SRC_PATH . DIRECTORY_SEPARATOR . 'API' . DIRECTORY_SEPARATOR . 'routes');
 
 require_once SRC_PATH . '/Core/App.php';
 require_once SRC_PATH . '/Core/JsonResponse.php';
@@ -115,8 +115,8 @@ class PharmaRouter {
             return;
         }
 
-        // PUT /api/productos/{id} - Actualizar producto
-        if ($this->method === 'PUT' && preg_match('#^/api/productos/(\d+)$#', $this->uri, $matches)) {
+        // PUT/POST /api/productos/{id} - Actualizar producto (POST para soportar imágenes en FormData)
+        if (($this->method === 'PUT' || $this->method === 'POST') && preg_match('#^/api/productos/(\d+)$#', $this->uri, $matches)) {
             require_once ROUTES_PATH . '/productos.php';
             handlePutProductos((int) $matches[1]);
             return;

@@ -39,166 +39,188 @@ const ProductsPage = {
      * Render layout completo
      */
     renderLayout(container) {
-        container.innerHTML = `
-            <div class="view-container p-4">
-                <!-- Header -->
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h2 class="h3 fw-bold text-dark m-0">
-                            <i class="fas fa-pills text-primary me-2"></i>Catálogo de Productos
-                        </h2>
-                        <p class="text-muted small mb-0">Gestione su inventario de medicamentos y productos</p>
+        const template = document.getElementById('template-layout');
+        
+        if (template) {
+            container.innerHTML = template.innerHTML;
+        } else {
+            // Fallback layout if template not found
+            container.innerHTML = `
+                <div class="main-content">
+                    <div class="container-fluid"><div class="page-content"></div></div>
+                </div>`;
+        }
+        
+        const pageContent = container.querySelector('.page-content');
+        if (pageContent) {
+            pageContent.innerHTML = `
+                <div class="view-container p-0">
+                    <!-- Header -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h2 class="h3 fw-bold text-dark m-0">
+                                <i class="fas fa-pills text-primary me-2"></i>Catálogo de Productos
+                            </h2>
+                            <p class="text-muted small mb-0">Gestione su inventario de medicamentos y productos</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary d-flex align-items-center gap-2" id="newProductBtn" style="background-color: var(--pq-primary); border: none; border-radius: 10px; padding: 10px 20px;">
+                                <i class="fas fa-plus"></i>
+                                <span>Nuevo Producto</span>
+                            </button>
+                        </div>
                     </div>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-primary d-flex align-items-center gap-2" id="newProductBtn" style="background-color: var(--pq-primary); border: none; border-radius: 10px; padding: 10px 20px;">
-                            <i class="fas fa-plus"></i>
-                            <span>Nuevo Producto</span>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Buscador y Filtros -->
-                <div class="bg-white p-3 rounded-3 shadow-sm mb-4">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0">
-                                    <i class="fas fa-search text-muted"></i>
-                                </span>
-                                <input type="text" class="form-control border-start-0 ps-0" id="searchInput" 
-                                       placeholder="Buscar por nombre, código o categoría...">
-                                <button class="btn btn-outline-secondary border-start-0" id="clearSearch">
-                                    <i class="fas fa-times"></i>
-                                </button>
+                    
+                    <!-- Buscador y Filtros -->
+                    <div class="bg-white p-3 rounded-3 shadow-sm mb-4 border">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="fas fa-search text-muted"></i>
+                                    </span>
+                                    <input type="text" class="form-control border-start-0 ps-0" id="searchInput" 
+                                           placeholder="Buscar por nombre, código o categoría...">
+                                    <button class="btn btn-outline-secondary border-start-0" id="clearSearch">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-3">
-                            <select class="form-select" id="categoriaFilter">
-                                <option value="">Todas las categorías</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="d-flex align-items-center gap-2 h-100 justify-content-end">
-                                <span class="text-muted small">Mostrar:</span>
-                                <select class="form-select form-select-sm" id="perPageSelect" style="width: auto;">
-                                    <option value="12" selected>12</option>
-                                    <option value="24">24</option>
-                                    <option value="48">48</option>
+                            <div class="col-md-3">
+                                <select class="form-select" id="categoriaFilter">
+                                    <option value="">Todas las categorías</option>
                                 </select>
                             </div>
+                            <div class="col-md-3">
+                                <div class="d-flex align-items-center gap-2 h-100 justify-content-end">
+                                    <span class="text-muted small">Mostrar:</span>
+                                    <select class="form-select form-select-sm" id="perPageSelect" style="width: auto;">
+                                        <option value="12" selected>12</option>
+                                        <option value="24">24</option>
+                                        <option value="48">48</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Stats Summary -->
-                <div class="row g-3 mb-4">
-                    <div class="col-md-3">
-                        <div class="card border-0 shadow-sm rounded-3">
-                            <div class="card-body p-3">
-                                <div class="d-flex align-items-center">
-                                    <div class="bg-primary-subtle p-2 rounded-3 me-3">
-                                        <i class="fas fa-box text-primary"></i>
-                                    </div>
-                                    <div>
-                                        <div class="text-muted small">Total Productos</div>
-                                        <div class="h5 fw-bold mb-0" id="totalProductos">0</div>
+                    
+                    <!-- Stats Summary -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <div class="card border-0 shadow-sm rounded-3">
+                                <div class="card-body p-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary-white p-2 rounded-3 me-3" style="background: rgba(var(--pq-primary-rgb), 0.1);">
+                                            <i class="fas fa-box text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-muted small">Total Productos</div>
+                                            <div class="h5 fw-bold mb-0" id="totalProductos">0</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Grid de Productos -->
-                <div id="productsGrid" class="row g-4">
-                    <div class="col-12 text-center py-5">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Cargando...</span>
-                        </div>
-                        <p class="mt-2 text-muted">Cargando productos...</p>
-                    </div>
-                </div>
-                
-                <!-- Paginación -->
-                <nav id="paginationNav" class="mt-5 d-none">
-                    <ul class="pagination justify-content-center" id="pagination"></ul>
-                </nav>
-            </div>
-            
-            <!-- Modal para Nuevo Producto -->
-            <div class="modal fade" id="productModal" tabindex="-1">
-                <div class="modal-dialog modal-lg modal-dialog-centered">
-                    <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
-                        <div class="modal-header bg-light border-0 py-3">
-                            <h5 class="modal-title fw-bold text-dark">
-                               <i class="fas fa-box-open me-2 text-primary"></i>Gestión de Producto
-                            </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body p-4">
-                            <form id="productForm">
-                                <div class="row g-4">
-                                    <div class="col-md-4">
-                                        <div class="text-center p-3 border rounded-4 bg-light" style="border-style: dashed !important;">
-                                            <div id="imagePreview" class="mb-3 d-flex align-items-center justify-content-center" style="height: 180px; background: white; border-radius: 12px; overflow: hidden;">
-                                                <i class="fas fa-image fa-4x text-light"></i>
-                                            </div>
-                                            <input type="file" id="productImage" accept="image/*" class="d-none">
-                                            <label for="productImage" class="btn btn-sm btn-outline-primary w-100 rounded-pill">
-                                                <i class="fas fa-upload me-1"></i> Seleccionar Imagen
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-8">
-                                        <div class="row g-3">
-                                            <div class="col-12">
-                                                <label class="form-label fw-semibold small text-muted">Nombre del Medicamento *</label>
-                                                <input type="text" class="form-control rounded-3" name="nombre" placeholder="Ej. Aspirina 500mg" required>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label fw-semibold small text-muted">Código / SKU</label>
-                                                <input type="text" class="form-control rounded-3" name="codigo_barras" placeholder="EAN-13">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label fw-semibold small text-muted">Categoría</label>
-                                                <input type="text" class="form-control rounded-3" name="categoria" list="categoriasList" placeholder="Seleccione o escriba...">
-                                                <datalist id="categoriasList"></datalist>
-                                            </div>
-                                            <div class="col-12">
-                                                <label class="form-label fw-semibold small text-muted">Presentación</label>
-                                                <input type="text" class="form-control rounded-3" name="presentacion" placeholder="Caja x 30 unidades">
-                                            </div>
-                                            <div class="col-12">
-                                                <label class="form-label fw-semibold small text-muted">Descripción</label>
-                                                <textarea class="form-control rounded-3" name="descripcion" rows="3" placeholder="Detalles descriptivos del producto..."></textarea>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                        <div class="modal-footer bg-light border-0 p-3">
-                            <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="button" class="btn btn-primary px-4 fw-semibold" id="saveProductBtn" style="border-radius: 10px; background-color: var(--pq-primary); border: none;">Guardar Producto</button>
+                    
+                    <!-- Grid de Productos -->
+                    <div id="productsGrid" class="row g-4">
+                        <div class="col-12 text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Cargando productos...</p>
                         </div>
                     </div>
+                    
+                    <!-- Paginación -->
+                    <nav id="paginationNav" class="mt-5 d-none">
+                        <ul class="pagination justify-content-center" id="pagination"></ul>
+                    </nav>
                 </div>
-            </div>
-        `;
+                
+                <!-- Modal para Producto (Universal) -->
+                <div class="modal fade" id="productModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                            <div class="modal-header bg-light border-0 py-3">
+                                <h5 class="modal-title fw-bold text-dark" id="modalTitle">
+                                   <i class="fas fa-box-open me-2 text-primary"></i>Gestión de Producto
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <form id="productForm">
+                                    <input type="hidden" name="id" id="productId">
+                                    <div class="row g-4">
+                                        <div class="col-md-4">
+                                            <div class="text-center p-3 border rounded-4 bg-light" style="border-style: dashed !important;">
+                                                <div id="imagePreview" class="mb-3 d-flex align-items-center justify-content-center" style="height: 180px; background: white; border-radius: 12px; overflow: hidden;">
+                                                    <i class="fas fa-image fa-4x text-light"></i>
+                                                </div>
+                                                <input type="file" id="productImage" name="imagen" accept="image/*" class="d-none">
+                                                <label for="productImage" class="btn btn-sm btn-outline-primary w-100 rounded-pill">
+                                                    <i class="fas fa-upload me-1"></i> Seleccionar Imagen
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <div class="row g-3">
+                                                <div class="col-12">
+                                                    <label class="form-label fw-semibold small text-muted">Nombre del Medicamento *</label>
+                                                    <input type="text" class="form-control rounded-3" name="nombre" id="formNombre" placeholder="Ej. Aspirina 500mg" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label fw-semibold small text-muted">Código / SKU</label>
+                                                    <input type="text" class="form-control rounded-3" name="codigo_barras" id="formCodigo" placeholder="EAN-13">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label fw-semibold small text-muted">Categoría</label>
+                                                    <input type="text" class="form-control rounded-3" name="categoria" id="formCategoria" list="categoriasList" placeholder="Seleccione o escriba...">
+                                                    <datalist id="categoriasList"></datalist>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label class="form-label fw-semibold small text-muted">Presentación</label>
+                                                    <input type="text" class="form-control rounded-3" name="presentacion" id="formPresentacion" placeholder="Caja x 30 unidades">
+                                                </div>
+                                                <div class="col-12">
+                                                    <label class="form-label fw-semibold small text-muted">Descripción</label>
+                                                    <textarea class="form-control rounded-3" name="descripcion" id="formDescripcion" rows="3" placeholder="Detalles descriptivos del producto..."></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer bg-light border-0 p-3">
+                                <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-primary px-4 fw-semibold" id="saveProductBtn" style="border-radius: 10px; background-color: var(--pq-primary); border: none;">Guardar Producto</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
         
         this.setupEventListeners();
+        
+        // Cargar info de usuario si es necesario
+        this.loadUserInfo();
     },
     
     /**
      * Configurar event listeners
      */
     setupEventListeners() {
-        // Logout
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => Router.logout());
+        // Toggle Sidebar (Global)
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', () => {
+                document.getElementById('sidebar')?.classList.toggle('collapsed');
+                document.querySelector('.main-content')?.classList.toggle('expanded');
+            });
         }
-        
+
         // Nuevo producto
         const newProductBtn = document.getElementById('newProductBtn');
         if (newProductBtn) {
@@ -218,7 +240,8 @@ const ProductsPage = {
         const clearSearch = document.getElementById('clearSearch');
         if (clearSearch) {
             clearSearch.addEventListener('click', () => {
-                searchInput.value = '';
+                const s = document.getElementById('searchInput');
+                if (s) s.value = '';
                 this.busqueda = '';
                 this.filtrarProductos();
             });
@@ -257,6 +280,17 @@ const ProductsPage = {
         }
     },
     
+    /**
+     * Cargar información del usuario en el layout
+     */
+    loadUserInfo() {
+        const session = AuthService.getSession();
+        const userNameEl = document.getElementById('userName');
+        if (userNameEl && session) {
+            userNameEl.textContent = session.nombre || session.usuario || 'Usuario';
+        }
+    },
+
     /**
      * Cargar datos desde API
      */
@@ -362,7 +396,7 @@ const ProductsPage = {
         if (this.productosFiltrados.length === 0) {
             grid.innerHTML = `
                 <div class="col-12 text-center py-5">
-                    <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                    <i class="fas fa-inbox text-muted opacity-25" style="font-size: 3rem;"></i>
                     <p class="mt-2 text-muted">No se encontraron productos</p>
                 </div>
             `;
@@ -480,8 +514,8 @@ const ProductsPage = {
         this.renderProducts();
         this.renderPagination();
         
-        // Scroll al inicio de la grid
-        document.getElementById('productsGrid')?.scrollIntoView({ behavior: 'smooth' });
+        const grid = document.getElementById('productsGrid');
+        if (grid) grid.scrollIntoView({ behavior: 'smooth' });
     },
     
     /**
@@ -496,10 +530,10 @@ const ProductsPage = {
         const reader = new FileReader();
         reader.onload = (e) => {
             preview.innerHTML = `
-                <img src="${e.target.result}" class="img-thumbnail" style="max-height: 150px;">
-                <button type="button" class="btn btn-sm btn-outline-danger position-absolute top-0 end-0 m-2" 
-                        onclick="this.parentElement.innerHTML = ''; document.getElementById('productImage').value = '';">
-                    <i class="bi bi-x"></i>
+                <img src="${e.target.result}" class="img-fluid rounded" style="max-height: 180px; object-fit: contain;">
+                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 rounded-circle" 
+                        onclick="document.getElementById('imagePreview').innerHTML = '<i class=\\'fas fa-image fa-4x text-light\\'></i>'; document.getElementById('productImage').value = '';">
+                    <i class="fas fa-times"></i>
                 </button>
             `;
         };
@@ -509,73 +543,78 @@ const ProductsPage = {
     /**
      * Abrir modal para nuevo producto
      */
-    openProductModal() {
+    openProductModal(producto = null) {
+        const form = document.getElementById('productForm');
+        if (!form) return;
+        
+        form.reset();
+        document.getElementById('productId').value = '';
+        document.getElementById('imagePreview').innerHTML = '<i class="fas fa-image fa-4x text-light"></i>';
+        
+        const modalTitle = document.getElementById('modalTitle');
+        const saveBtn = document.getElementById('saveProductBtn');
+        
+        if (producto) {
+            modalTitle.innerHTML = '<i class="fas fa-edit me-2 text-primary"></i>Editar Medicamento';
+            saveBtn.textContent = 'Actualizar Medicamento';
+            
+            // Llenar campos
+            document.getElementById('productId').value = producto.id;
+            document.getElementById('formNombre').value = producto.nombre || '';
+            document.getElementById('formCodigo').value = producto.codigo_barras || producto.codigo || '';
+            document.getElementById('formCategoria').value = producto.categoria || '';
+            document.getElementById('formPresentacion').value = producto.presentacion || '';
+            document.getElementById('formDescripcion').value = producto.descripcion || '';
+            
+            if (producto.imagen) {
+                const imgUrl = producto.imagen.startsWith('/') ? producto.imagen : `/uploads/productos/${producto.imagen}`;
+                document.getElementById('imagePreview').innerHTML = `
+                    <img src="${imgUrl}" class="img-fluid rounded" style="max-height: 180px; object-fit: contain;">
+                `;
+            }
+        } else {
+            modalTitle.innerHTML = '<i class="fas fa-box-open me-2 text-primary"></i>Nuevo Medicamento';
+            saveBtn.textContent = 'Guardar Producto';
+        }
+        
         const modal = new bootstrap.Modal(document.getElementById('productModal'));
         modal.show();
     },
     
     /**
-     * Guardar producto
+     * Guardar producto (Create/Update Reformulado)
      */
     async saveProduct() {
         const form = document.getElementById('productForm');
         const formData = new FormData(form);
+        const id = formData.get('id');
         
-        const data = Object.fromEntries(formData.entries());
+        const saveBtn = document.getElementById('saveProductBtn');
+        const originalText = saveBtn.textContent;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Procesando...';
         
         try {
             const token = AuthService.getToken();
-            const response = await fetch('/api/productos', {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Bearer ' + token,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
+            const url = id ? `/api/productos/${id}` : '/api/productos';
             
-            const result = await response.json();
-            
-            if (result.success) {
-                // Cerrar modal
-                bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
-                
-                // Verificar si hay imagen para subir
-                const imageInput = document.getElementById('productImage');
-                if (imageInput && imageInput.files[0] && result.data?.producto_id) {
-                    await this.uploadImage(result.data.producto_id, imageInput.files[0]);
-                }
-                
-                // Recargar
-                await this.loadData();
-                
-                // Mostrar éxito
-                if (typeof Toast !== 'undefined') {
-                    Toast.success('Producto creado correctamente');
-                }
-            } else {
-                alert(result.message || 'Error al crear producto');
+            // Si es PUT, PHP no maneja bien multipart/form-data. 
+            // Usaremos POST y en el backend ya detectamos si hay ID (reformulación).
+            // O podemos usar un campo oculto _method.
+            if (id) {
+                // Para simplificar la reformulación, usaremos el endpoint de imagen si hay imagen,
+                // Pero aquí el usuario quiere "reformulado". 
+                // Enviaremos vía POST a la URL de creación si no hay ID, o a una especial si hay ID?
+                // Mejor: Si hay ID, usamos el endpoint de actualización JSON y luego subimos imagen.
+                // PERO el usuario pidió reformular. Así que enviaré FormData vía POST al router.
+                // El router ya lo manejará.
             }
-            
-        } catch (error) {
-            console.error('Error guardando producto:', error);
-            alert('Error: ' + error.message);
-        }
-    },
-    
-    /**
-     * Subir imagen de producto
-     */
-    async uploadImage(productoId, file) {
-        const formData = new FormData();
-        formData.append('imagen', file);
-        
-        try {
-            const token = AuthService.getToken();
-            const response = await fetch(`/api/productos/${productoId}/imagen`, {
-                method: 'POST',
+
+            const response = await fetch(url, {
+                method: id ? 'POST' : 'POST', // Usamos POST para subida de archivos siempre
                 headers: {
                     'Authorization': 'Bearer ' + token
+                    // NO poner Content-Type: multipart/form-data manualmente, dejar que fetch lo haga
                 },
                 body: formData
             });
@@ -583,22 +622,44 @@ const ProductsPage = {
             const result = await response.json();
             
             if (result.success) {
-                console.log('Imagen subida:', result.data);
+                bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
+                await this.loadData();
+                if (typeof Toast !== 'undefined') Toast.success(id ? 'Medicamento actualizado' : 'Medicamento creado');
             } else {
-                console.warn('Error subiendo imagen:', result.message);
+                alert(result.message || 'Error al procesar solicitud');
             }
             
         } catch (error) {
-            console.error('Error upload image:', error);
+            console.error('Error saving product:', error);
+            alert('Error: ' + error.message);
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = originalText;
         }
     },
     
     /**
      * Editar producto
      */
-    editProduct(id) {
-        console.log('Editar producto:', id);
-        // Por implementar - abrir modal de edición
+    async editProduct(id) {
+        const producto = this.productos.find(p => p.id === id);
+        if (producto) {
+            this.openProductModal(producto);
+        } else {
+            // Intentar cargar de la API si no está en memoria
+            try {
+                const token = AuthService.getToken();
+                const response = await fetch(`/api/productos/${id}`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const result = await response.json();
+                if (result.success) {
+                    this.openProductModal(result.data);
+                }
+            } catch (error) {
+                console.error('Error cargando producto para editar:', error);
+            }
+        }
     }
 };
 

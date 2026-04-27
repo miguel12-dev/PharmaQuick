@@ -62,13 +62,14 @@ class ProductoRepository {
                 p.categoria,
                 p.presentacion,
                 p.activo,
+                p.imagen,
                 SUM(l.stock_actual) AS stock_total
             FROM productos p
             INNER JOIN lotes l ON p.id = l.producto_id
             WHERE p.id = :id 
                 AND l.farmacia_id = :farmacia_id 
                 AND p.activo = 1
-            GROUP BY p.id, p.nombre, p.codigo_barras, p.descripcion, p.categoria, p.presentacion, p.activo
+            GROUP BY p.id, p.nombre, p.codigo_barras, p.descripcion, p.categoria, p.presentacion, p.activo, p.imagen
         ");
         $stmt->execute([':id' => $productoId, ':farmacia_id' => $farmaciaId]);
         $producto = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -89,6 +90,7 @@ class ProductoRepository {
                 p.categoria,
                 p.presentacion,
                 p.activo,
+                p.imagen,
                 SUM(l.stock_actual) AS stock_total
             FROM productos p
             INNER JOIN lotes l ON p.id = l.producto_id
@@ -96,7 +98,7 @@ class ProductoRepository {
                 AND p.activo = 1
                 AND l.stock_actual > 0
                 AND (p.nombre LIKE :query OR p.codigo_barras LIKE :query)
-            GROUP BY p.id, p.nombre, p.codigo_barras, p.descripcion, p.categoria, p.presentacion, p.activo
+            GROUP BY p.id, p.nombre, p.codigo_barras, p.descripcion, p.categoria, p.presentacion, p.activo, p.imagen
             ORDER BY p.nombre ASC
             LIMIT 50
         ");
@@ -116,8 +118,8 @@ class ProductoRepository {
      */
     public function create(array $data): int {
         $stmt = $this->pdo->prepare("
-            INSERT INTO productos (nombre, codigo_barras, descripcion, categoria, presentacion, activo)
-            VALUES (:nombre, :codigo_barras, :descripcion, :categoria, :presentacion, :activo)
+            INSERT INTO productos (nombre, codigo_barras, descripcion, categoria, presentacion, activo, imagen)
+            VALUES (:nombre, :codigo_barras, :descripcion, :categoria, :presentacion, :activo, :imagen)
         ");
         
         $stmt->execute([
@@ -127,6 +129,7 @@ class ProductoRepository {
             ':categoria' => $data['categoria'] ?? null,
             ':presentacion' => $data['presentacion'] ?? null,
             ':activo' => $data['activo'] ?? true,
+            ':imagen' => $data['imagen'] ?? null,
         ]);
         
         return (int) $this->pdo->lastInsertId();
@@ -163,6 +166,10 @@ class ProductoRepository {
             $fields[] = 'activo = :activo';
             $params[':activo'] = $data['activo'] ? 1 : 0;
         }
+        if (isset($data['imagen'])) {
+            $fields[] = 'imagen = :imagen';
+            $params[':imagen'] = $data['imagen'];
+        }
         
         if (empty($fields)) {
             return false;
@@ -170,9 +177,11 @@ class ProductoRepository {
         
         $sql = "UPDATE productos SET " . implode(', ', $fields) . " WHERE id = :id";
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
+        $result = $stmt->execute($params);
         
-        return $stmt->rowCount() > 0;
+        // Dado que usamos PDO::ERRMODE_EXCEPTION, si no hay excepción, la consulta fue válida.
+        // Retornamos el resultado de la ejecución para mayor seguridad.
+        return $result;
     }
 
     /**
@@ -180,7 +189,7 @@ class ProductoRepository {
      */
     public function findByIdGlobal(int $id): ?array {
         $stmt = $this->pdo->prepare("
-            SELECT id, nombre, codigo_barras, descripcion, categoria, presentacion, activo
+            SELECT id, nombre, codigo_barras, descripcion, categoria, presentacion, activo, imagen
             FROM productos
             WHERE id = :id
         ");
@@ -196,7 +205,7 @@ class ProductoRepository {
      */
     public function findAllGlobal(): array {
         $stmt = $this->pdo->query("
-            SELECT id, nombre, codigo_barras, descripcion, categoria, presentacion, activo
+            SELECT id, nombre, codigo_barras, descripcion, categoria, presentacion, activo, imagen
             FROM productos
             ORDER BY nombre ASC
         ");
@@ -211,7 +220,7 @@ class ProductoRepository {
     public function searchGlobal(string $query): array {
         $searchTerm = "%{$query}%";
         $stmt = $this->pdo->prepare("
-            SELECT id, nombre, codigo_barras, descripcion, categoria, presentacion, activo
+            SELECT id, nombre, codigo_barras, descripcion, categoria, presentacion, activo, imagen
             FROM productos
             WHERE nombre LIKE :query OR codigo_barras LIKE :query
             ORDER BY nombre ASC
@@ -236,6 +245,7 @@ class ProductoRepository {
                 p.categoria,
                 p.presentacion,
                 p.activo,
+                p.imagen,
                 pr.precio AS precio_activo,
                 pr.id AS precio_id
             FROM productos p

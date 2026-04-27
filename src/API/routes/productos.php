@@ -112,37 +112,31 @@ function handleSearchProductos(): void {
 
 function handlePostProductos(): void {
     $farmaciaId = Auth::farmaciaId();
-    $userId = Auth::userId();
-    
     if (!$farmaciaId) {
         JsonResponse::error('No autenticado', 401);
         return;
     }
 
-    // Verificar rol desde BD (no desde email)
     if (!Auth::isAdmin()) {
         JsonResponse::error('No tiene permisos para crear productos', 403);
         return;
     }
 
-    // Leer JSON del body
     $input = json_decode(file_get_contents('php://input'), true);
-    
     if (!$input) {
-        JsonResponse::error('JSON inválido en el body', 400);
-        return;
+        $input = $_POST;
     }
-
-    // Validar campos requeridos
-    $nombre = isset($input['nombre']) ? trim($input['nombre']) : '';
     
-    if (empty($nombre)) {
-        JsonResponse::error('nombre es requerido', 400);
+    if (empty($input) && empty($_FILES)) {
+        JsonResponse::error('No se recibieron datos válidos en la petición', 400);
         return;
     }
 
-    // Validar código de barras único (si se proporciona)
-    $codigoBarras = isset($input['codigo_barras']) ? trim($input['codigo_barras']) : null;
+    $nombre = isset($input['nombre']) ? trim($input['nombre']) : '';
+    if (empty($nombre)) {
+        JsonResponse::error('El nombre del producto es requerido', 400);
+        return;
+    }
 
     try {
         require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
@@ -153,12 +147,20 @@ function handlePostProductos(): void {
 
         $productoId = $repo->create([
             'nombre' => $nombre,
-            'codigo_barras' => $codigoBarras,
+            'codigo_barras' => $input['codigo_barras'] ?? null,
             'descripcion' => $input['descripcion'] ?? null,
             'categoria' => $input['categoria'] ?? null,
             'presentacion' => $input['presentacion'] ?? null,
-            'activo' => $input['activo'] ?? true,
+            'activo' => isset($input['activo']) ? (bool)$input['activo'] : true,
         ]);
+
+        // Si hay una imagen en la misma petición, procesarla
+        if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
+            require_once ROUTES_PATH . '/upload.php';
+            // Esta función ya responde al cliente o lanza excepción
+            handleUploadProductImage($productoId);
+            return;
+        }
 
         JsonResponse::success([
             'message' => 'Producto creado',
@@ -169,7 +171,7 @@ function handlePostProductos(): void {
         if ($e->getCode() == 23000) {
             JsonResponse::error('El código de barras ya existe', 400);
         } else {
-            JsonResponse::error('Error: ' . $e->getMessage(), 500);
+            JsonResponse::error('Error de base de datos: ' . $e->getMessage(), 500);
         }
     } catch (\Throwable $e) {
         JsonResponse::error('Error: ' . $e->getMessage(), 500);
@@ -178,23 +180,25 @@ function handlePostProductos(): void {
 
 function handlePutProductos(int $id): void {
     $farmaciaId = Auth::farmaciaId();
-    
     if (!$farmaciaId) {
         JsonResponse::error('No autenticado', 401);
         return;
     }
 
-    // Verificar rol desde BD
     if (!Auth::isAdmin()) {
         JsonResponse::error('No tiene permisos para modificar productos', 403);
         return;
     }
 
-    $input = json_decode(file_get_contents('php://input'), true);
+    // PUT no soporta nativamente multipart/form-data en PHP ($_FILES está vacío)
+    // Para simplificar, si el cliente envía FormData, usaremos POST con un campo _method=PUT o similar,
+    // o simplemente manejaremos la imagen por separado como antes.
+    // Pero si es multipart/form-data tradicional, leeremos de php://input y parsearemos.
+    // Sin embargo, para SPA es mejor que el Edit también pueda enviar imagen.
     
+    $input = json_decode(file_get_contents('php://input'), true);
     if (!$input) {
-        JsonResponse::error('JSON inválido en el body', 400);
-        return;
+        $input = $_POST;
     }
 
     try {
@@ -204,27 +208,28 @@ function handlePutProductos(int $id): void {
         $pdo = PDOFactory::getCluster(1);
         $repo = new ProductoRepository($pdo);
 
-        // Verificar que existe el producto
         $producto = $repo->findByIdGlobal($id);
         if (!$producto) {
             JsonResponse::error('Producto no encontrado', 404);
             return;
         }
 
-        $success = $repo->update($id, $input);
-
-        if ($success) {
-            JsonResponse::success(['message' => 'Producto actualizado']);
-        } else {
-            JsonResponse::error('Error al actualizar', 500);
+        // Actualizar datos básicos
+        if (!empty($input)) {
+            $repo->update($id, $input);
         }
 
-    } catch (\PDOException $e) {
-        if ($e->getCode() == 23000) {
-            JsonResponse::error('El código de barras ya existe', 400);
-        } else {
-            JsonResponse::error('Error: ' . $e->getMessage(), 500);
+        // Procesar imagen si viene (PHP solo llena $_FILES en POST)
+        // Si el cliente envía FormData vía PUT, $_FILES suele estar vacío.
+        // El frontend debe usar el endpoint de imagen dedicado o enviar vía POST con override.
+        if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
+            require_once ROUTES_PATH . '/upload.php';
+            handleUploadProductImage($id);
+            return;
         }
+
+        JsonResponse::success(['message' => 'Producto actualizado']);
+
     } catch (\Throwable $e) {
         JsonResponse::error('Error: ' . $e->getMessage(), 500);
     }

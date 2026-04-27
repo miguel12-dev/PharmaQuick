@@ -98,9 +98,17 @@ function handleUploadProductImage(int $productoId): void {
                 'message' => 'Imagen subida correctamente'
             ]);
         } else {
-            // Eliminar archivo si falla el update
+            // Si el update devuelve false pero no lanzó excepción, verificamos manualmente
+            $verificar = $repo->findByIdGlobal($productoId);
+            if (!$verificar) {
+                unlink($rutaArchivo);
+                JsonResponse::error("El producto $productoId no existe", 404);
+                return;
+            }
+
+            // Si llegamos aquí, el producto existe y update devolvió false (poco probable con execute)
             unlink($rutaArchivo);
-            JsonResponse::error('Error al actualizar el producto', 500);
+            JsonResponse::error('Error al actualizar el registro del producto', 500);
         }
         
     } catch (\Throwable $e) {

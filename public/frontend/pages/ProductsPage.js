@@ -372,7 +372,7 @@ const ProductsPage = {
     renderProductCard(producto) {
         const imagen = producto.imagen || producto.foto || null;
         const imgUrl = imagen 
-            ? `/uploads/productos/${imagen}` 
+            ? (imagen.startsWith('/') ? imagen : `/uploads/productos/${imagen}`) 
             : null;
         
         const imgHtml = imgUrl 
@@ -498,7 +498,24 @@ const ProductsPage = {
     /**
      * Abrir modal para nuevo producto
      */
-    openProductModal() {
+    openProductModal(producto = null) {
+        const form = document.getElementById('productForm');
+        if (form) {
+            form.reset();
+            if (producto) {
+                form.nombre.value = producto.nombre || '';
+                form.codigo_barras.value = producto.codigo_barras || '';
+                form.categoria.value = producto.categoria || '';
+                form.presentacion.value = producto.presentacion || '';
+                form.descripcion.value = producto.descripcion || '';
+                
+                const preview = document.getElementById('imagePreview');
+                if (preview && producto.imagen) {
+                    const imgUrl = producto.imagen.startsWith('/') ? producto.imagen : `/uploads/productos/${producto.imagen}`;
+                    preview.innerHTML = `<img src="${imgUrl}" class="img-thumbnail" style="max-height: 150px;">`;
+                }
+            }
+        }
         const modal = new bootstrap.Modal(document.getElementById('productModal'));
         modal.show();
     },
@@ -509,13 +526,16 @@ const ProductsPage = {
     async saveProduct() {
         const form = document.getElementById('productForm');
         const formData = new FormData(form);
+        const productoId = document.getElementById('productId')?.value;
         
         const data = Object.fromEntries(formData.entries());
         
         try {
             const token = AuthService.getToken();
-            const response = await fetch('/api/productos', {
-                method: 'POST',
+            const url = productoId ? `/api/productos/${productoId}` : '/api/productos';
+            
+            const response = await fetch(url, {
+                method: 'POST',  // Usamos POST para ambos por compatibilidad con FormData/Imágenes
                 headers: {
                     'Authorization': 'Bearer ' + token,
                     'Content-Type': 'application/json'
@@ -529,10 +549,13 @@ const ProductsPage = {
                 // Cerrar modal
                 bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
                 
+                // ID del producto (nuevo o existente)
+                const targetId = productoId || result.data?.producto_id;
+                
                 // Verificar si hay imagen para subir
                 const imageInput = document.getElementById('productImage');
-                if (imageInput && imageInput.files[0] && result.data?.producto_id) {
-                    await this.uploadImage(result.data.producto_id, imageInput.files[0]);
+                if (imageInput && imageInput.files[0] && targetId) {
+                    await this.uploadImage(targetId, imageInput.files[0]);
                 }
                 
                 // Recargar
@@ -586,8 +609,10 @@ const ProductsPage = {
      * Editar producto
      */
     editProduct(id) {
-        console.log('Editar producto:', id);
-        // Por implementar - abrir modal de edición
+        const producto = this.productos.find(p => p.id === id);
+        if (producto) {
+            this.openProductModal(producto);
+        }
     }
 };
 
