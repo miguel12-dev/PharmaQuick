@@ -39,141 +39,130 @@ const ProductsPage = {
      * Renderizar layout completo
      */
     renderLayout(container) {
-        container.innerHTML = `
-            <!-- Navbar -->
-            <nav class="navbar navbar-expand-lg navbar-light fixed-top" style="z-index: 1030;">
-                <div class="container-fluid">
-                    <a class="navbar-brand" href="/dashboard">
-                        <i class="bi bi-capsule"></i> PharmaQuick
-                    </a>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-primary btn-sm" id="newProductBtn">
-                            <i class="bi bi-plus-lg"></i> Nuevo
-                        </button>
-                        <button class="btn btn-outline-danger btn-sm" id="logoutBtn">Cerrar Sesión</button>
+        const template = document.getElementById('template-layout');
+        
+        if (template) {
+            container.innerHTML = template.innerHTML;
+        } else {
+            // Fallback (pero deberíamos usar el template)
+            container.innerHTML = `
+                <div class="main-content" id="mainContent">
+                    <div class="container-fluid py-4">
+                        <div class="page-content"></div>
                     </div>
                 </div>
-            </nav>
-            
-            <!-- Sidebar -->
-            <nav class="sidebar" id="sidebar" style="margin-top: 56px;">
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/dashboard">Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/productos">Productos</a>
-                    </li>
-                </ul>
-            </nav>
-            
-            <!-- Main Content -->
-            <main class="main-content" id="mainContent" style="margin-top: 56px; padding: 20px;">
-                <div class="container-fluid">
-                    <!-- Header -->
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2><i class="bi bi-box-seam"></i> Productos</h2>
-                        <span class="badge bg-secondary" id="totalProductos">0</span>
+            `;
+        }
+        
+        // Insertar contenido de productos
+        const pageContent = container.querySelector('.page-content');
+        if (pageContent) {
+            pageContent.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="fw-bold mb-0 text-dark"><i class="fas fa-pills me-2 text-primary"></i> Catálogo de Productos</h2>
+                        <p class="text-muted small mb-0">Gestiona el inventario y stock de tu farmacia</p>
                     </div>
-                    
-                    <!-- Buscador y Filtros -->
-                    <div class="row mb-4 g-2">
-                        <div class="col-md-6">
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                <input type="text" class="form-control" id="searchInput" 
-                                       placeholder="Buscar productos...">
-                                <button class="btn btn-outline-secondary" id="clearSearch">
-                                    <i class="bi bi-x-lg"></i>
-                                </button>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary d-flex align-items-center gap-2" id="newProductBtn">
+                            <i class="fas fa-plus"></i> <span class="d-none d-md-inline">Nuevo Producto</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Buscador y Filtros -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-3">
+                        <div class="row g-3">
+                            <div class="col-md-5">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                                    <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Buscar por nombre, código o categoría...">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <select class="form-select" id="categoriaFilter">
+                                    <option value="">Todas las categorías</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-muted small flex-shrink-0">Mostrar:</span>
+                                    <select class="form-select" id="perPageSelect">
+                                        <option value="12" selected>12</option>
+                                        <option value="24">24</option>
+                                        <option value="48">48</option>
+                                    </select>
+                                    <span class="badge bg-primary-soft text-primary p-2 ms-auto" id="totalProductos">0</span>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <select class="form-select" id="categoriaFilter">
-                                <option value="">Todas las categorías</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <select class="form-select" id="perPageSelect">
-                                <option value="12" selected>12 por página</option>
-                                <option value="24">24 por página</option>
-                                <option value="48">48 por página</option>
-                            </select>
-                        </div>
                     </div>
-                    
-                    <!-- Grid de Productos -->
-                    <div id="productsGrid" class="row g-3">
-                        <div class="col-12 text-center py-5">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Cargando...</span>
-                            </div>
-                            <p class="mt-2 text-muted">Cargando productos...</p>
-                        </div>
+                </div>
+                
+                <!-- Grid de Productos -->
+                <div id="productsGrid" class="product-grid row g-4">
+                    <div class="col-12 text-center py-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2 text-muted">Cargando productos...</p>
                     </div>
-                    
-                    <!-- Paginación -->
-                    <nav id="paginationNav" class="mt-4 d-none">
+                </div>
+                
+                <!-- Paginación -->
+                <div id="paginationNav" class="mt-5 d-none">
+                    <nav>
                         <ul class="pagination justify-content-center" id="pagination"></ul>
                     </nav>
                 </div>
-            </main>
-            
-            <!-- Modal para Nuevo Producto -->
-            <div class="modal fade" id="productModal" tabindex="-1">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Nuevo Producto</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form id="productForm">
-                                <div class="row g-3">
-                                    <div class="col-md-8">
-                                        <label class="form-label">Nombre *</label>
-                                        <input type="text" class="form-control" name="nombre" required>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Código de Barras</label>
-                                        <input type="text" class="form-control" name="codigo_barras">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Categoría</label>
-                                        <input type="text" class="form-control" name="categoria" list="categoriasList">
-                                        <datalist id="categoriasList"></datalist>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Presentación</label>
-                                        <input type="text" class="form-control" name="presentacion">
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label">Descripción</label>
-                                        <textarea class="form-control" name="descripcion" rows="3"></textarea>
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label"> Imagen del Producto</label>
-                                        <div class="border rounded p-3 text-center">
-                                            <input type="file" id="productImage" accept="image/*" class="d-none">
-                                            <label for="productImage" class="btn btn-outline-secondary mb-2">
-                                                <i class="bi bi-upload"></i> Subir Imagen
-                                            </label>
-                                            <div id="imagePreview" class="mt-2"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="button" class="btn btn-primary" id="saveProductBtn">Guardar</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
+            `;
+        }
+
+        // Configurar título de página en el navbar
+        const pageTitle = container.querySelector('#pageTitle');
+        if (pageTitle) pageTitle.textContent = 'Productos';
+
         this.setupEventListeners();
+        this.initSidebarToggle(container);
+    },
+
+    /**
+     * Inicializar toggle del sidebar (duplicando lógica del dashboard para consistencia)
+     */
+    initSidebarToggle(container) {
+        const sidebar = container.querySelector('#sidebar');
+        const sidebarCollapseBtn = container.querySelector('#sidebarCollapseBtn');
+        const sidebarToggleMobile = container.querySelector('#sidebarToggleMobile');
+        
+        if (localStorage.getItem('sidebarCollapsed') === 'true' && sidebar) {
+            sidebar.classList.add('collapsed');
+            document.body.classList.add('sidebar-collapsed');
+            const icon = sidebar.querySelector('.sidebar-toggle-icon');
+            if (icon) {
+                icon.classList.remove('fa-chevron-left');
+                icon.classList.add('fa-chevron-right');
+            }
+        }
+
+        const handleSidebar = () => {
+            if (sidebar) {
+                sidebar.classList.toggle('collapsed');
+                const nowCollapsed = sidebar.classList.contains('collapsed');
+                localStorage.setItem('sidebarCollapsed', nowCollapsed);
+                document.body.classList.toggle('sidebar-collapsed', nowCollapsed);
+                const icon = sidebar.querySelector('.sidebar-toggle-icon');
+                if (icon) {
+                    icon.classList.toggle('fa-chevron-right', nowCollapsed);
+                    icon.classList.toggle('fa-chevron-left', !nowCollapsed);
+                }
+            }
+        };
+
+        if (sidebarCollapseBtn) sidebarCollapseBtn.addEventListener('click', (e) => { e.preventDefault(); handleSidebar(); });
+        if (sidebarToggleMobile) sidebarToggleMobile.addEventListener('click', (e) => { e.preventDefault(); sidebar.classList.toggle('show'); });
+        
+        // Logout
+        const logoutBtn = container.querySelector('#logoutBtn');
+        if (logoutBtn) logoutBtn.addEventListener('click', (e) => { e.preventDefault(); Router.logout(); });
     },
     
     /**
@@ -376,27 +365,32 @@ const ProductsPage = {
             : null;
         
         const imgHtml = imgUrl 
-            ? `<img src="${imgUrl}" class="card-img-top" alt="${producto.nombre}" style="height: 150px; object-fit: cover;">`
-            : `<div class="bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
-                <i class="bi bi-box text-muted" style="font-size: 3rem;"></i>
+            ? `<div class="card-img-container overflow-hidden" style="height: 180px;">
+                <img src="${imgUrl}" class="card-img-top h-100 w-100" alt="${producto.nombre}" style="object-fit: cover; transition: transform 0.5s ease;">
+               </div>`
+            : `<div class="bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
+                <i class="fas fa-pills text-muted opacity-25" style="font-size: 3rem;"></i>
                </div>`;
         
         return `
-            <div class="col-md-6 col-lg-4 col-xl-3">
-                <div class="card h-100 shadow-sm product-card" style="cursor: pointer;">
+            <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+                <div class="card h-100 shadow-sm border-0 product-item-card overflow-hidden">
                     ${imgHtml}
-                    <div class="card-body">
-                        <h6 class="card-title mb-1">${producto.nombre || 'Sin nombre'}</h6>
-                        <p class="text-muted small mb-1">${producto.categoria || 'Sin categoría'}</p>
-                        <p class="small mb-0 text-muted">
-                            <i class="bi bi-upc"></i> ${producto.codigo_barras || producto.codigo || 'Sin código'}
+                    <div class="card-body p-3 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="fw-bold text-dark mb-0 line-clamp-2" style="font-size: 0.95rem;">${producto.nombre || 'Sin nombre'}</h6>
+                            <span class="badge bg-primary-soft text-primary small">${producto.categoria || 'Gral'}</span>
+                        </div>
+                        <p class="text-muted x-small mb-3">
+                            <i class="fas fa-barcode me-1 opacity-50"></i> ${producto.codigo_barras || producto.codigo || 'S/C'}
                         </p>
-                    </div>
-                    <div class="card-footer bg-transparent border-top-0">
-                        <button class="btn btn-sm btn-outline-primary w-100" 
-                                onclick="ProductsPage.editProduct(${producto.id})">
-                            <i class="bi bi-pencil"></i> Editar
-                        </button>
+                        <div class="mt-auto d-flex align-items-center justify-content-between">
+                            <div class="text-primary fw-bold">$ ${producto.precio || '0.00'}</div>
+                            <button class="btn btn-light btn-sm rounded-pill px-3" 
+                                    onclick="ProductsPage.editProduct(${producto.id})">
+                                <i class="fas fa-edit me-1"></i> <span class="small">Editar</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -499,110 +493,50 @@ const ProductsPage = {
      * Abrir modal para nuevo producto
      */
     openProductModal(producto = null) {
-        const form = document.getElementById('productForm');
-        if (form) {
-            form.reset();
-            if (producto) {
-                form.nombre.value = producto.nombre || '';
-                form.codigo_barras.value = producto.codigo_barras || '';
-                form.categoria.value = producto.categoria || '';
-                form.presentacion.value = producto.presentacion || '';
-                form.descripcion.value = producto.descripcion || '';
-                
-                const preview = document.getElementById('imagePreview');
-                if (preview && producto.imagen) {
-                    const imgUrl = producto.imagen.startsWith('/') ? producto.imagen : `/uploads/productos/${producto.imagen}`;
-                    preview.innerHTML = `<img src="${imgUrl}" class="img-thumbnail" style="max-height: 150px;">`;
-                }
-            }
-        }
-        const modal = new bootstrap.Modal(document.getElementById('productModal'));
-        modal.show();
-    },
-    
-    /**
-     * Guardar producto
-     */
-    async saveProduct() {
-        const form = document.getElementById('productForm');
-        const formData = new FormData(form);
-        const productoId = document.getElementById('productId')?.value;
-        
-        const data = Object.fromEntries(formData.entries());
-        
-        try {
-            const token = AuthService.getToken();
-            const url = productoId ? `/api/productos/${productoId}` : '/api/productos';
-            
-            const response = await fetch(url, {
-                method: 'POST',  // Usamos POST para ambos por compatibilidad con FormData/Imágenes
-                headers: {
-                    'Authorization': 'Bearer ' + token,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                // Cerrar modal
-                bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
-                
-                // ID del producto (nuevo o existente)
-                const targetId = productoId || result.data?.producto_id;
-                
-                // Verificar si hay imagen para subir
-                const imageInput = document.getElementById('productImage');
-                if (imageInput && imageInput.files[0] && targetId) {
-                    await this.uploadImage(targetId, imageInput.files[0]);
+        const modal = new Modal({
+            title: producto ? 'Editar Producto' : 'Nuevo Producto',
+            content: productFormRenderer.getFormHtml(producto),
+            confirmText: 'Guardar cambios',
+            onConfirm: async () => {
+                const data = productFormRenderer.getData();
+                if (!data.nombre) {
+                    modal.showError('El nombre es requerido');
+                    return;
                 }
                 
-                // Recargar
-                await this.loadData();
-                
-                // Mostrar éxito
-                if (typeof Toast !== 'undefined') {
-                    Toast.success('Producto creado correctamente');
+                modal.setLoading(true);
+                try {
+                    const token = AuthService.getToken();
+                    const url = producto ? `/api/productos/${producto.id}` : '/api/productos';
+                    
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer ' + token,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        modal.close();
+                        if (typeof Toast !== 'undefined') {
+                            Toast.success(producto ? 'Producto actualizado' : 'Producto creado');
+                        }
+                        await this.loadData();
+                    } else {
+                        modal.showError(result.message);
+                    }
+                } catch (error) {
+                    modal.showError(error.message);
+                } finally {
+                    modal.setLoading(false);
                 }
-            } else {
-                alert(result.message || 'Error al crear producto');
             }
-            
-        } catch (error) {
-            console.error('Error guardando producto:', error);
-            alert('Error: ' + error.message);
-        }
-    },
-    
-    /**
-     * Subir imagen de producto
-     */
-    async uploadImage(productoId, file) {
-        const formData = new FormData();
-        formData.append('imagen', file);
-        
-        try {
-            const token = AuthService.getToken();
-            const response = await fetch(`/api/productos/${productoId}/imagen`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Bearer ' + token
-                },
-                body: formData
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                console.log('Imagen subida:', result.data);
-            } else {
-                console.warn('Error subiendo imagen:', result.message);
-            }
-            
-        } catch (error) {
-            console.error('Error upload image:', error);
-        }
+        });
+        modal.open();
     },
     
     /**

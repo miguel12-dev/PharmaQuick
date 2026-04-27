@@ -91,125 +91,169 @@
 
     <!-- Template: Layout (Navbar + Sidebar) -->
     <template id="template-layout">
-       <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <i class="fas fa-prescription-bottle-medical fa-lg me-2"></i>
-            <span class="fw-bold fs-5">PharmaQuick</span>
-        </div>
-        <nav class="nav flex-column py-3">
-            <a class="nav-link active" href="#" data-page="dashboard">
-                <i class="fas fa-chart-line"></i>
-                <span class="nav-text">Dashboard</span>
-            </a>
-            <a class="nav-link" href="#" data-page="ventas">
-                <i class="fas fa-cart-shopping"></i>
-                <span class="nav-text">Ventas</span>
-            </a>
-            <a class="nav-link" href="#" data-page="productos">
-                <i class="fas fa-pills"></i>
-                <span class="nav-text">Productos</span>
-            </a>
-            <a class="nav-link" href="#" data-page="inventario">
-                <i class="fas fa-boxes-stacked"></i>
-                <span class="nav-text">Inventario</span>
-            </a>
-            <a class="nav-link" href="#" data-page="clientes">
-                <i class="fas fa-users"></i>
-                <span class="nav-text">Clientes</span>
-            </a>
-            <a class="nav-link" href="#" data-page="proveedores">
-                <i class="fas fa-truck-field"></i>
-                <span class="nav-text">Proveedores</span>
-            </a>
-            <hr class="mx-3 my-2 text-white-50">
-            <a class="nav-link" href="#" data-page="reportes">
-                <i class="fas fa-file-invoice-dollar"></i>
-                <span class="nav-text">Reportes</span>
-            </a>
-            <a class="nav-link" href="#" data-page="configuracion">
-                <i class="fas fa-gear"></i>
-                <span class="nav-text">Configuración</span>
-            </a>
-        </nav>
-        
-        <div class="mt-auto p-3 border-top border-white-50 border-opacity-10">
-            <a class="nav-link text-danger" href="login.html">
-                <i class="fas fa-right-from-bracket"></i>
-                <span class="nav-text">Cerrar Sesión</span>
-            </a>
-        </div>
-    </aside>
-
-    <div class="main-content">
-        <nav class="navbar navbar-expand-lg fixed-top shadow-sm px-4">
-            <div class="container-fluid p-0">
-                <button class="btn btn-link link-dark p-0 me-3" id="sidebarToggle">
-                    <i class="fas fa-bars-staggered fa-lg"></i>
-                </button>
-                
-                <h4 class="m-0 fw-semibold text-dark" id="pageTitle">Dashboard</h4>
-                
-                <div class="ms-auto d-flex align-items-center">
-                    <div class="dropdown">
-                        <button class="btn btn-link position-relative me-3 text-dark p-0" data-bs-toggle="dropdown">
-                            <i class="fas fa-bell"></i>
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
-                                3
-                            </span>
-                        </button>
-                    </div>
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="d-flex align-items-center w-100">
+                    <i class="fas fa-capsules fa-lg me-2 text-primary-light"></i>
+                    <span class="fw-bold fs-5 nav-text">PharmaQuick</span>
+                    <button class="btn btn-link link-light ms-auto p-0 d-none d-md-block" id="sidebarCollapseBtn">
+                        <i class="fas fa-chevron-left sidebar-toggle-icon"></i>
+                    </button>
                 </div>
             </div>
-        </nav>
-
-        <!-- Main Content -->
-        <main class="main-content" id="mainContent">
-            <div class="container-fluid">
-                <div class="page-content"></div>
+            <nav class="nav flex-column py-3">
+                <a class="nav-link active" href="/dashboard" data-page="dashboard">
+                    <i class="fas fa-chart-pie"></i>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+                <a class="nav-link" href="/productos" data-page="productos">
+                    <i class="fas fa-pills"></i>
+                    <span class="nav-text">Productos</span>
+                </a>
+                <a class="nav-link" href="/inventario" data-page="inventario">
+                    <i class="fas fa-boxes-stacked"></i>
+                    <span class="nav-text">Inventario</span>
+                </a>
+                <a class="nav-link" href="/clientes" data-page="clientes">
+                    <i class="fas fa-users"></i>
+                    <span class="nav-text">Clientes</span>
+                </a>
+                <a class="nav-link" href="/proveedores" data-page="proveedores">
+                    <i class="fas fa-truck-medical"></i>
+                    <span class="nav-text">Proveedores</span>
+                </a>
+                <hr class="mx-3 my-2 text-white-50">
+                <a class="nav-link" href="/configuracion" data-page="configuracion">
+                    <i class="fas fa-cog"></i>
+                    <span class="nav-text">Configuración</span>
+                </a>
+            </nav>
+            
+            <div class="mt-auto p-3 border-top border-white-50 border-opacity-10">
+                <a class="nav-link text-danger-light" href="#" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="nav-text sidebar-footer-text">Cerrar Sesión</span>
+                </a>
             </div>
-        </main>
+        </aside>
+
+        <div class="main-content" id="mainContent">
+            <nav class="navbar navbar-expand-lg fixed-top px-4">
+                <div class="container-fluid p-0">
+                    <button class="btn btn-link link-dark p-0 me-3 d-md-none" id="sidebarToggleMobile">
+                        <i class="fas fa-bars fa-lg"></i>
+                    </button>
+                    
+                    <h4 class="m-0 fw-bold text-dark" id="pageTitle">Dashboard</h4>
+                    
+                    <div class="ms-auto d-flex align-items-center">
+                        <div class="dropdown">
+                            <button class="btn btn-light rounded-circle p-0 me-3 position-relative" style="width: 40px; height: 40px;" data-bs-toggle="dropdown">
+                                <i class="fas fa-bell text-secondary"></i>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger shadow-sm" style="font-size: 0.6rem; border: 2px solid white;">
+                                    3
+                                </span>
+                            </button>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn d-flex align-items-center gap-2 p-1 pe-3 border rounded-pill bg-white shadow-sm" data-bs-toggle="dropdown">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                    <i class="fas fa-user-circle"></i>
+                                </div>
+                                <span class="fw-semibold small d-none d-sm-inline" id="userName">Admin</span>
+                                <i class="fas fa-chevron-down x-small opacity-50"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2">
+                                <li><a class="dropdown-item py-2" href="#"><i class="fas fa-user me-2 opacity-50"></i> Perfil</a></li>
+                                <li><a class="dropdown-item py-2" href="#"><i class="fas fa-cog me-2 opacity-50"></i> Ajustes</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item py-2 text-danger" href="#" id="logoutBtnDropdown"><i class="fas fa-power-off me-2 opacity-50"></i> Salir</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Main Content Area -->
+            <div class="container-fluid py-4">
+                <div class="page-content fade-in-up"></div>
+            </div>
+        </div>
     </template>
 
     <!-- Template: Dashboard Page -->
     <template id="template-dashboard">
-        <div class="welcome-card card mb-4">
-            <div class="card-body py-4">
-                <h2 class="mb-1">Bienvenido a PharmaQuick</h2>
-                <p class="text-muted mb-0">Gestión integral para tu farmacia</p>
+        <div class="welcome-card card mb-4 border-0 shadow-sm">
+            <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                <div>
+                    <h2 class="mb-1 text-white">¡Hola de nuevo!</h2>
+                    <p class="mb-0 text-white opacity-75">Bienvenido al panel de control de PharmaQuick.</p>
+                </div>
+                <div class="d-none d-md-block opacity-25">
+                    <i class="fas fa-hand-holding-medical fa-4x text-white"></i>
+                </div>
             </div>
         </div>
 
         <!-- Stats Grid -->
-        <div class="row g-3 mb-4">
-            <div class="col-6 col-lg-3">
-                <div class="card stats-card h-100">
+        <div class="row g-4 mb-4">
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card stats-card border-0 shadow-sm h-100" style="border-left: 4px solid var(--pq-primary) !important;">
                     <div class="card-body">
-                        <h6 class="text-muted">Ventas Hoy</h6>
-                        <h4 class="mb-0" id="ventasHoy">$0</h4>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="text-muted text-uppercase small fw-bold mb-0">Ventas Hoy</h6>
+                            <div class="bg-primary-soft p-2 rounded">
+                                <i class="fas fa-dollar-sign text-primary"></i>
+                            </div>
+                        </div>
+                        <h3 class="mb-0 fw-bold" id="ventasHoy">$0.00</h3>
+                        <p class="text-success small mb-0 mt-2">
+                            <i class="fas fa-arrow-up me-1"></i> 12% vs ayer
+                        </p>
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-lg-3">
-                <div class="card stats-card h-100">
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card stats-card border-0 shadow-sm h-100" style="border-left: 4px solid var(--pq-info) !important;">
                     <div class="card-body">
-                        <h6 class="text-muted">Transacciones</h6>
-                        <h4 class="mb-0" id="transacciones">0</h4>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="text-muted text-uppercase small fw-bold mb-0">Pedidos</h6>
+                            <div class="bg-info-soft p-2 rounded">
+                                <i class="fas fa-shopping-basket text-info"></i>
+                            </div>
+                        </div>
+                        <h3 class="mb-0 fw-bold" id="transacciones">0</h3>
+                        <p class="text-muted small mb-0 mt-2">Nuevos pedidos registrados</p>
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-lg-3">
-                <div class="card stats-card h-100">
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card stats-card border-0 shadow-sm h-100" style="border-left: 4px solid var(--pq-warning) !important;">
                     <div class="card-body">
-                        <h6 class="text-muted">Productos</h6>
-                        <h4 class="mb-0" id="productos">0</h4>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="text-muted text-uppercase small fw-bold mb-0">Total Productos</h6>
+                            <div class="bg-warning-soft p-2 rounded">
+                                <i class="fas fa-pills text-warning"></i>
+                            </div>
+                        </div>
+                        <h3 class="mb-0 fw-bold" id="productos">0</h3>
+                        <p class="text-warning small mb-0 mt-2">
+                            <i class="fas fa-exclamation-triangle me-1"></i> 5 en bajo stock
+                        </p>
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-lg-3">
-                <div class="card stats-card h-100">
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card stats-card border-0 shadow-sm h-100" style="border-left: 4px solid var(--pq-danger) !important;">
                     <div class="card-body">
-                        <h6 class="text-muted">Alertas</h6>
-                        <h4 class="mb-0" id="alertas">0</h4>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="text-muted text-uppercase small fw-bold mb-0">Alertas Críticas</h6>
+                            <div class="bg-danger-soft p-2 rounded">
+                                <i class="fas fa-bell text-danger"></i>
+                            </div>
+                        </div>
+                        <h3 class="mb-0 fw-bold" id="alertas">0</h3>
+                        <p class="text-muted small mb-0 mt-2">Requieren tu atención</p>
                     </div>
                 </div>
             </div>

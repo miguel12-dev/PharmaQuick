@@ -13,21 +13,21 @@ const Config = {
     DEBOUNCE_DELAY: 300, // ms
     TOAST_DURATION: 3000, // ms
     
-    // Colors - Verde menta como color principal
+    // Colors - PharmaGreen Mint Premium
     COLORS: {
-        primary: '#2dd4bf',      // Verde menta
-        primaryDark: '#14b8a6',
-        primaryLight: '#5eead4',
-        secondary: '#60a5fa',    // Azul suave alternativo
+        primary: '#10b981',      // Verde menta premium
+        primaryDark: '#059669',
+        primaryLight: '#34d399',
+        secondary: '#0f172a',    // Azul marino oscuro
         success: '#10b981',
         warning: '#f59e0b',
         error: '#ef4444',
-        info: '#3b82f6',
-        text: '#6b7280',
-        textDark: '#374151',
+        info: '#0ea5e9',
+        text: '#475569',
+        textDark: '#1e293b',
         background: '#ffffff',
-        surface: '#f9fafb',
-        border: '#e5e7eb'
+        surface: '#f8fafc',
+        border: '#e2e8f0'
     },
     
     // Breakpoints
