@@ -1,6 +1,8 @@
 -- PharmaQuick - Base de Datos Cluster (db_cluster_2)
--- Basado en pharmaquick.sql original
--- Version: 1.0.0
+-- Version: 1.0.1
+--
+-- Version 1.0.1 cambios:
+-- - Sistema de roles actualizado: ADMINISTRADOR | USUARIO
 
 CREATE DATABASE IF NOT EXISTS db_cluster_2;
 USE db_cluster_2;
@@ -16,13 +18,14 @@ CREATE TABLE IF NOT EXISTS farmacias (
     nombre VARCHAR(100)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Sistema de roles actualizado para Fase 2
 CREATE TABLE IF NOT EXISTS usuarios (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     farmacia_id INT UNSIGNED NOT NULL,
     email VARCHAR(150) NOT NULL,
     password_hash VARCHAR(255),
     nombre VARCHAR(100) DEFAULT NULL,
-    rol ENUM('ADMIN', 'VENDEDOR', 'AUXILIAR') DEFAULT 'VENDEDOR',
+    rol ENUM('ADMINISTRADOR', 'USUARIO') DEFAULT 'USUARIO',
     activo BOOLEAN DEFAULT TRUE,
     ultimo_login TIMESTAMP NULL,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -32,12 +35,15 @@ CREATE TABLE IF NOT EXISTS usuarios (
 
 CREATE TABLE IF NOT EXISTS productos (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(150),
+    nombre VARCHAR(150) NOT NULL,
     codigo_barras VARCHAR(50) UNIQUE,
     descripcion TEXT,
-    categoria VARCHAR(100) DEFAULT NULL,
-    presentacion VARCHAR(50) DEFAULT NULL,
-    activo BOOLEAN DEFAULT TRUE
+    categoria VARCHAR(50),
+    presentacion VARCHAR(100),
+    activo BOOLEAN DEFAULT TRUE,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_activo (activo)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS lotes (
@@ -91,7 +97,7 @@ DELIMITER ;
 CREATE TABLE IF NOT EXISTS ventas (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     farmacia_id INT UNSIGNED,
-    usuario_id BIGINT UNSIGNED,
+    usuario_id INT UNSIGNED,
     cliente_nombre VARCHAR(150) DEFAULT NULL,
     cliente_documento VARCHAR(20) DEFAULT NULL,
     total DECIMAL(12,2),
@@ -132,3 +138,16 @@ CREATE TABLE IF NOT EXISTS precios (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+-- =========================================================
+-- DATOS DE PRUEBA
+-- =========================================================
+
+-- Farmacias locales
+INSERT INTO farmacias (id, codigo_sucursal, nombre) VALUES
+(6, 'F006', 'PharmaQuick Alamos');
+
+-- Usuarios de prueba
+INSERT INTO usuarios (farmacia_id, email, password_hash, nombre, rol) VALUES
+(6, 'admin@pharmaquick.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Administrador Alamos', 'ADMINISTRADOR'),
+(6, 'vendedor6@pharmaquick.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Vendedor Alamos', 'USUARIO');

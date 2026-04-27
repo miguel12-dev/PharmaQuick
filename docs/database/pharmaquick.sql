@@ -17,6 +17,8 @@ CREATE TABLE usuarios (
     farmacia_id INT UNSIGNED NOT NULL,
     email VARCHAR(150) NOT NULL,
     password_hash VARCHAR(255),
+    rol ENUM('USUARIO','ADMINISTRADOR') DEFAULT 'USUARIO',
+    activo BOOLEAN DEFAULT TRUE,
 
     UNIQUE (farmacia_id, email),
 
@@ -29,8 +31,15 @@ CREATE TABLE usuarios (
 
 CREATE TABLE productos (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(150),
-    codigo_barras VARCHAR(50) UNIQUE
+    nombre VARCHAR(150) NOT NULL,
+    codigo_barras VARCHAR(50) UNIQUE,
+    descripcion TEXT,
+    categoria VARCHAR(50),
+    presentacion VARCHAR(100),
+    activo BOOLEAN DEFAULT TRUE,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_activo (activo)
 ) ENGINE=InnoDB;
 
 -- =========================================================
