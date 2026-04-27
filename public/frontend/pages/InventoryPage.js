@@ -1,8 +1,7 @@
 /**
- * PharmaQuick - Inventory Page
- * Página de gestión de inventario, stock y carga masiva
+ * PharmaQuick - InventoryPage
+ * Página de inventario con experiencia visual alineada a /productos.
  */
-
 const InventoryPage = {
     view: null,
 
@@ -13,8 +12,6 @@ const InventoryPage = {
         }
 
         this.renderLayout(container);
-        
-        // Inicializar la vista
         this.view = new InventoryView('.page-content');
     },
 
@@ -27,100 +24,125 @@ const InventoryPage = {
         const pageContent = container.querySelector('.page-content');
         if (pageContent) {
             pageContent.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h2 class="fw-bold mb-0 text-dark"><i class="fas fa-boxes-stacked me-2 text-primary"></i> Control de Inventario</h2>
-                        <p class="text-muted small mb-0">Gestión de lotes, vencimientos y movimientos Kardex</p>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-outline-primary d-flex align-items-center gap-2" id="importExcelBtn">
-                            <i class="fas fa-file-import"></i> <span class="d-none d-md-inline">Carga Masiva</span>
+                <section class="inventory-page fade-in-up">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                        <div>
+                            <h2 class="fw-bold mb-1 text-dark"><i class="fas fa-boxes-stacked me-2 text-primary"></i>Gestión de Inventario</h2>
+                            <p class="text-muted small mb-0">Control FEFO, alertas de vencimiento y movimientos Kardex.</p>
+                        </div>
+                        <button class="btn btn-primary d-flex align-items-center gap-2" id="importExcelBtn">
+                            <i class="fas fa-file-import"></i>
+                            <span>Carga masiva</span>
                         </button>
                     </div>
-                </div>
 
-                <div class="row g-4">
-                    <!-- Sección de Alertas (Semáforo) -->
-                    <div class="col-12">
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0 fw-bold"><i class="fas fa-clock text-warning me-2"></i> Próximos Vencimientos (FEFO)</h5>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="text-muted small">Ventana:</span>
-                                    <select class="form-select form-select-sm" id="diasVentanaSelect" style="width: auto;">
+                    <div class="card border-0 shadow-sm mb-4 inventory-loading-target">
+                        <div class="card-body">
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted mb-1">Buscar</label>
+                                    <input id="inventarioSearchInput" type="text" class="form-control" placeholder="Producto, código de barras o lote">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small text-muted mb-1">Semáforo</label>
+                                    <select id="semaforoFilter" class="form-select">
+                                        <option value="">Todos</option>
+                                        <option value="VENCIDO">Vencido</option>
+                                        <option value="ROJO">Rojo</option>
+                                        <option value="AMARILLO">Amarillo</option>
+                                        <option value="VERDE">Verde</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small text-muted mb-1">Ventana</label>
+                                    <select id="diasVentanaSelect" class="form-select">
                                         <option value="30">30 días</option>
                                         <option value="90">90 días</option>
                                         <option value="180" selected>180 días</option>
-                                        <option value="365">1 año</option>
+                                        <option value="365">365 días</option>
                                     </select>
                                 </div>
-                            </div>
-                            <div class="card-body p-0">
-                                <div class="table-responsive">
-                                    <table class="table table-hover align-middle mb-0">
-                                        <thead class="bg-light">
-                                            <tr>
-                                                <th style="width: 100px;">Estado</th>
-                                                <th>Producto</th>
-                                                <th>Lote</th>
-                                                <th>Vencimiento</th>
-                                                <th>Stock</th>
-                                                <th class="text-end">Acciones</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="alertasTableBody">
-                                            <tr>
-                                                <td colspan="6" class="text-center py-4">
-                                                    <div class="spinner-border text-primary spinner-border-sm" role="status"></div>
-                                                    <span class="ms-2 text-muted">Cargando alertas...</span>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                <div class="col-md-2">
+                                    <label class="form-label small text-muted mb-1">Mostrar</label>
+                                    <select id="inventarioPerPageSelect" class="form-select">
+                                        <option value="10">10</option>
+                                        <option value="25" selected>25</option>
+                                        <option value="50">50</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 text-md-end">
+                                    <span class="badge bg-primary-soft text-primary p-2">Total <span id="inventarioTotalBadge">0</span></span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+
+                    <div class="card border-0 shadow-sm mb-4 inventory-loading-target">
+                        <div class="card-header bg-white border-0 py-3"><h5 class="mb-0 fw-bold">Alertas FEFO</h5></div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0 inventory-table">
+                                <thead>
+                                    <tr>
+                                        <th>Estado</th><th>Producto</th><th>Código</th><th>Lote</th><th>Vencimiento</th><th>Días</th><th>Stock</th><th class="text-end">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="alertasTableBody">
+                                    <tr><td colspan="8" class="text-center text-muted py-4">Cargando alertas...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer bg-white border-0 py-3">
+                            <nav><ul class="pagination pagination-sm justify-content-center mb-0" id="inventarioPagination"></ul></nav>
+                        </div>
+                    </div>
+                </section>
             `;
         }
 
         const pageTitle = container.querySelector('#pageTitle');
-        if (pageTitle) pageTitle.textContent = 'Inventario';
+        if (pageTitle) {
+            pageTitle.textContent = 'Inventario';
+        }
 
-        this.setupEventListeners();
+        this.setupEventListeners(container);
         this.initSidebarToggle(container);
     },
 
-    setupEventListeners() {
-        const importBtn = document.getElementById('importExcelBtn');
-        if (importBtn) {
-            importBtn.onclick = () => this.view.showImportModal();
+    setupEventListeners(container) {
+        const importButton = container.querySelector('#importExcelBtn');
+        if (importButton) {
+            importButton.addEventListener('click', () => this.view?.showImportModal());
         }
 
-        const diasSelect = document.getElementById('diasVentanaSelect');
-        if (diasSelect) {
-            diasSelect.onchange = (e) => {
-                inventoryController.loadAlertas(parseInt(e.target.value));
-            };
+        const logoutBtn = container.querySelector('#logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                Router.logout();
+            });
         }
     },
 
     initSidebarToggle(container) {
-        // Reusar lógica de layout.js si es posible, o duplicar mínimamente
         const sidebar = container.querySelector('#sidebar');
-        const sidebarCollapseBtn = container.querySelector('#sidebarCollapseBtn');
-        
-        if (sidebarCollapseBtn && sidebar) {
-            sidebarCollapseBtn.onclick = () => {
+        const collapseBtn = container.querySelector('#sidebarCollapseBtn');
+        const mobileBtn = container.querySelector('#sidebarToggleMobile');
+
+        if (collapseBtn && sidebar) {
+            collapseBtn.addEventListener('click', (event) => {
+                event.preventDefault();
                 sidebar.classList.toggle('collapsed');
                 document.body.classList.toggle('sidebar-collapsed');
-            };
+            });
         }
 
-        const logoutBtn = container.querySelector('#logoutBtn');
-        if (logoutBtn) logoutBtn.onclick = () => Router.logout();
-    }
+        if (mobileBtn && sidebar) {
+            mobileBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                sidebar.classList.toggle('show');
+            });
+        }
+    },
 };
 
 window.InventoryPage = InventoryPage;

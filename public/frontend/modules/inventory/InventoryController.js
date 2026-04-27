@@ -1,114 +1,116 @@
 /**
  * PharmaQuick - InventoryController
- * Controlador de Inventario - maneja FEFO, Alertas e Importación
+ * Coordina estado y eventos de la vista de inventario.
  */
-
 class InventoryController {
     constructor() {
         this.alertas = [];
-        this.fefoData = {}; // productoId => [lotes]
+        this.pagination = { page: 1, per_page: 25, total: 0, total_pages: 1 };
         this.isLoading = false;
-        
+
+        this.filters = {
+            dias: 180,
+            semaforo: '',
+            q: '',
+            page: 1,
+            perPage: 25,
+        };
+
         this.listeners = {
             onAlertasChange: [],
-            onFefoChange: [],
+            onPaginationChange: [],
             onLoadingChange: [],
-            onError: []
+            onError: [],
         };
     }
 
-    /**
-     * Inicializar controlador - cargar alertas por defecto
-     */
     async init() {
-        await this.loadAlertas();
-    }
-
-    /**
-     * Cargar alertas de vencimiento
-     */
-    async loadAlertas(dias = 180) {
         this.setLoading(true);
         try {
-            this.alertas = await InventoryService.getAlertas(dias);
+            await this.loadAlertas();
+        } finally {
+            this.setLoading(false);
+        }
+    }
+
+    async refreshCurrentView() {
+        this.setLoading(true);
+        try {
+            await this.loadAlertas();
+        } finally {
+            this.setLoading(false);
+        }
+    }
+
+    setFilters(partialFilters = {}) {
+        this.filters = { ...this.filters, ...partialFilters };
+        if (partialFilters.dias !== undefined || partialFilters.q !== undefined || partialFilters.semaforo !== undefined || partialFilters.perPage !== undefined) {
+            this.filters.page = 1;
+        }
+    }
+
+    setPage(page) {
+        this.filters.page = Math.max(1, Number(page) || 1);
+    }
+
+    async loadAlertas() {
+        try {
+            const result = await InventoryService.getAlertas(this.filters);
+            this.alertas = result.alertas;
+            this.pagination = result.pagination;
             this.notify('onAlertasChange', this.alertas);
+            this.notify('onPaginationChange', this.pagination);
         } catch (error) {
-            this.notify('onError', error.message);
-        } finally {
-            this.setLoading(false);
+            this.notify('onError', error.message || 'Error cargando alertas de inventario');
         }
     }
 
-    /**
-     * Cargar sugerencia FEFO para un producto
-     */
-    async loadFefo(productoId) {
-        this.setLoading(true);
-        try {
-            const lotes = await InventoryService.getFefo(productoId);
-            this.fefoData[productoId] = lotes;
-            this.notify('onFefoChange', { productoId, lotes });
-            return lotes;
-        } catch (error) {
-            this.notify('onError', error.message);
-        } finally {
-            this.setLoading(false);
-        }
-    }
-
-    /**
-     * Registrar movimiento
-     */
     async registrarMovimiento(data) {
         this.setLoading(true);
         try {
             const result = await InventoryService.registrarMovimiento(data);
-            // Si el movimiento afecta a un producto que estamos viendo en FEFO, recargar
-            const loteId = data.lote_id;
-            // Podríamos ser más específicos aquí si supiéramos el producto_id del lote
+            await this.refreshCurrentView();
             return result;
         } catch (error) {
-            this.notify('onError', error.message);
+            this.notify('onError', error.message || 'Error registrando movimiento');
             throw error;
         } finally {
             this.setLoading(false);
         }
     }
 
-    /**
-     * Importar desde Excel
-     */
     async importExcel(file) {
         this.setLoading(true);
         try {
             const result = await InventoryService.importExcel(file);
-            await this.loadAlertas(); // Recargar alertas después de importar
+            await this.refreshCurrentView();
             return result;
         } catch (error) {
-            this.notify('onError', error.message);
+            this.notify('onError', error.message || 'Error importando archivo');
             throw error;
         } finally {
             this.setLoading(false);
         }
     }
 
-    setLoading(loading) {
-        this.isLoading = loading;
-        this.notify('onLoadingChange', loading);
+    setLoading(isLoading) {
+        this.isLoading = isLoading;
+        this.notify('onLoadingChange', isLoading);
     }
 
     on(event, callback) {
-        if (this.listeners[event]) {
-            this.listeners[event].push(callback);
+        if (!this.listeners[event]) {
+            return;
         }
+        this.listeners[event].push(callback);
     }
 
-    notify(event, data) {
-        if (this.listeners[event]) {
-            this.listeners[event].forEach(cb => cb(data));
+    notify(event, payload) {
+        if (!this.listeners[event]) {
+            return;
         }
+        this.listeners[event].forEach((callback) => callback(payload));
     }
 }
 
-// Exportar global
 const inventoryController = new InventoryController();

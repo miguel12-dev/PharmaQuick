@@ -18,7 +18,7 @@ if (!defined('ROUTES_PATH')) define('ROUTES_PATH', SRC_PATH . DIRECTORY_SEPARATO
 require_once SRC_PATH . '/Core/App.php';
 require_once SRC_PATH . '/Core/JsonResponse.php';
 require_once SRC_PATH . '/Core/Exceptions.php';
-// Precarga de firmas de rutas para análisis estático (y para evitar require condicional en editores).
+// Precarga de firmas de rutas para anÃƒÂ¡lisis estÃƒÂ¡tico (y para evitar require condicional en editores).
 require_once ROUTES_PATH . '/lotes.php';
 require_once ROUTES_PATH . '/inventario.php';
 
@@ -37,13 +37,13 @@ class PharmaRouter {
     }
 
     public function run(): void {
-        // Archivos estáticos (HTML, CSS, JS)
+        // Archivos estÃƒÂ¡ticos (HTML, CSS, JS)
         if ($this->method === 'GET' && !$this->isApiRequest($this->uri)) {
             $this->serveStaticFile();
             return;
         }
 
-        // Health check público
+        // Health check pÃƒÂºblico
         if ($this->method === 'GET' && $this->uri === '/health') {
             header('Content-Type: application/json');
             echo json_encode(['service' => 'PharmaQuick API', 'status' => 'running']);
@@ -64,7 +64,7 @@ class PharmaRouter {
     }
 
     private function handleApi(): void {
-        // Verificar si es ruta pública (login)
+        // Verificar si es ruta pÃƒÂºblica (login)
         if (in_array($this->uri, $this->publicRoutes) && $this->method === 'POST') {
             require_once ROUTES_PATH . '/auth.php';
             handleAuthLogin();
@@ -80,17 +80,17 @@ class PharmaRouter {
             return;
         }
 
-        // Todas las demás rutas requieren JWT
+        // Todas las demÃƒÂ¡s rutas requieren JWT
         require_once SRC_PATH . '/Infrastructure/Services/JwtService.php';
         require_once SRC_PATH . '/API/Middleware/JwtMiddleware.php';
 
         $middleware = new JwtMiddleware();
         
         if (!$middleware->handle()) {
-            return; // Ya respondió con error
+            return; // Ya respondiÃƒÂ³ con error
         }
 
-        // Enrutar según URI
+        // Enrutar segÃƒÂºn URI
         $this->dispatchRoutes();
     }
 
@@ -120,7 +120,7 @@ class PharmaRouter {
             return;
         }
 
-        // PUT/POST /api/productos/{id} - Actualizar producto (POST para soportar imágenes en FormData)
+        // PUT/POST /api/productos/{id} - Actualizar producto (POST para soportar imÃƒÂ¡genes en FormData)
         if (($this->method === 'PUT' || $this->method === 'POST') && preg_match('#^/api/productos/(\d+)$#', $this->uri, $matches)) {
             require_once ROUTES_PATH . '/productos.php';
             handlePutProductos((int) $matches[1]);
@@ -141,7 +141,7 @@ class PharmaRouter {
             return;
         }
 
-        // Búsqueda: /api/productos/search?q=...
+        // BÃƒÂºsqueda: /api/productos/search?q=...
         if ($this->uri === '/api/productos/search' && $this->method === 'GET') {
             require_once ROUTES_PATH . '/productos.php';
             handleSearchProductos();
@@ -242,7 +242,7 @@ class PharmaRouter {
             return;
         }
 
-        // GET /api/inventario/alertas - lotes por vencer (semáforo)
+        // GET /api/inventario/alertas - lotes por vencer (semÃ¡foro)
         if (
             $this->method === 'GET' &&
             in_array($this->uri, ['/api/inventario/alertas', '/api/inventario/alerta'], true)
@@ -252,7 +252,28 @@ class PharmaRouter {
             return;
         }
 
-        // POST /api/inventario/import-excel - carga masiva vía Excel
+        // GET /api/inventario/resumen - KPIs inventario
+        if ($this->uri === '/api/inventario/resumen' && $this->method === 'GET') {
+            require_once ROUTES_PATH . '/inventario.php';
+            handleGetResumenInventario();
+            return;
+        }
+
+        // GET /api/inventario/movimientos - historial de movimientos
+        if ($this->uri === '/api/inventario/movimientos' && $this->method === 'GET') {
+            require_once ROUTES_PATH . '/inventario.php';
+            handleGetMovimientosInventario();
+            return;
+        }
+
+        // GET /api/inventario/import-modelo - formato esperado para xlsx
+        if ($this->uri === '/api/inventario/import-modelo' && $this->method === 'GET') {
+            require_once ROUTES_PATH . '/inventario.php';
+            handleGetImportModeloInventario();
+            return;
+        }
+
+        // POST /api/inventario/import-excel - carga masiva vÃ­a Excel
         if ($this->uri === '/api/inventario/import-excel' && $this->method === 'POST') {
             require_once ROUTES_PATH . '/inventario.php';
             handlePostImportExcel();
@@ -305,3 +326,4 @@ class PharmaRouter {
 // Ejecutar router
 $router = new PharmaRouter();
 $router->run();
+

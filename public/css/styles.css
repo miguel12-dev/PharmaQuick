@@ -728,3 +728,85 @@ body {
         grid-template-columns: repeat(4, 1fr);
     }
 }
+/* ===== Inventario moderno ===== */
+.inventory-page {
+    animation: fadeInUp 0.25s ease-out;
+}
+
+.inventory-kpi-card {
+    border-radius: 14px;
+    border: 1px solid rgba(var(--pq-primary-rgb), 0.14) !important;
+}
+
+.inventory-kpi-card .card-body {
+    padding: 1rem;
+}
+
+.inventory-kpi-card small {
+    color: var(--pq-text-secondary);
+    font-weight: 600;
+}
+
+.inventory-kpi-card h5 {
+    margin: 0.35rem 0 0;
+    color: var(--pq-primary-dark);
+    font-weight: 700;
+}
+
+.inventory-table thead th {
+    white-space: nowrap;
+}
+
+.inventory-action-btn {
+    border-radius: 10px;
+}
+
+.inventory-semaforo {
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.35rem 0.7rem;
+}
+
+.inventory-semaforo-vencido {
+    background-color: rgba(15, 23, 42, 0.08);
+    color: var(--pq-dark);
+}
+
+.inventory-semaforo-rojo {
+    background-color: rgba(239, 68, 68, 0.14);
+    color: #b91c1c;
+}
+
+.inventory-semaforo-amarillo {
+    background-color: rgba(245, 158, 11, 0.14);
+    color: #b45309;
+}
+
+.inventory-semaforo-verde {
+    background-color: rgba(16, 185, 129, 0.14);
+    color: var(--pq-primary-dark);
+}
+
+.inventory-movement-filter {
+    max-width: 220px;
+}
+
+.inventory-import-format,
+.inventory-import-csv {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.75rem;
+}
+
+.inventory-import-summary {
+    font-size: 0.9rem;
+}
+
+.inventory-modal-form .form-control,
+.inventory-modal-form .form-select,
+.inventory-import-modal .form-control,
+.inventory-import-modal .form-select {
+    border-radius: 10px;
+}

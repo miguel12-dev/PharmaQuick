@@ -1,68 +1,72 @@
 /**
  * PharmaQuick - InventoryService
- * Servicio para manejo de Inventario (FEFO + Kardex + Import) via API
+ * Servicio de Inventario: alertas, resumen, movimientos e importación.
  */
-
 class InventoryService {
-    /**
-     * Obtener sugerencia FEFO para un producto
-     */
-    static async getFefo(productoId) {
-        try {
-            const response = await httpClient.get('/inventario/fefo', { producto_id: productoId });
-            return response.data?.lotes || [];
-        } catch (error) {
-            console.error('InventoryService.getFefo:', error);
-            throw error;
-        }
+    static async getAlertas(filters = {}) {
+        const params = {
+            dias: filters.dias ?? 180,
+            semaforo: filters.semaforo || undefined,
+            q: filters.q || undefined,
+            page: filters.page ?? 1,
+            per_page: filters.perPage ?? 25,
+        };
+
+        const response = await httpClient.get('/inventario/alertas', params);
+        return {
+            alertas: response.data?.alertas || [],
+            pagination: response.data?.pagination || { page: 1, per_page: 25, total: 0, total_pages: 1 },
+            filtros: response.data?.filtros || {},
+        };
     }
 
-    /**
-     * Obtener alertas de vencimiento
-     */
-    static async getAlertas(dias = 180) {
-        try {
-            const response = await httpClient.get('/inventario/alertas', { dias: dias });
-            return response.data?.alertas || [];
-        } catch (error) {
-            console.error('InventoryService.getAlertas:', error);
-            throw error;
-        }
+    static async getResumen(dias = 180) {
+        const response = await httpClient.get('/inventario/resumen', { dias });
+        return response.data?.resumen || {
+            total_alertas: 0,
+            stock_en_riesgo: 0,
+            vencidos: 0,
+            rojos: 0,
+            amarillos: 0,
+            verdes: 0,
+        };
     }
 
-    /**
-     * Registrar un movimiento de inventario
-     * @param {Object} data {lote_id, tipo, cantidad, descripcion}
-     */
+    static async getMovimientos(filters = {}) {
+        const response = await httpClient.get('/inventario/movimientos', {
+            tipo: filters.tipo || undefined,
+            q: filters.q || undefined,
+            page: filters.page ?? 1,
+            per_page: filters.perPage ?? 10,
+        });
+
+        return {
+            movimientos: response.data?.movimientos || [],
+            pagination: response.data?.pagination || { page: 1, per_page: 10, total: 0, total_pages: 1 },
+        };
+    }
+
+    static async getImportModel() {
+        const response = await httpClient.get('/inventario/import-modelo');
+        return response.data || {
+            headers_requeridos: [],
+            headers_opcionales: [],
+            ejemplo_fila: {},
+            formato_fecha: 'YYYY-MM-DD',
+        };
+    }
+
     static async registrarMovimiento(data) {
-        try {
-            const response = await httpClient.post('/inventario/movimiento', data);
-            return response.data;
-        } catch (error) {
-            console.error('InventoryService.registrarMovimiento:', error);
-            throw error;
-        }
+        const response = await httpClient.post('/inventario/movimiento', data);
+        return response.data;
     }
 
-    /**
-     * Importar inventario desde Excel
-     * @param {File} file 
-     */
     static async importExcel(file) {
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-
-            // Nota: httpClient.post debería manejar FormData correctamente si está configurado
-            // Si no, usaremos fetch directo o ajustaremos HttpClient
-            const response = await httpClient.post('/inventario/import-excel', formData);
-            return response.data;
-        } catch (error) {
-            console.error('InventoryService.importExcel:', error);
-            throw error;
-        }
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await httpClient.post('/inventario/import-excel', formData);
+        return response.data;
     }
 }
 
-// Exportar global
 const inventoryService = InventoryService;

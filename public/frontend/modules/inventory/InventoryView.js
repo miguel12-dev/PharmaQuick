@@ -1,75 +1,153 @@
 /**
- * PharmaQuick - Inventory View
- * Maneja la interfaz de inventario, FEFO e importación
+ * PharmaQuick - InventoryView
+ * Vista moderna de inventario con filtros, KPIs y carga masiva.
  */
-
 class InventoryView {
     constructor(containerSelector) {
         this.container = document.querySelector(containerSelector);
         this.controller = inventoryController;
+        this.currentImportSummary = null;
         this.init();
     }
 
     init() {
-        if (!this.container) return;
-
-        // Escuchar eventos del controlador
-        this.controller.on('onAlertasChange', (alertas) => this.renderAlertas(alertas));
-        this.controller.on('onLoadingChange', (loading) => this.setLoading(loading));
-        this.controller.on('onError', (msg) => this.showError(msg));
-
-        // Inicializar
-        this.controller.init();
-    }
-
-    /**
-     * Renderiza la tabla de alertas/semáforo
-     */
-    renderAlertas(alertas) {
-        const tableBody = this.container.querySelector('#alertasTableBody');
-        if (!tableBody) return;
-
-        if (alertas.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay alertas de vencimiento.</td></tr>';
+        if (!this.container) {
             return;
         }
 
-        tableBody.innerHTML = alertas.map(a => `
+        this.controller.on('onAlertasChange', (alertas) => this.renderAlertas(alertas));
+        this.controller.on('onPaginationChange', (pagination) => this.renderPagination(pagination));
+        this.controller.on('onLoadingChange', (loading) => this.setLoading(loading));
+        this.controller.on('onError', (message) => this.showError(message));
+
+        this.bindFilters();
+        this.controller.init();
+    }
+
+    bindFilters() {
+        const dias = this.container.querySelector('#diasVentanaSelect');
+        const semaforo = this.container.querySelector('#semaforoFilter');
+        const search = this.container.querySelector('#inventarioSearchInput');
+        const perPage = this.container.querySelector('#inventarioPerPageSelect');
+
+        if (dias) {
+            dias.addEventListener('change', async (event) => {
+                this.controller.setFilters({ dias: parseInt(event.target.value, 10) || 180 });
+                await this.controller.loadAlertas();
+            });
+        }
+
+        if (semaforo) {
+            semaforo.addEventListener('change', async (event) => {
+                this.controller.setFilters({ semaforo: event.target.value || '' });
+                await this.controller.loadAlertas();
+            });
+        }
+
+        if (search) {
+            let timeoutRef = null;
+            search.addEventListener('input', (event) => {
+                clearTimeout(timeoutRef);
+                timeoutRef = setTimeout(async () => {
+                    this.controller.setFilters({ q: event.target.value.trim() });
+                    await this.controller.loadAlertas();
+                }, 250);
+            });
+        }
+
+        if (perPage) {
+            perPage.addEventListener('change', async (event) => {
+                this.controller.setFilters({ perPage: parseInt(event.target.value, 10) || 25 });
+                await this.controller.loadAlertas();
+            });
+        }
+
+    }
+
+    renderAlertas(alertas) {
+        const tableBody = this.container.querySelector('#alertasTableBody');
+        const total = this.container.querySelector('#inventarioTotalBadge');
+
+        if (!tableBody) {
+            return;
+        }
+
+        if (total) {
+            total.textContent = `${this.controller.pagination.total || alertas.length}`;
+        }
+
+        if (!alertas || alertas.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Sin resultados para los filtros aplicados.</td></tr>';
+            return;
+        }
+
+        tableBody.innerHTML = alertas.map((item) => `
             <tr>
-                <td><span class="badge bg-${this.getSemaforoColor(a.semaforo)}">${a.semaforo}</span></td>
-                <td><strong>${a.producto_nombre}</strong></td>
-                <td><code>${a.codigo_lote}</code></td>
-                <td>${a.fecha_vencimiento}</td>
-                <td>${a.stock_actual}</td>
+                <td><span class="badge inventory-semaforo inventory-semaforo-${item.semaforo.toLowerCase()}">${item.semaforo}</span></td>
+                <td class="fw-semibold">${item.producto_nombre || '-'}</td>
+                <td><code>${item.codigo_barras || '-'}</code></td>
+                <td><code>${item.codigo_lote || '-'}</code></td>
+                <td>${item.fecha_vencimiento || '-'}</td>
+                <td>${item.dias_restantes ?? '-'}</td>
+                <td>${item.stock_actual}</td>
                 <td class="text-end">
-                    <button class="btn btn-sm btn-outline-primary action-btn" data-id="${a.lote_id}" data-action="movimiento">
-                        <i class="fas fa-exchange-alt"></i>
+                    <button class="btn btn-sm btn-outline-primary inventory-action-btn" data-id="${item.lote_id}" data-action="movimiento">
+                        <i class="fas fa-exchange-alt me-1"></i>Movimiento
                     </button>
                 </td>
             </tr>
         `).join('');
 
-        // Re-vincular eventos de botones
-        tableBody.querySelectorAll('.action-btn').forEach(btn => {
-            btn.onclick = () => this.handleAction(btn.dataset.action, btn.dataset.id);
+        tableBody.querySelectorAll('[data-action="movimiento"]').forEach((button) => {
+            button.addEventListener('click', () => this.showMovimientoModal(button.dataset.id));
         });
     }
 
-    getSemaforoColor(semaforo) {
-        const colors = {
-            'VENCIDO': 'dark',
-            'ROJO': 'danger',
-            'AMARILLO': 'warning',
-            'VERDE': 'success'
-        };
-        return colors[semaforo] || 'secondary';
+    renderPagination(pagination) {
+        const container = this.container.querySelector('#inventarioPagination');
+        if (!container) {
+            return;
+        }
+
+        const totalPages = pagination.total_pages || 1;
+        const current = pagination.page || 1;
+
+        if (totalPages <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+        html += `<li class="page-item ${current <= 1 ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${current - 1}">«</a></li>`;
+
+        for (let page = 1; page <= totalPages; page += 1) {
+            if (page === 1 || page === totalPages || (page >= current - 1 && page <= current + 1)) {
+                html += `<li class="page-item ${page === current ? 'active' : ''}"><a class="page-link" href="#" data-page="${page}">${page}</a></li>`;
+            } else if (page === current - 2 || page === current + 2) {
+                html += '<li class="page-item disabled"><span class="page-link">…</span></li>';
+            }
+        }
+
+        html += `<li class="page-item ${current >= totalPages ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${current + 1}">»</a></li>`;
+        container.innerHTML = html;
+
+        container.querySelectorAll('[data-page]').forEach((link) => {
+            link.addEventListener('click', async (event) => {
+                event.preventDefault();
+                const page = parseInt(link.dataset.page, 10);
+                if (!page || page < 1 || page > totalPages) {
+                    return;
+                }
+                this.controller.setPage(page);
+                await this.controller.loadAlertas();
+            });
+        });
     }
 
-    setLoading(loading) {
-        const table = this.container.querySelector('.table-responsive');
-        if (table) {
-            table.classList.toggle('opacity-50', loading);
-        }
+    setLoading(isLoading) {
+        this.container.querySelectorAll('.inventory-loading-target').forEach((element) => {
+            element.classList.toggle('opacity-50', isLoading);
+        });
     }
 
     showError(message) {
@@ -78,125 +156,155 @@ class InventoryView {
         }
     }
 
-    handleAction(action, id) {
-        if (action === 'movimiento') {
-            this.showMovimientoModal(id);
-        }
-    }
-
-    /**
-     * Modal para registrar movimiento manual (Ajuste, Merma, etc)
-     */
     showMovimientoModal(loteId) {
         const modal = new Modal({
-            title: 'Registrar Movimiento de Inventario',
+            title: '<i class="fas fa-exchange-alt me-2 text-primary"></i>Registrar movimiento',
             content: `
-                <form id="movimientoForm">
+                <form id="movimientoForm" class="inventory-modal-form">
                     <div class="mb-3">
-                        <label class="form-label">Tipo de Movimiento</label>
+                        <label class="form-label">Tipo</label>
                         <select class="form-select" name="tipo" required>
-                            <option value="ENTRADA">ENTRADA (Ajuste/Compra)</option>
-                            <option value="SALIDA">SALIDA (Merma/Ajuste)</option>
+                            <option value="ENTRADA">ENTRADA</option>
+                            <option value="SALIDA">SALIDA</option>
                             <option value="RESERVA">RESERVA</option>
                             <option value="LIBERACION">LIBERACION</option>
                         </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Cantidad</label>
-                        <input type="number" step="0.01" class="form-control" name="cantidad" required>
+                        <input type="number" step="0.01" min="0.01" class="form-control" name="cantidad" required>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Descripción / Motivo</label>
-                        <textarea class="form-control" name="descripcion" rows="2"></textarea>
+                    <div class="mb-0">
+                        <label class="form-label">Descripción</label>
+                        <textarea class="form-control" name="descripcion" rows="2" placeholder="Motivo del movimiento"></textarea>
                     </div>
                 </form>
             `,
             onConfirm: async () => {
                 const form = document.getElementById('movimientoForm');
                 const formData = new FormData(form);
-                const data = {
-                    lote_id: loteId,
+
+                const payload = {
+                    lote_id: Number(loteId),
                     tipo: formData.get('tipo'),
                     cantidad: parseFloat(formData.get('cantidad')),
-                    descripcion: formData.get('descripcion')
+                    descripcion: formData.get('descripcion'),
                 };
 
                 try {
-                    await this.controller.registrarMovimiento(data);
+                    modal.setLoading(true);
+                    await this.controller.registrarMovimiento(payload);
                     modal.close();
-                    Toast.success('Movimiento registrado correctamente');
-                    this.controller.loadAlertas(); // Recargar alertas
-                } catch (e) {
-                    modal.showError(e.message);
+                    Toast.success('Movimiento registrado correctamente.');
+                } catch (error) {
+                    modal.showError(error.message || 'No fue posible registrar el movimiento.');
+                } finally {
+                    modal.setLoading(false);
                 }
-            }
+            },
         });
+
         modal.open();
     }
 
-    /**
-     * Modal para Importación Excel
-     */
-    showImportModal() {
+    async showImportModal() {
+        const importModel = {
+            headers_requeridos: ['codigo_barras', 'codigo_lote', 'cantidad'],
+            headers_opcionales: ['costo_unitario', 'fecha_vencimiento'],
+            formato_fecha: 'YYYY-MM-DD',
+            ejemplo_fila: {
+                codigo_barras: '7701234567890',
+                codigo_lote: 'L-2026-001',
+                cantidad: '120',
+                costo_unitario: '4500.50',
+                fecha_vencimiento: '2027-12-31',
+            },
+        };
+        const headers = [...(importModel.headers_requeridos || []), ...(importModel.headers_opcionales || [])];
+        const headerLine = headers.join(',');
+        const exampleValues = headers.map((header) => importModel.ejemplo_fila?.[header] ?? '').join(',');
+        const csvModel = `${headerLine}\n${exampleValues}`;
+
         const modal = new Modal({
-            title: 'Importar Inventario Masivo',
+            title: '<i class="fas fa-file-import me-2 text-primary"></i>Carga masiva de inventario',
+            size: 'lg',
+            confirmText: 'Importar archivo',
             content: `
-                <div class="p-3">
-                    <p class="text-muted small">Selecciona un archivo .xlsx siguiendo la plantilla por código de barras.</p>
+                <div class="inventory-import-modal">
+                    <p class="small text-muted mb-3">Sube un archivo <strong>.xlsx</strong> con los encabezados del modelo definido.</p>
+
+                    <div class="inventory-import-format mb-3">
+                        <h6 class="fw-bold mb-2">Modelo esperado</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead><tr>${headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead>
+                                <tbody><tr>${headers.map((h) => `<td>${importModel.ejemplo_fila?.[h] ?? '-'}</td>`).join('')}</tr></tbody>
+                            </table>
+                        </div>
+                        <small class="text-muted d-block mt-2">Formato de fecha: ${importModel.formato_fecha || 'YYYY-MM-DD'}</small>
+                    </div>
+
+                    <div class="inventory-import-csv mb-3">
+                        <label class="form-label fw-semibold">Referencia rápida (CSV)</label>
+                        <textarea class="form-control" rows="3" readonly>${csvModel}</textarea>
+                    </div>
+
                     <div class="mb-3">
-                        <label class="form-label">Archivo Excel (.xlsx)</label>
-                        <input type="file" class="form-control" id="excelFile" accept=".xlsx">
+                        <label class="form-label fw-semibold">Archivo Excel (.xlsx)</label>
+                        <input type="file" class="form-control" id="excelFile" accept=".xlsx" required>
                     </div>
-                    <div id="importResults" class="mt-3 d-none">
-                        <h6>Resultados:</h6>
-                        <div class="alert alert-info py-2 small" id="importSummary"></div>
-                        <div id="importErrors" class="text-danger small mt-2" style="max-height: 150px; overflow-y: auto;"></div>
-                    </div>
+
+                    <div id="importResults" class="d-none"></div>
                 </div>
             `,
             onConfirm: async () => {
                 const fileInput = document.getElementById('excelFile');
-                if (!fileInput.files.length) {
-                    modal.showError('Selecciona un archivo');
+                if (!fileInput?.files?.length) {
+                    modal.showError('Seleccione un archivo .xlsx para continuar.');
                     return;
                 }
 
-                modal.setLoading(true);
                 try {
+                    modal.setLoading(true);
                     const result = await this.controller.importExcel(fileInput.files[0]);
-                    this.showImportResults(result.summary);
-                    if (result.summary.errores.length === 0) {
-                        setTimeout(() => modal.close(), 3000);
-                        Toast.success('Importación completada con éxito');
+                    this.currentImportSummary = result.summary;
+                    this.renderImportResults(result.summary, modal);
+
+                    if ((result.summary?.errores || []).length === 0) {
+                        Toast.success('Importación completada correctamente.');
+                        setTimeout(() => modal.close(), 1200);
                     }
-                } catch (e) {
-                    modal.showError(e.message);
+                } catch (error) {
+                    modal.showError(error.message || 'Error en la carga masiva.');
                 } finally {
                     modal.setLoading(false);
                 }
-            }
+            },
         });
+
         modal.open();
     }
 
-    showImportResults(summary) {
-        const container = document.getElementById('importResults');
-        const summaryElem = document.getElementById('importSummary');
-        const errorsElem = document.getElementById('importErrors');
-
-        container.classList.remove('d-none');
-        summaryElem.innerHTML = `
-            <strong>Total:</strong> ${summary.total_filas} | 
-            <strong>OK:</strong> ${summary.procesados_ok} | 
-            <strong>Errores:</strong> ${summary.errores.length}
-        `;
-
-        if (summary.errores.length > 0) {
-            errorsElem.innerHTML = '<ul>' + summary.errores.map(e => `
-                <li>Línea ${e.linea} (${e.codigo_barras}): ${e.error}</li>
-            `).join('') + '</ul>';
-        } else {
-            errorsElem.innerHTML = '';
+    renderImportResults(summary, modal) {
+        const body = modal.element?.querySelector('#importResults');
+        if (!body) {
+            return;
         }
+
+        const errores = summary?.errores || [];
+        const erroresHtml = errores.length
+            ? `<ul class="mb-0 ps-3">${errores.map((e) => `<li>Línea ${e.linea} (${e.codigo_barras}): ${e.error}</li>`).join('')}</ul>`
+            : '<span class="text-success">Sin errores de importación.</span>';
+
+        body.classList.remove('d-none');
+        body.innerHTML = `
+            <div class="alert alert-info inventory-import-summary mb-0">
+                <div><strong>Total filas:</strong> ${summary?.total_filas || 0}</div>
+                <div><strong>Procesadas OK:</strong> ${summary?.procesados_ok || 0}</div>
+                <div><strong>Errores:</strong> ${errores.length}</div>
+                <hr class="my-2">
+                ${erroresHtml}
+            </div>
+        `;
     }
 }
