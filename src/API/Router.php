@@ -30,8 +30,10 @@ class PharmaRouter {
     public function __construct() {
         App::bootstrap();
         $this->method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-        $uri = $_SERVER['REQUEST_URI'] ?? '/';
-        $this->uri = parse_url($uri, PHP_URL_PATH);
+        $requestUri = $_SERVER['REQUEST_URI'] ?? '/';
+        $path = parse_url($requestUri, PHP_URL_PATH) ?: '/';
+        $normalizedPath = $path !== '/' ? rtrim($path, '/') : '/';
+        $this->uri = $normalizedPath !== '' ? $normalizedPath : '/';
     }
 
     public function run(): void {
@@ -241,7 +243,10 @@ class PharmaRouter {
         }
 
         // GET /api/inventario/alertas - lotes por vencer (semáforo)
-        if ($this->uri === '/api/inventario/alertas' && $this->method === 'GET') {
+        if (
+            $this->method === 'GET' &&
+            in_array($this->uri, ['/api/inventario/alertas', '/api/inventario/alerta'], true)
+        ) {
             require_once ROUTES_PATH . '/inventario.php';
             handleGetAlertasInventario();
             return;

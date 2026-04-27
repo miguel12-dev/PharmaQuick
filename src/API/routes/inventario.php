@@ -114,10 +114,8 @@ function handleGetFefo(): void {
 }
 
 
-use PharmaQuick\Infrastructure\Persistence\PDOFactory;
 use PharmaQuick\Infrastructure\Persistence\LoteRepository;
 use PharmaQuick\Infrastructure\Persistence\MovimientoInventarioRepository;
-use PharmaQuick\Infrastructure\Persistence\ProductoRepository;
 use PharmaQuick\Domain\Services\InventarioMovimientoService;
 use PharmaQuick\Domain\Services\InventarioImportService;
 use PharmaQuick\Infrastructure\Services\ExcelXlsxReader;
@@ -292,5 +290,4 @@ function handleGetAlertasInventario(): void {
         JsonResponse::error('Error: ' . $e->getMessage(), 500);
     }
 }
-
 

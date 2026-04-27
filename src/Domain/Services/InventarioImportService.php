@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace PharmaQuick\Domain\Services;
 
 use PharmaQuick\Infrastructure\Persistence\LoteRepository;
-use PharmaQuick\Infrastructure\Persistence\ProductoRepository;
 use PharmaQuick\Infrastructure\Services\ExcelXlsxReader;
 use PDO;
 use RuntimeException;
@@ -15,14 +14,14 @@ use RuntimeException;
  */
 class InventarioImportService {
     private ExcelXlsxReader $excelReader;
-    private ProductoRepository $productoRepo;
+    private \ProductoRepository $productoRepo;
     private LoteRepository $loteRepo;
     private InventarioMovimientoService $movService;
     private PDO $pdo;
 
     public function __construct(
         ExcelXlsxReader $excelReader,
-        ProductoRepository $productoRepo,
+        \ProductoRepository $productoRepo,
         LoteRepository $loteRepo,
         InventarioMovimientoService $movService,
         PDO $pdo
