@@ -101,7 +101,7 @@ const ProductsPage = {
                 </div>
                 
                 <!-- Grid de Productos -->
-                <div id="productsGrid" class="product-grid row g-4">
+                <div id="productsGrid" class="product-grid">
                     <div class="col-12 text-center py-5">
                         <div class="spinner-border text-primary" role="status"></div>
                         <p class="mt-2 text-muted">Cargando productos...</p>
@@ -234,6 +234,16 @@ const ProductsPage = {
     },
     
     /**
+     * Configurar listeners específicos del modal de producto
+     */
+    setupModalListeners() {
+        const imageInput = document.getElementById('productImageInput');
+        if (imageInput) {
+            imageInput.addEventListener('change', (e) => this.handleImagePreview(e));
+        }
+    },
+    
+    /**
      * Cargar datos desde API
      */
     async loadData() {
@@ -305,19 +315,16 @@ const ProductsPage = {
      */
     renderCategoriaFilter() {
         const select = document.getElementById('categoriaFilter');
-        const datalist = document.getElementById('categoriasList');
+        const optionsHtml = this.categorias.map(c => `<option value="${c}">${c}</option>`).join('');
         
         if (select) {
-            const options = this.categorias.map(c => 
-                `<option value="${c}">${c}</option>`
-            ).join('');
-            select.innerHTML = `<option value="">Todas las categorías</option>${options}`;
+            select.innerHTML = `<option value="">Todas las categorías</option>${optionsHtml}`;
         }
         
+        // Poblar el datalist en el modal (si está abierto)
+        const datalist = document.getElementById('categoriasList');
         if (datalist) {
-            datalist.innerHTML = this.categorias.map(c => 
-                `<option value="${c}">`
-            ).join('');
+            datalist.innerHTML = this.categorias.map(c => `<option value="${c}">`).join('');
         }
     },
     
@@ -372,23 +379,32 @@ const ProductsPage = {
                 <i class="fas fa-pills text-muted opacity-25" style="font-size: 3rem;"></i>
                </div>`;
         
+        const stock = parseInt(producto.stock_total || 0);
+        const stockBadge = stock > 0
+            ? `<span class="badge badge-stock-ok"><i class="fas fa-cubes me-1"></i>${stock} uds</span>`
+            : `<span class="badge badge-stock-low"><i class="fas fa-exclamation-triangle me-1"></i>Sin stock</span>`;
+
         return `
-            <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
-                <div class="card h-100 shadow-sm border-0 product-item-card overflow-hidden">
+            <div class="product-item-container">
+                <div class="card h-100 border-0 product-item-card overflow-hidden">
                     ${imgHtml}
                     <div class="card-body p-3 d-flex flex-column">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h6 class="fw-bold text-dark mb-0 line-clamp-2" style="font-size: 0.95rem;">${producto.nombre || 'Sin nombre'}</h6>
-                            <span class="badge bg-primary-soft text-primary small">${producto.categoria || 'Gral'}</span>
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <h6 class="fw-bold text-dark mb-0" style="font-size: 0.92rem; line-height: 1.3;">${producto.nombre || 'Sin nombre'}</h6>
+                            <span class="badge bg-primary-soft text-primary small ms-1 flex-shrink-0">${producto.categoria || 'General'}</span>
                         </div>
-                        <p class="text-muted x-small mb-3">
-                            <i class="fas fa-barcode me-1 opacity-50"></i> ${producto.codigo_barras || producto.codigo || 'S/C'}
+                        <p class="text-muted x-small mb-2">
+                            <i class="fas fa-barcode me-1 opacity-50"></i>${producto.codigo_barras || producto.codigo || 'S/C'}
                         </p>
-                        <div class="mt-auto d-flex align-items-center justify-content-between">
-                            <div class="text-primary fw-bold">$ ${producto.precio || '0.00'}</div>
-                            <button class="btn btn-light btn-sm rounded-pill px-3" 
+                        ${producto.presentacion ? `<p class="text-muted x-small mb-2"><i class="fas fa-box me-1 opacity-50"></i>${producto.presentacion}</p>` : ''}
+                        <div class="mt-auto">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="fw-bold" style="color: var(--pq-primary); font-size: 1.05rem;">$ ${parseFloat(producto.precio || 0).toFixed(2)}</div>
+                                ${stockBadge}
+                            </div>
+                            <button class="btn btn-sm btn-edit-product w-100" 
                                     onclick="ProductsPage.editProduct(${producto.id})">
-                                <i class="fas fa-edit me-1"></i> <span class="small">Editar</span>
+                                <i class="fas fa-pen me-1"></i> Editar producto
                             </button>
                         </div>
                     </div>
@@ -472,18 +488,20 @@ const ProductsPage = {
      */
     handleImagePreview(event) {
         const file = event.target.files[0];
-        const preview = document.getElementById('imagePreview');
+        const preview = document.getElementById('imagePreviewContainer');
         
         if (!file || !preview) return;
         
         const reader = new FileReader();
         reader.onload = (e) => {
             preview.innerHTML = `
-                <img src="${e.target.result}" class="img-thumbnail" style="max-height: 150px;">
-                <button type="button" class="btn btn-sm btn-outline-danger position-absolute top-0 end-0 m-2" 
-                        onclick="this.parentElement.innerHTML = ''; document.getElementById('productImage').value = '';">
-                    <i class="bi bi-x"></i>
-                </button>
+                <div class="position-relative d-inline-block">
+                    <img src="${e.target.result}" class="img-thumbnail" style="max-height: 120px;">
+                    <button type="button" class="btn btn-sm btn-danger rounded-circle position-absolute top-0 end-0 translate-middle" 
+                            onclick="document.getElementById('imagePreviewContainer').innerHTML = ''; document.getElementById('productImageInput').value = '';">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
             `;
         };
         reader.readAsDataURL(file);
@@ -494,28 +512,33 @@ const ProductsPage = {
      */
     openProductModal(producto = null) {
         const modal = new Modal({
-            title: producto ? 'Editar Producto' : 'Nuevo Producto',
+            title: producto ? `<i class="fas fa-edit me-2 text-primary"></i> Editar Producto` : `<i class="fas fa-plus me-2 text-primary"></i> Nuevo Producto`,
             content: productFormRenderer.getFormHtml(producto),
-            confirmText: 'Guardar cambios',
+            confirmText: producto ? 'Actualizar Producto' : 'Crear Producto',
+            size: 'lg',
             onConfirm: async () => {
-                const data = productFormRenderer.getData();
-                if (!data.nombre) {
-                    modal.showError('El nombre es requerido');
+                const formData = productFormRenderer.getFormData();
+                const nombre = formData.get('nombre');
+                
+                if (!nombre || nombre.trim() === '') {
+                    modal.showError('El nombre del producto es obligatorio');
                     return;
                 }
                 
                 modal.setLoading(true);
                 try {
                     const token = AuthService.getToken();
+                    // Importante: Usamos POST para actualizaciones si hay archivos (FormData), 
+                    // ya que PHP no parsea PUT multipart/form-data automáticamente.
                     const url = producto ? `/api/productos/${producto.id}` : '/api/productos';
                     
                     const response = await fetch(url, {
                         method: 'POST',
                         headers: {
-                            'Authorization': 'Bearer ' + token,
-                            'Content-Type': 'application/json'
+                            'Authorization': 'Bearer ' + token
+                            // No establecemos Content-Type, el navegador lo hará con el boundary
                         },
-                        body: JSON.stringify(data)
+                        body: formData
                     });
                     
                     const result = await response.json();
@@ -523,20 +546,25 @@ const ProductsPage = {
                     if (result.success) {
                         modal.close();
                         if (typeof Toast !== 'undefined') {
-                            Toast.success(producto ? 'Producto actualizado' : 'Producto creado');
+                            Toast.success(producto ? 'Producto actualizado correctamente' : 'Producto creado correctamente');
                         }
                         await this.loadData();
                     } else {
-                        modal.showError(result.message);
+                        modal.showError(result.message || 'Error al procesar la solicitud');
                     }
                 } catch (error) {
-                    modal.showError(error.message);
+                    modal.showError('Error de red: ' + error.message);
                 } finally {
                     modal.setLoading(false);
                 }
             }
         });
+        
         modal.open();
+        
+        // Inicializar categorías en el datalist y listeners del modal
+        this.renderCategoriaFilter();
+        this.setupModalListeners();
     },
     
     /**

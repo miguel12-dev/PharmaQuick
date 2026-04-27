@@ -15,7 +15,7 @@ class ProductFormRenderer {
             <form id="productForm" class="p-2">
                 <div class="row g-3">
                     <!-- Nombre y Código -->
-                    <div class="col-md-8">
+                    <div class="col-md-7">
                         <div class="form-group mb-3">
                             <label class="form-label fw-bold small text-muted text-uppercase">Nombre del Producto <span class="text-danger">*</span></label>
                             <div class="input-group">
@@ -24,27 +24,53 @@ class ProductFormRenderer {
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-5">
                         <div class="form-group mb-3">
-                            <label class="form-label fw-bold small text-muted text-uppercase">Código</label>
+                            <label class="form-label fw-bold small text-muted text-uppercase">Código de Barras</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-white border-end-0"><i class="fas fa-barcode text-muted"></i></span>
-                                <input type="text" name="codigo_barras" class="form-control border-start-0" value="${barcode}" placeholder="Opcional">
+                                <input type="text" name="codigo_barras" class="form-control border-start-0" value="${barcode}" placeholder="Escanee o escriba">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Categoría y Presentación -->
+                    <!-- Categoría y Precio -->
                     <div class="col-md-6">
                         <div class="form-group mb-3">
                             <label class="form-label fw-bold small text-muted text-uppercase">Categoría</label>
-                            <input type="text" name="categoria" class="form-control" value="${p.categoria || ''}" placeholder="Ej. Antibióticos">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="fas fa-tag text-muted"></i></span>
+                                <input type="text" name="categoria" class="form-control border-start-0" value="${p.categoria || ''}" list="categoriasList" placeholder="Ej. Antibióticos">
+                                <datalist id="categoriasList"></datalist>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group mb-3">
-                            <label class="form-label fw-bold small text-muted text-uppercase">Presentación</label>
-                            <input type="text" name="presentacion" class="form-control" value="${p.presentacion || ''}" placeholder="Ej. Caja x 30 tabletas">
+                            <label class="form-label fw-bold small text-muted text-uppercase">Precio de Venta <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="fas fa-dollar-sign text-success"></i></span>
+                                <input type="number" step="0.01" name="precio" class="form-control border-start-0" value="${p.precio || ''}" placeholder="0.00" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Presentación -->
+                    <div class="col-12">
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold small text-muted text-uppercase">Presentación / Formato</label>
+                            <input type="text" name="presentacion" class="form-control" value="${p.presentacion || ''}" placeholder="Ej. Caja x 30 tabletas, Jarabe 120ml...">
+                        </div>
+                    </div>
+
+                    <!-- Imagen -->
+                    <div class="col-12">
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold small text-muted text-uppercase">Imagen del Producto</label>
+                            <input type="file" name="imagen" id="productImageInput" class="form-control" accept="image/*">
+                            <div id="imagePreviewContainer" class="mt-2 text-center position-relative">
+                                ${p.imagen ? `<img src="/uploads/productos/${p.imagen}" class="img-thumbnail" style="max-height: 120px;">` : ''}
+                            </div>
                         </div>
                     </div>
 
@@ -52,7 +78,7 @@ class ProductFormRenderer {
                     <div class="col-12">
                         <div class="form-group mb-0">
                             <label class="form-label fw-bold small text-muted text-uppercase">Descripción</label>
-                            <textarea name="descripcion" class="form-control" rows="3" placeholder="Información adicional del producto...">${p.descripcion || ''}</textarea>
+                            <textarea name="descripcion" class="form-control" rows="2" placeholder="Información adicional...">${p.descripcion || ''}</textarea>
                         </div>
                     </div>
                 </div>
@@ -74,6 +100,7 @@ class ProductFormRenderer {
             'nombre': producto.nombre,
             'codigo_barras': producto.codigo_barras || producto.codigo,
             'categoria': producto.categoria,
+            'precio': producto.precio || producto.precio_venta || 0,
             'presentacion': producto.presentacion,
             'descripcion': producto.descripcion
         };
@@ -87,18 +114,31 @@ class ProductFormRenderer {
     }
 
     /**
-     * Get form data
+     * Get form data as Object
      */
     getData() {
         const form = document.getElementById('productForm');
         if (!form) return {};
 
-        const formData = new FormData(form);
         const data = {};
-        formData.forEach((value, key) => {
-            data[key] = value;
+        const inputs = form.querySelectorAll('input, select, textarea');
+        
+        inputs.forEach(input => {
+            if (input.name && input.type !== 'file') {
+                data[input.name] = input.value;
+            }
         });
+        
         return data;
+    }
+
+    /**
+     * Get form data as FormData (for file uploads)
+     */
+    getFormData() {
+        const form = document.getElementById('productForm');
+        if (!form) return new FormData();
+        return new FormData(form);
     }
 }
 
