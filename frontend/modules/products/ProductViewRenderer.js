@@ -87,7 +87,9 @@ class ProductViewRenderer {
      */
     renderRow(p) {
         const id = p.id || p.producto_id;
-        const imageUrl = p.imagen_url ? p.imagen_url : '/public/assets/img/no-image.png';
+        const imageUrl = p.imagen_url
+            ? p.imagen_url
+            : (p.imagen && String(p.imagen).startsWith('/uploads/') ? '/public' + p.imagen : '/public/assets/img/no-image.png');
         const stockClass = p.stock_total <= 5 ? 'text-danger fw-bold' : (p.stock_total <= 15 ? 'text-warning fw-bold' : '');
         
         return `

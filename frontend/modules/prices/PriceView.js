@@ -38,9 +38,7 @@ class PriceView {
         if (!precios || precios.length === 0) {
             this.container.innerHTML = `
                 <div class="prices-empty">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
-                    </svg>
+                    <i class="fas fa-tags fa-2x text-muted"></i>
                     <p>No hay precios registrados</p>
                 </div>
             `;
@@ -75,9 +73,7 @@ class PriceView {
                 <div class="price-actions">
                     ${isActive ? `
                         <span class="badge badge-success">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                                <polyline points="20 6 9 17 4 12"/>
-                            </svg>
+                            <i class="fas fa-check"></i>
                             Activo
                         </span>
                     ` : `
@@ -87,9 +83,7 @@ class PriceView {
                     `}
                     <button type="button" class="btn btn-icon-only btn-ghost btn-sm" 
                         title="Eliminar" data-action="delete" data-id="${precio.precio_id}">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-                        </svg>
+                        <i class="fas fa-trash"></i>
                     </button>
                 </div>
             </div>
@@ -102,9 +96,7 @@ class PriceView {
     renderAddPriceButton() {
         return `
             <button type="button" class="btn btn-primary btn-block" id="btnAddPrice">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 5v14M5 12h14"/>
-                </svg>
+                <i class="fas fa-plus"></i>
                 Agregar Precio
             </button>
         `;

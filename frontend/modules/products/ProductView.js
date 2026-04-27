@@ -78,6 +78,7 @@ class ProductView {
             onConfirm: () => this.handleCreate(modal)
         });
         modal.open();
+        productFormRenderer.attachEvents();
     }
 
     /**
@@ -93,7 +94,7 @@ class ProductView {
             onConfirm: () => this.handleEdit(modal, id)
         });
         modal.open();
-        productFormRenderer.fillForm(producto);
+        productFormRenderer.attachEvents();
     }
 
     /**
@@ -111,14 +112,22 @@ class ProductView {
      */
     async handleCreate(modal) {
         const data = productFormRenderer.getData();
-        if (!data.nombre) {
+        if (!data?.nombre) {
             modal.showError('El nombre es requerido');
             return;
         }
         
         modal.setLoading(true);
         try {
-            await this.controller.createProducto(data);
+            const result = await this.controller.createProducto(data);
+
+            // Si el usuario adjuntó imagen, subirla al endpoint dedicado
+            const fileInput = document.getElementById('productImageInput');
+            const file = fileInput?.files?.[0];
+            if (file && result?.producto_id) {
+                await ProductService.uploadImage(result.producto_id, file);
+            }
+
             modal.close();
             if (typeof Toast !== 'undefined') {
                 Toast.success('Producto creado');
@@ -133,7 +142,7 @@ class ProductView {
      */
     async handleEdit(modal, id) {
         const data = productFormRenderer.getData();
-        if (!data.nombre) {
+        if (!data?.nombre) {
             modal.showError('El nombre es requerido');
             return;
         }
@@ -141,6 +150,14 @@ class ProductView {
         modal.setLoading(true);
         try {
             await this.controller.updateProducto(id, data);
+
+            // Subir imagen si se seleccionó una nueva
+            const fileInput = document.getElementById('productImageInput');
+            const file = fileInput?.files?.[0];
+            if (file) {
+                await ProductService.uploadImage(id, file);
+            }
+
             modal.close();
             if (typeof Toast !== 'undefined') {
                 Toast.success('Producto actualizado');

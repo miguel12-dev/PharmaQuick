@@ -4,7 +4,7 @@ class ProductFormRenderer {
      */
     getFormHtml(producto = null) {
         const p = producto || {};
-        const imageUrl = p.imagen_url ? p.imagen_url : '/public/assets/img/no-image.png';
+        const imageUrl = this.getImageUrl(p);
         
         return `
             <form id="productForm" class="product-form">
@@ -25,6 +25,14 @@ class ProductFormRenderer {
                     </div>
                     <div class="col-md-8">
                         <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Stock (cantidad disponible)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-cubes"></i></span>
+                                    <input type="number" name="stock_total" class="form-control" min="0" step="0.001" value="${(p.stock_total ?? 0)}">
+                                </div>
+                                <small class="text-muted">Este valor ajusta el inventario a través de lotes/movimientos.</small>
+                            </div>
                             <div class="col-12">
                                 <label class="form-label fw-semibold">Nombre del Producto <span class="text-danger">*</span></label>
                                 <input type="text" name="nombre" class="form-control" placeholder="Ej. Paracetamol 500mg" value="${p.nombre || ''}" required>
@@ -60,6 +68,16 @@ class ProductFormRenderer {
         `;
     }
 
+    getImageUrl(p) {
+        if (p?.imagen_url) return p.imagen_url;
+        if (p?.imagen) {
+            if (String(p.imagen).startsWith('/public/')) return p.imagen;
+            if (String(p.imagen).startsWith('/uploads/')) return '/public' + p.imagen;
+            return p.imagen;
+        }
+        return '/public/assets/img/no-image.png';
+    }
+
     /**
      * Attach form-specific events (image preview)
      */
@@ -87,7 +105,13 @@ class ProductFormRenderer {
     getData() {
         const form = document.getElementById('productForm');
         if (!form) return null;
-        return new FormData(form);
+        const data = {};
+        form.querySelectorAll('input, select, textarea').forEach(el => {
+            if (!el.name) return;
+            if (el.type === 'file') return;
+            data[el.name] = el.value;
+        });
+        return data;
     }
 }
 

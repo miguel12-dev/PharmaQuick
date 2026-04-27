@@ -1,0 +1,2 @@
+Please confirm: Do you prefer Automatic or Interactive execution mode for this change? (Default: Interactive)
+Also, which artifact store would you like to use? Options: engram (default if available), openspec, hybrid, none.

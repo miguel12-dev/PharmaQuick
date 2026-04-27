@@ -68,6 +68,21 @@ class ProductService {
             throw error;
         }
     }
+
+    /**
+     * Subir imagen de producto (endpoint dedicado)
+     */
+    static async uploadImage(id, file) {
+        try {
+            const formData = new FormData();
+            formData.append('imagen', file);
+            const response = await httpClient.post(`/productos/${id}/imagen`, formData);
+            return response.data;
+        } catch (error) {
+            console.error('ProductService.uploadImage:', error);
+            throw error;
+        }
+    }
     
     /**
      * Eliminar producto (inactivar)

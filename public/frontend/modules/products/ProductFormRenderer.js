@@ -10,6 +10,7 @@ class ProductFormRenderer {
     getFormHtml(producto = null) {
         const p = producto || {};
         const barcode = p.codigo_barras || p.codigo || '';
+        const imageUrl = this.getImageUrl(p);
         
         return `
             <form id="productForm" class="p-2">
@@ -55,6 +56,17 @@ class ProductFormRenderer {
                         </div>
                     </div>
 
+                    <!-- Stock -->
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold small text-muted text-uppercase">Stock (cantidad disponible)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="fas fa-cubes text-muted"></i></span>
+                                <input type="number" step="0.001" min="0" name="stock_total" class="form-control border-start-0" value="${(p.stock_total ?? 0)}" placeholder="0">
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Presentación -->
                     <div class="col-12">
                         <div class="form-group mb-3">
@@ -69,7 +81,7 @@ class ProductFormRenderer {
                             <label class="form-label fw-bold small text-muted text-uppercase">Imagen del Producto</label>
                             <input type="file" name="imagen" id="productImageInput" class="form-control" accept="image/*">
                             <div id="imagePreviewContainer" class="mt-2 text-center position-relative">
-                                ${p.imagen ? `<img src="/uploads/productos/${p.imagen}" class="img-thumbnail" style="max-height: 120px;">` : ''}
+                                ${imageUrl ? `<img src="${imageUrl}" class="img-thumbnail" style="max-height: 120px;" onerror="this.src='/public/assets/img/no-image.png'">` : ''}
                             </div>
                         </div>
                     </div>
@@ -84,6 +96,16 @@ class ProductFormRenderer {
                 </div>
             </form>
         `;
+    }
+
+    getImageUrl(p) {
+        if (p?.imagen_url) return p.imagen_url;
+        if (p?.imagen) {
+            if (String(p.imagen).startsWith('/public/')) return p.imagen;
+            if (String(p.imagen).startsWith('/uploads/')) return '/public' + p.imagen;
+            return p.imagen;
+        }
+        return null;
     }
 
     /**
@@ -101,6 +123,7 @@ class ProductFormRenderer {
             'codigo_barras': producto.codigo_barras || producto.codigo,
             'categoria': producto.categoria,
             'precio': producto.precio || producto.precio_venta || 0,
+            'stock_total': producto.stock_total ?? 0,
             'presentacion': producto.presentacion,
             'descripcion': producto.descripcion
         };
