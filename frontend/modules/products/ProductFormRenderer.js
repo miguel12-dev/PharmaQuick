@@ -1,4 +1,5 @@
 class ProductFormRenderer {
+    static NO_IMAGE_FALLBACK = "data:image/gif;base64,R0lGODlhAQABAAAAACw=";
     /**
      * Get form HTML
      */
@@ -14,7 +15,7 @@ class ProductFormRenderer {
                         <div class="image-upload-container text-center">
                             <label class="form-label d-block text-start mb-2">Imagen del Producto</label>
                             <div class="image-preview-wrapper mb-3 mx-auto" style="width: 180px; height: 180px; border-radius: var(--radius-lg); overflow: hidden; background: #f3f4f6; border: 2px dashed var(--color-border); position: relative;">
-                                <img id="imagePreview" src="${imageUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='/public/assets/img/no-image.png'">
+                                <img id="imagePreview" src="${imageUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='${ProductFormRenderer.NO_IMAGE_FALLBACK}'">
                             </div>
                             <button type="button" class="btn btn-outline-primary btn-sm w-100" onclick="document.getElementById('productImageInput').click()">
                                 <i class="fas fa-camera me-1"></i> Cambiar Imagen
@@ -71,11 +72,10 @@ class ProductFormRenderer {
     getImageUrl(p) {
         if (p?.imagen_url) return p.imagen_url;
         if (p?.imagen) {
-            if (String(p.imagen).startsWith('/public/')) return p.imagen;
-            if (String(p.imagen).startsWith('/uploads/')) return '/public' + p.imagen;
+            if (String(p.imagen).startsWith('/uploads/')) return p.imagen;
             return p.imagen;
         }
-        return '/public/assets/img/no-image.png';
+        return ProductFormRenderer.NO_IMAGE_FALLBACK;
     }
 
     /**

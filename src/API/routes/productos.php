@@ -15,15 +15,9 @@ declare(strict_types=1);
 function buildProductoImagenUrl(?string $imagenDbPath): ?string {
     if (!$imagenDbPath) return null;
 
-    // Si ya viene con /public, se asume lista para el navegador.
-    if (strpos($imagenDbPath, '/public/') === 0) {
-        return $imagenDbPath;
-    }
-
-    // En este proyecto los assets se sirven bajo /public/...
-    if (strpos($imagenDbPath, '/uploads/') === 0) {
-        return '/public' . $imagenDbPath;
-    }
+    // El docroot ya es `public/`, por lo que una ruta DB "/uploads/..."
+    // debe exponerse como "/uploads/..." (NO "/public/uploads/...").
+    if (strpos($imagenDbPath, '/uploads/') === 0) return $imagenDbPath;
 
     // Fallback: devolver tal cual (por compatibilidad)
     return $imagenDbPath;
@@ -256,6 +250,7 @@ function handlePostProductos(): void {
         JsonResponse::error('El nombre del producto es requerido', 400);
         return;
     }
+    $precio = isset($input['precio']) ? (float)$input['precio'] : 0.0;
 
     try {
         require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
@@ -272,6 +267,15 @@ function handlePostProductos(): void {
             'presentacion' => $input['presentacion'] ?? null,
             'activo' => isset($input['activo']) ? (bool)$input['activo'] : true,
         ]);
+
+        // Si viene precio, persistir como precio activo en tabla precios para esta farmacia
+        if ($precio > 0) {
+            require_once SRC_PATH . '/Infrastructure/Persistence/PrecioRepository.php';
+            require_once SRC_PATH . '/Domain/Services/PrecioService.php';
+            $precioRepo = new PrecioRepository($pdo);
+            $precioService = new PrecioService($precioRepo, $repo);
+            $precioService->crearYActivar($productoId, $farmaciaId, $precio);
+        }
 
         // Si hay una imagen en la misma petición, procesarla
         if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
@@ -333,6 +337,12 @@ function handlePutProductos(int $id): void {
             return;
         }
 
+        $precio = null;
+        if (isset($input['precio'])) {
+            $precio = (float)$input['precio'];
+            unset($input['precio']);
+        }
+
         // Ajuste de stock_total (si viene)
         // Puede llegar como stock_total o stock (por compatibilidad)
         $stockDesired = null;
@@ -347,6 +357,15 @@ function handlePutProductos(int $id): void {
         // Actualizar datos básicos del producto (catálogo global)
         if (!empty($input)) {
             $repo->update($id, $input);
+        }
+
+        // Si viene precio, persistir como precio activo (tabla precios)
+        if ($precio !== null && $precio > 0) {
+            require_once SRC_PATH . '/Infrastructure/Persistence/PrecioRepository.php';
+            require_once SRC_PATH . '/Domain/Services/PrecioService.php';
+            $precioRepo = new PrecioRepository($pdo);
+            $precioService = new PrecioService($precioRepo, $repo);
+            $precioService->crearYActivar($id, $farmaciaId, $precio);
         }
 
         // Aplicar ajuste de stock vía Kardex

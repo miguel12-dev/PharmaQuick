@@ -417,11 +417,12 @@ const ProductsPage = {
      * Renderizar un card de producto
      */
     renderProductCard(producto) {
-        const imagen = producto.imagen || producto.foto || null;
-        const imgUrl = (imagen && imagen.startsWith('/')) ? imagen : (imagen ? `/uploads/productos/${imagen}` : '');
+        const imgUrl = producto.imagen_url
+            ? producto.imagen_url
+            : (producto.imagen && String(producto.imagen).startsWith('/uploads/') ? producto.imagen : null);
         
-        const imgHtml = imagen 
-            ? `<img src="${imgUrl}" class="card-img-top" alt="${producto.nombre}" style="height: 150px; object-fit: cover;" onerror="this.src='/public/assets/img/no-image.png'">`
+        const imgHtml = imgUrl 
+            ? `<img src="${imgUrl}" class="card-img-top" alt="${producto.nombre}" style="height: 150px; object-fit: cover;" onerror="this.onerror=null;this.src='data:image/gif;base64,R0lGODlhAQABAAAAACw='">`
             : `<div class="bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
                 <i class="fas fa-pills text-muted opacity-25" style="font-size: 3rem;"></i>
                </div>`;

@@ -4,6 +4,7 @@
  */
 
 const ProductsPage = {
+    NO_IMAGE_FALLBACK: "data:image/gif;base64,R0lGODlhAQABAAAAACw=",
     // Estado
     productos: [],
     productosFiltrados: [],
@@ -366,18 +367,25 @@ const ProductsPage = {
      * Renderizar un card de producto
      */
     renderProductCard(producto) {
-        const imagen = producto.imagen || producto.foto || null;
-        const imgUrl = imagen 
-            ? (imagen.startsWith('/') ? imagen : `/uploads/productos/${imagen}`) 
-            : null;
+        const imgUrl = producto.imagen_url
+            ? producto.imagen_url
+            : (producto.imagen && String(producto.imagen).startsWith('/uploads/') ? producto.imagen : null);
         
         const imgHtml = imgUrl 
             ? `<div class="card-img-container overflow-hidden" style="height: 180px;">
-                <img src="${imgUrl}" class="card-img-top h-100 w-100" alt="${producto.nombre}" style="object-fit: cover; transition: transform 0.5s ease;">
+                <img src="${imgUrl}" class="card-img-top h-100 w-100" alt="${producto.nombre}" style="object-fit: cover; transition: transform 0.5s ease;" onerror="this.onerror=null;this.src='${ProductsPage.NO_IMAGE_FALLBACK}'">
                </div>`
             : `<div class="bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
                 <i class="fas fa-pills text-muted opacity-25" style="font-size: 3rem;"></i>
                </div>`;
+
+        const precio = producto.precio_activo ?? producto.precio ?? 0;
+        const precioFmt = new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(Number(precio) || 0);
         
         const stock = parseInt(producto.stock_total || 0);
         const stockBadge = stock > 0
@@ -399,7 +407,7 @@ const ProductsPage = {
                         ${producto.presentacion ? `<p class="text-muted x-small mb-2"><i class="fas fa-box me-1 opacity-50"></i>${producto.presentacion}</p>` : ''}
                         <div class="mt-auto">
                             <div class="d-flex align-items-center justify-content-between mb-2">
-                                <div class="fw-bold" style="color: var(--pq-primary); font-size: 1.05rem;">$ ${parseFloat(producto.precio || 0).toFixed(2)}</div>
+                                <div class="fw-bold" style="color: var(--pq-primary); font-size: 1.05rem;">${precioFmt}</div>
                                 ${stockBadge}
                             </div>
                             <button class="btn btn-sm btn-edit-product w-100" 

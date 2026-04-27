@@ -1,4 +1,5 @@
 class ProductViewRenderer {
+    static NO_IMAGE_FALLBACK = "data:image/gif;base64,R0lGODlhAQABAAAAACw=";
     /**
      * Render main products view
      */
@@ -89,14 +90,14 @@ class ProductViewRenderer {
         const id = p.id || p.producto_id;
         const imageUrl = p.imagen_url
             ? p.imagen_url
-            : (p.imagen && String(p.imagen).startsWith('/uploads/') ? '/public' + p.imagen : '/public/assets/img/no-image.png');
+            : (p.imagen && String(p.imagen).startsWith('/uploads/') ? p.imagen : ProductViewRenderer.NO_IMAGE_FALLBACK);
         const stockClass = p.stock_total <= 5 ? 'text-danger fw-bold' : (p.stock_total <= 15 ? 'text-warning fw-bold' : '');
         
         return `
             <tr data-id="${id}">
                 <td class="ps-4">
                     <div class="product-img-thumb" style="width: 48px; height: 48px; border-radius: 8px; overflow: hidden; background: #f3f4f6;">
-                        <img src="${imageUrl}" alt="${p.nombre}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='/public/assets/img/no-image.png'">
+                        <img src="${imageUrl}" alt="${p.nombre}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='${ProductViewRenderer.NO_IMAGE_FALLBACK}'">
                     </div>
                 </td>
                 <td>

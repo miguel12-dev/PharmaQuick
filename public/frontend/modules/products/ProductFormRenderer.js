@@ -4,6 +4,7 @@
  */
 
 class ProductFormRenderer {
+    static NO_IMAGE_FALLBACK = "data:image/gif;base64,R0lGODlhAQABAAAAACw=";
     /**
      * Get form HTML
      */
@@ -81,7 +82,7 @@ class ProductFormRenderer {
                             <label class="form-label fw-bold small text-muted text-uppercase">Imagen del Producto</label>
                             <input type="file" name="imagen" id="productImageInput" class="form-control" accept="image/*">
                             <div id="imagePreviewContainer" class="mt-2 text-center position-relative">
-                                ${imageUrl ? `<img src="${imageUrl}" class="img-thumbnail" style="max-height: 120px;" onerror="this.src='/public/assets/img/no-image.png'">` : ''}
+                                ${imageUrl ? `<img src="${imageUrl}" class="img-thumbnail" style="max-height: 120px;" onerror="this.onerror=null;this.src='${ProductFormRenderer.NO_IMAGE_FALLBACK}'">` : ''}
                             </div>
                         </div>
                     </div>
@@ -101,8 +102,7 @@ class ProductFormRenderer {
     getImageUrl(p) {
         if (p?.imagen_url) return p.imagen_url;
         if (p?.imagen) {
-            if (String(p.imagen).startsWith('/public/')) return p.imagen;
-            if (String(p.imagen).startsWith('/uploads/')) return '/public' + p.imagen;
+            if (String(p.imagen).startsWith('/uploads/')) return p.imagen;
             return p.imagen;
         }
         return null;

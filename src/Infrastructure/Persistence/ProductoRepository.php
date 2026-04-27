@@ -37,11 +37,14 @@ class ProductoRepository {
                 p.presentacion,
                 p.activo,
                 p.imagen,
-                COALESCE(SUM(l.stock_actual), 0) AS stock_total
+                COALESCE(SUM(l.stock_actual), 0) AS stock_total,
+                pr.precio AS precio_activo,
+                pr.id AS precio_id
             FROM productos p
             LEFT JOIN lotes l ON p.id = l.producto_id AND l.farmacia_id = :farmacia_id
+            LEFT JOIN precios pr ON p.id = pr.producto_id AND pr.farmacia_id = :farmacia_id AND pr.activo = 1
             WHERE p.activo = 1
-            GROUP BY p.id, p.nombre, p.codigo_barras, p.descripcion, p.categoria, p.presentacion, p.activo, p.imagen
+            GROUP BY p.id, p.nombre, p.codigo_barras, p.descripcion, p.categoria, p.presentacion, p.activo, p.imagen, pr.precio, pr.id
             ORDER BY p.nombre ASC
         ");
         $stmt->execute([':farmacia_id' => $farmaciaId]);
@@ -63,13 +66,16 @@ class ProductoRepository {
                 p.presentacion,
                 p.activo,
                 p.imagen,
-                SUM(l.stock_actual) AS stock_total
+                SUM(l.stock_actual) AS stock_total,
+                pr.precio AS precio_activo,
+                pr.id AS precio_id
             FROM productos p
             INNER JOIN lotes l ON p.id = l.producto_id
+            LEFT JOIN precios pr ON p.id = pr.producto_id AND pr.farmacia_id = :farmacia_id AND pr.activo = 1
             WHERE p.id = :id 
                 AND l.farmacia_id = :farmacia_id 
                 AND p.activo = 1
-            GROUP BY p.id, p.nombre, p.codigo_barras, p.descripcion, p.categoria, p.presentacion, p.activo, p.imagen
+            GROUP BY p.id, p.nombre, p.codigo_barras, p.descripcion, p.categoria, p.presentacion, p.activo, p.imagen, pr.precio, pr.id
         ");
         $stmt->execute([':id' => $productoId, ':farmacia_id' => $farmaciaId]);
         $producto = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -91,14 +97,17 @@ class ProductoRepository {
                 p.presentacion,
                 p.activo,
                 p.imagen,
-                SUM(l.stock_actual) AS stock_total
+                SUM(l.stock_actual) AS stock_total,
+                pr.precio AS precio_activo,
+                pr.id AS precio_id
             FROM productos p
             INNER JOIN lotes l ON p.id = l.producto_id
+            LEFT JOIN precios pr ON p.id = pr.producto_id AND pr.farmacia_id = :farmacia_id AND pr.activo = 1
             WHERE l.farmacia_id = :farmacia_id 
                 AND p.activo = 1
                 AND l.stock_actual > 0
                 AND (p.nombre LIKE :query OR p.codigo_barras LIKE :query)
-            GROUP BY p.id, p.nombre, p.codigo_barras, p.descripcion, p.categoria, p.presentacion, p.activo, p.imagen
+            GROUP BY p.id, p.nombre, p.codigo_barras, p.descripcion, p.categoria, p.presentacion, p.activo, p.imagen, pr.precio, pr.id
             ORDER BY p.nombre ASC
             LIMIT 50
         ");
