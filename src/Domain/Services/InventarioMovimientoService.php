@@ -29,7 +29,7 @@ class InventarioMovimientoService {
         $loteId = (int)($data['lote_id'] ?? 0);
         $farmaciaId = (int)($data['farmacia_id'] ?? 0);
         $tipo = strtoupper(trim((string)($data['tipo'] ?? '')));
-        $cantidad = (float)($data['cantidad'] ?? 0);
+        $cantidad = (int)($data['cantidad'] ?? 0);
         $usuarioId = (int)($data['usuario_id'] ?? 0);
 
         // 1. Validaciones básicas
@@ -59,16 +59,17 @@ class InventarioMovimientoService {
         }
 
         // 4. Validar disponibilidad (pre-trigger check)
-        $stockActual = (float)$lote['stock_actual'];
-        $stockReservado = (float)$lote['stock_reservado'];
+        $stockActual = (int)$lote['stock_actual'];
+        $stockReservado = (int)$lote['stock_reservado'];
 
-        if ($tipo === 'SALIDA' && ($cantidad - $stockActual > 0.0005)) {
+
+        if ($tipo === 'SALIDA' && $cantidad > $stockActual) {
             throw new RuntimeException("Stock insuficiente en el lote.");
         }
-        if ($tipo === 'RESERVA' && ($cantidad - $stockActual > 0.0005)) {
+        if ($tipo === 'RESERVA' && $cantidad > $stockActual) {
             throw new RuntimeException("Stock insuficiente para reservar.");
         }
-        if ($tipo === 'LIBERACION' && ($cantidad - $stockReservado > 0.0005)) {
+        if ($tipo === 'LIBERACION' && $cantidad > $stockReservado) {
             throw new RuntimeException("No hay suficiente stock reservado para liberar.");
         }
 

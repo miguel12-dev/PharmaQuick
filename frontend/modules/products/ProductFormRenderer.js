@@ -27,12 +27,21 @@ class ProductFormRenderer {
                     <div class="col-md-8">
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Stock (cantidad disponible)</label>
+                                <label class="form-label fw-semibold">Stock Actual</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light"><i class="fas fa-cubes"></i></span>
-                                    <input type="number" name="stock_total" class="form-control" min="0" step="0.001" value="${(p.stock_total ?? 0)}">
+                                    <input type="number" name="stock_total" class="form-control" min="0" step="1" value="${Math.round(p.stock_total ?? 0)}">
                                 </div>
-                                <small class="text-muted">Este valor ajusta el inventario a través de lotes/movimientos.</small>
+                                <small class="text-muted">Cantidad total en inventario (unidades enteras).</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Precio de Venta</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-tag"></i></span>
+                                    <input type="text" id="formPrecioDisplay" class="form-control" placeholder="0" value="${this.formatPrice(p.precio_activo || p.precio || 0)}">
+                                    <input type="hidden" name="precio" id="formPrecioValue" value="${p.precio_activo || p.precio || 0}">
+                                </div>
+                                <small class="text-muted">Precio actual para esta farmacia.</small>
                             </div>
                             <div class="col-12">
                                 <label class="form-label fw-semibold">Nombre del Producto <span class="text-danger">*</span></label>
@@ -79,7 +88,7 @@ class ProductFormRenderer {
     }
 
     /**
-     * Attach form-specific events (image preview)
+     * Attach form-specific events (image preview and price formatting)
      */
     attachEvents() {
         const fileInput = document.getElementById('productImageInput');
@@ -97,6 +106,35 @@ class ProductFormRenderer {
                 }
             });
         }
+
+        // Price formatting logic
+        const precioDisplay = document.getElementById('formPrecioDisplay');
+        const precioValue = document.getElementById('formPrecioValue');
+
+        if (precioDisplay && precioValue) {
+            precioDisplay.addEventListener('input', (e) => {
+                // Remove non-numeric characters
+                let val = e.target.value.replace(/\D/g, '');
+                
+                // Update hidden input with raw value
+                precioValue.value = val;
+                
+                // Format display with thousands separator
+                if (val !== '') {
+                    e.target.value = new Intl.NumberFormat('es-CO').format(val);
+                } else {
+                    e.target.value = '';
+                }
+            });
+        }
+    }
+
+    /**
+     * Format price for display
+     */
+    formatPrice(val) {
+        if (!val) return '';
+        return new Intl.NumberFormat('es-CO').format(Math.round(val));
     }
 
     /**

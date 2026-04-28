@@ -298,7 +298,7 @@ function handleGetResumenInventario(): void {
             'dias' => $dias,
             'resumen' => [
                 'total_alertas' => (int)($row['total_alertas'] ?? 0),
-                'stock_en_riesgo' => (float)($row['stock_en_riesgo'] ?? 0),
+                'stock_en_riesgo' => (int)($row['stock_en_riesgo'] ?? 0),
                 'vencidos' => (int)($row['vencidos'] ?? 0),
                 'rojos' => (int)($row['rojos'] ?? 0),
                 'amarillos' => (int)($row['amarillos'] ?? 0),
@@ -467,8 +467,9 @@ function handlePostMovimientoInventario(): void {
             'movimiento_id' => $movId,
             'lote' => [
                 'id' => (int)$lote['id'],
-                'stock_actual' => (float)$lote['stock_actual'],
-                'stock_reservado' => (float)$lote['stock_reservado'],
+                'stock_actual' => (int)$lote['stock_actual'],
+                'stock_reservado' => (int)$lote['stock_reservado'],
+
             ],
         ], 201);
     } catch (Throwable $e) {

@@ -73,7 +73,7 @@ class InventarioImportService {
         // 1. Validar campos mínimos
         $codigoBarras = trim((string)($row['codigo_barras'] ?? ''));
         $codigoLote = trim((string)($row['codigo_lote'] ?? ''));
-        $cantidad = (float)($row['cantidad'] ?? 0);
+        $cantidad = (int)($row['cantidad'] ?? 0);
         $costoUnitario = (float)($row['costo_unitario'] ?? 0);
         $fechaVencimiento = $row['fecha_vencimiento'] ?? null;
 

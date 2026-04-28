@@ -27,7 +27,7 @@ function buildProductoImagenUrl(?string $imagenDbPath): ?string {
  * Ajusta el stock total (sumatoria de lotes) creando movimientos de inventario.
  * Respeta el trigger `trg_kardex_stock` (no actualiza lotes.stock_actual directo).
  */
-function setProductoStockTotal(PDO $pdo, int $productoId, int $farmaciaId, int $usuarioId, float $desiredStock): void {
+function setProductoStockTotal(PDO $pdo, int $productoId, int $farmaciaId, int $usuarioId, int $desiredStock): void {
     if ($desiredStock < 0) {
         throw new \InvalidArgumentException('stock_total no puede ser negativo');
     }
@@ -39,10 +39,10 @@ function setProductoStockTotal(PDO $pdo, int $productoId, int $farmaciaId, int $
         WHERE producto_id = :producto_id AND farmacia_id = :farmacia_id
     ");
     $stmt->execute([':producto_id' => $productoId, ':farmacia_id' => $farmaciaId]);
-    $current = (float)($stmt->fetchColumn() ?: 0);
+    $current = (int)($stmt->fetchColumn() ?: 0);
 
     $delta = $desiredStock - $current;
-    if (abs($delta) < 0.0005) {
+    if ($delta === 0) {
         return; // Sin cambios relevantes
     }
 
@@ -76,7 +76,7 @@ function setProductoStockTotal(PDO $pdo, int $productoId, int $farmaciaId, int $
     }
 
     // Helpers: insertar movimiento
-    $insertMov = function(int $loteId, string $tipo, float $cantidad) use ($pdo, $farmaciaId, $usuarioId): void {
+    $insertMov = function(int $loteId, string $tipo, int $cantidad) use ($pdo, $farmaciaId, $usuarioId): void {
         $stmt = $pdo->prepare("
             INSERT INTO movimientos_inventario (lote_id, farmacia_id, usuario_id, tipo, cantidad)
             VALUES (:lote_id, :farmacia_id, :usuario_id, :tipo, :cantidad)
@@ -101,7 +101,7 @@ function setProductoStockTotal(PDO $pdo, int $productoId, int $farmaciaId, int $
     $toRemove = abs($delta);
     foreach ($lotes as $l) {
         $loteId = (int)$l['id'];
-        $available = (float)($l['stock_actual'] ?? 0);
+        $available = (int)($l['stock_actual'] ?? 0);
         if ($available <= 0) continue;
         if ($toRemove <= 0) break;
 
@@ -347,10 +347,10 @@ function handlePutProductos(int $id): void {
         // Puede llegar como stock_total o stock (por compatibilidad)
         $stockDesired = null;
         if (isset($input['stock_total'])) {
-            $stockDesired = (float)$input['stock_total'];
+            $stockDesired = (int)$input['stock_total'];
             unset($input['stock_total']);
         } elseif (isset($input['stock'])) {
-            $stockDesired = (float)$input['stock'];
+            $stockDesired = (int)$input['stock'];
             unset($input['stock']);
         }
 

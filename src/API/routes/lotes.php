@@ -125,7 +125,7 @@ function handlePostLotes(): void {
     $codigoLote = isset($input['codigo_lote']) ? trim((string)$input['codigo_lote']) : '';
     $fechaVenc = $input['fecha_vencimiento'] ?? null;
     $costo = isset($input['costo_unitario']) ? (float)$input['costo_unitario'] : null;
-    $stockInicial = isset($input['stock_inicial']) ? (float)$input['stock_inicial'] : 0.0;
+    $stockInicial = isset($input['stock_inicial']) ? (int)$input['stock_inicial'] : 0;
 
     if ($productoId <= 0) {
         JsonResponse::error('producto_id es requerido', 400);
