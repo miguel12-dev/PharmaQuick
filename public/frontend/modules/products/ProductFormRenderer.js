@@ -11,6 +11,7 @@ class ProductFormRenderer {
     getFormHtml(producto = null) {
         const p = producto || {};
         const barcode = p.codigo_barras || p.codigo || '';
+        const precioInicial = p.precio ?? p.precio_venta ?? p.precio_activo ?? '';
         const imageUrl = this.getImageUrl(p);
         
         return `
@@ -52,7 +53,7 @@ class ProductFormRenderer {
                             <label class="form-label fw-bold small text-muted text-uppercase">Precio de Venta <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text bg-white border-end-0"><i class="fas fa-dollar-sign text-success"></i></span>
-                                <input type="number" step="0.01" name="precio" class="form-control border-start-0" value="${p.precio || ''}" placeholder="0.00" required>
+                                <input type="number" step="0.01" name="precio" class="form-control border-start-0" value="${precioInicial}" placeholder="0.00" required>
                             </div>
                         </div>
                     </div>
@@ -122,7 +123,7 @@ class ProductFormRenderer {
             'nombre': producto.nombre,
             'codigo_barras': producto.codigo_barras || producto.codigo,
             'categoria': producto.categoria,
-            'precio': producto.precio || producto.precio_venta || 0,
+            'precio': producto.precio ?? producto.precio_venta ?? producto.precio_activo ?? 0,
             'stock_total': producto.stock_total ?? 0,
             'presentacion': producto.presentacion,
             'descripcion': producto.descripcion

@@ -251,6 +251,12 @@ function handlePostProductos(): void {
         return;
     }
     $precio = isset($input['precio']) ? (float)$input['precio'] : 0.0;
+    $stockDesired = null;
+    if (isset($input['stock_total'])) {
+        $stockDesired = (int)$input['stock_total'];
+    } elseif (isset($input['stock'])) {
+        $stockDesired = (int)$input['stock'];
+    }
 
     try {
         require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
@@ -275,6 +281,15 @@ function handlePostProductos(): void {
             $precioRepo = new PrecioRepository($pdo);
             $precioService = new PrecioService($precioRepo, $repo);
             $precioService->crearYActivar($productoId, $farmaciaId, $precio);
+        }
+
+        if ($stockDesired !== null) {
+            $usuarioId = Auth::userId() ?? 0;
+            if (!$usuarioId) {
+                JsonResponse::error('Usuario no autenticado', 401);
+                return;
+            }
+            setProductoStockTotal($pdo, $productoId, $farmaciaId, (int)$usuarioId, $stockDesired);
         }
 
         // Si hay una imagen en la misma petición, procesarla
