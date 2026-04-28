@@ -64,7 +64,7 @@ class ProductFormRenderer {
                             <label class="form-label fw-bold small text-muted text-uppercase">Stock (cantidad disponible)</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-white border-end-0"><i class="fas fa-cubes text-muted"></i></span>
-                                <input type="number" step="0.001" min="0" name="stock_total" class="form-control border-start-0" value="${(p.stock_total ?? 0)}" placeholder="0">
+                                <input type="number" step="1" min="0" name="stock_total" class="form-control border-start-0" value="${(p.stock_total ?? 0)}" placeholder="0">
                             </div>
                         </div>
                     </div>
@@ -124,7 +124,7 @@ class ProductFormRenderer {
             'codigo_barras': producto.codigo_barras || producto.codigo,
             'categoria': producto.categoria,
             'precio': producto.precio ?? producto.precio_venta ?? producto.precio_activo ?? 0,
-            'stock_total': producto.stock_total ?? 0,
+            'stock_total': Number.isFinite(Number(producto.stock_total)) ? Math.trunc(Number(producto.stock_total)) : 0,
             'presentacion': producto.presentacion,
             'descripcion': producto.descripcion
         };
@@ -132,7 +132,7 @@ class ProductFormRenderer {
         Object.keys(mapping).forEach(name => {
             const input = form.querySelector(`[name="${name}"]`);
             if (input && mapping[name] !== undefined) {
-                input.value = mapping[name];
+                input.value = name === 'stock_total' ? Math.max(0, Math.trunc(Number(mapping[name]) || 0)) : mapping[name];
             }
         });
     }
@@ -149,7 +149,11 @@ class ProductFormRenderer {
         
         inputs.forEach(input => {
             if (input.name && input.type !== 'file') {
-                data[input.name] = input.value;
+                if (input.name === 'stock_total') {
+                    data[input.name] = String(Math.max(0, Math.trunc(Number(input.value) || 0)));
+                } else {
+                    data[input.name] = input.value;
+                }
             }
         });
         

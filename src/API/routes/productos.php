@@ -283,7 +283,7 @@ function handlePostProductos(): void {
             $precioService->crearYActivar($productoId, $farmaciaId, $precio);
         }
 
-        if ($stockDesired !== null) {
+        if ($stockDesired !== null && $stockDesired > 0) {
             $usuarioId = Auth::userId() ?? 0;
             if (!$usuarioId) {
                 JsonResponse::error('Usuario no autenticado', 401);
