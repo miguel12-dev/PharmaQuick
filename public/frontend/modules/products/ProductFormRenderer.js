@@ -6,6 +6,10 @@
 class ProductFormRenderer {
     static NO_IMAGE_FALLBACK = "data:image/gif;base64,R0lGODlhAQABAAAAACw=";
     static DEFAULT_CATEGORIES = ['Analgésicos', 'Antibióticos', 'Antiinflamatorios', 'Antihistamínicos', 'Gastrointestinales', 'Vitaminas y suplementos', 'Dermatológicos', 'Cardiovasculares', 'Respiratorios', 'Pediátricos'];
+    
+    constructor() {
+        this.dynamicCategories = [];
+    }
 
     /**
      * Get form HTML
@@ -123,8 +127,16 @@ class ProductFormRenderer {
         return Boolean(category) && !this.isDefaultCategory(category);
     }
 
+    setDynamicCategories(categories = []) {
+        const cleaned = categories
+            .map(c => String(c || '').trim())
+            .filter(Boolean);
+        this.dynamicCategories = [...new Set(cleaned)];
+    }
+
     getCategoryOptionsHtml(selectedCategory) {
-        const options = ProductFormRenderer.DEFAULT_CATEGORIES.map(category => {
+        const merged = [...new Set([...ProductFormRenderer.DEFAULT_CATEGORIES, ...this.dynamicCategories])];
+        const options = merged.map(category => {
             const selected = category === selectedCategory ? 'selected' : '';
             return `<option value="${category}" ${selected}>${category}</option>`;
         }).join('');
@@ -146,6 +158,22 @@ class ProductFormRenderer {
 
         select.addEventListener('change', toggle);
         toggle();
+    }
+
+    setupStockFieldBehavior() {
+        const stockInput = document.querySelector('#productForm input[name="stock_total"]');
+        if (!stockInput) return;
+
+        stockInput.addEventListener('focus', () => {
+            if (String(stockInput.value).trim() === '0') {
+                stockInput.value = '';
+            }
+        });
+
+        stockInput.addEventListener('blur', () => {
+            const normalized = Math.max(0, Math.trunc(Number(stockInput.value) || 0));
+            stockInput.value = String(normalized);
+        });
     }
 
     /**
@@ -175,6 +203,7 @@ class ProductFormRenderer {
         });
 
         this.setupCategoryField();
+        this.setupStockFieldBehavior();
     }
 
     /**
@@ -211,6 +240,7 @@ class ProductFormRenderer {
         const form = document.getElementById('productForm');
         if (!form) return new FormData();
 
+        this.setupStockFieldBehavior();
         const data = this.getData();
         const formData = new FormData();
         Object.entries(data).forEach(([key, value]) => formData.append(key, value));

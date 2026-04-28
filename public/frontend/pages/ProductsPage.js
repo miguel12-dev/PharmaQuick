@@ -245,6 +245,9 @@ const ProductsPage = {
         if (typeof productFormRenderer?.setupCategoryField === 'function') {
             productFormRenderer.setupCategoryField();
         }
+        if (typeof productFormRenderer?.setupStockFieldBehavior === 'function') {
+            productFormRenderer.setupStockFieldBehavior();
+        }
     },
     
     /**
@@ -320,15 +323,12 @@ const ProductsPage = {
     renderCategoriaFilter() {
         const select = document.getElementById('categoriaFilter');
         const optionsHtml = this.categorias.map(c => `<option value="${c}">${c}</option>`).join('');
+        if (typeof productFormRenderer?.setDynamicCategories === 'function') {
+            productFormRenderer.setDynamicCategories(this.categorias);
+        }
         
         if (select) {
             select.innerHTML = `<option value="">Todas las categorías</option>${optionsHtml}`;
-        }
-        
-        // Poblar el datalist en el modal (si está abierto)
-        const datalist = document.getElementById('categoriasList');
-        if (datalist) {
-            datalist.innerHTML = this.categorias.map(c => `<option value="${c}">`).join('');
         }
     },
     
