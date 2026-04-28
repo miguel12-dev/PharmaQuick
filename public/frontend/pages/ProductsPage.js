@@ -242,6 +242,9 @@ const ProductsPage = {
         if (imageInput) {
             imageInput.addEventListener('change', (e) => this.handleImagePreview(e));
         }
+        if (typeof productFormRenderer?.setupCategoryField === 'function') {
+            productFormRenderer.setupCategoryField();
+        }
     },
     
     /**

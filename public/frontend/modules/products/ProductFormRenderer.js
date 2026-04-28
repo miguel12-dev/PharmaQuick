@@ -1,10 +1,12 @@
-/**
+﻿/**
  * PharmaQuick - Product Form Renderer
  * Renders product create/edit forms
  */
 
 class ProductFormRenderer {
     static NO_IMAGE_FALLBACK = "data:image/gif;base64,R0lGODlhAQABAAAAACw=";
+    static DEFAULT_CATEGORIES = ['Analgésicos', 'Antibióticos', 'Antiinflamatorios', 'Antihistamínicos', 'Gastrointestinales', 'Vitaminas y suplementos', 'Dermatológicos', 'Cardiovasculares', 'Respiratorios', 'Pediátricos'];
+
     /**
      * Get form HTML
      */
@@ -41,10 +43,14 @@ class ProductFormRenderer {
                     <div class="col-md-6">
                         <div class="form-group mb-3">
                             <label class="form-label fw-bold small text-muted text-uppercase">Categoría</label>
-                            <div class="input-group">
+                            <div class="input-group mb-2">
                                 <span class="input-group-text bg-white border-end-0"><i class="fas fa-tag text-muted"></i></span>
-                                <input type="text" name="categoria" class="form-control border-start-0" value="${p.categoria || ''}" list="categoriasList" placeholder="Ej. Antibióticos">
-                                <datalist id="categoriasList"></datalist>
+                                <select name="categoria" id="categoriaSelect" class="form-select border-start-0">
+                                    ${this.getCategoryOptionsHtml(p.categoria || '')}
+                                </select>
+                            </div>
+                            <div id="categoriaCustomContainer" class="${this.shouldShowCustomCategory(p.categoria || '') ? '' : 'd-none'}">
+                                <input type="text" id="categoriaCustomInput" class="form-control" value="${this.isDefaultCategory(p.categoria || '') ? '' : (p.categoria || '')}" placeholder="Escriba la nueva categoría">
                             </div>
                         </div>
                     </div>
@@ -109,6 +115,39 @@ class ProductFormRenderer {
         return null;
     }
 
+    isDefaultCategory(category) {
+        return ProductFormRenderer.DEFAULT_CATEGORIES.includes(category);
+    }
+
+    shouldShowCustomCategory(category) {
+        return Boolean(category) && !this.isDefaultCategory(category);
+    }
+
+    getCategoryOptionsHtml(selectedCategory) {
+        const options = ProductFormRenderer.DEFAULT_CATEGORIES.map(category => {
+            const selected = category === selectedCategory ? 'selected' : '';
+            return `<option value="${category}" ${selected}>${category}</option>`;
+        }).join('');
+        const useOther = this.shouldShowCustomCategory(selectedCategory);
+        return `<option value="">Seleccione categoría</option>${options}<option value="__OTRA__" ${useOther ? 'selected' : ''}>Otra...</option>`;
+    }
+
+    setupCategoryField() {
+        const select = document.getElementById('categoriaSelect');
+        const customContainer = document.getElementById('categoriaCustomContainer');
+        const customInput = document.getElementById('categoriaCustomInput');
+        if (!select || !customContainer || !customInput) return;
+
+        const toggle = () => {
+            const isOther = select.value === '__OTRA__';
+            customContainer.classList.toggle('d-none', !isOther);
+            if (!isOther) customInput.value = '';
+        };
+
+        select.addEventListener('change', toggle);
+        toggle();
+    }
+
     /**
      * Fill form with data (Robust handling for different field names)
      */
@@ -118,7 +157,6 @@ class ProductFormRenderer {
         const form = document.getElementById('productForm');
         if (!form) return;
 
-        // Mapeo de campos (name en form -> key en objeto)
         const mapping = {
             'nombre': producto.nombre,
             'codigo_barras': producto.codigo_barras || producto.codigo,
@@ -135,6 +173,8 @@ class ProductFormRenderer {
                 input.value = name === 'stock_total' ? Math.max(0, Math.trunc(Number(mapping[name]) || 0)) : mapping[name];
             }
         });
+
+        this.setupCategoryField();
     }
 
     /**
@@ -156,6 +196,10 @@ class ProductFormRenderer {
                 }
             }
         });
+
+        if (data.categoria === '__OTRA__') {
+            data.categoria = document.getElementById('categoriaCustomInput')?.value?.trim() || '';
+        }
         
         return data;
     }
@@ -166,7 +210,17 @@ class ProductFormRenderer {
     getFormData() {
         const form = document.getElementById('productForm');
         if (!form) return new FormData();
-        return new FormData(form);
+
+        const data = this.getData();
+        const formData = new FormData();
+        Object.entries(data).forEach(([key, value]) => formData.append(key, value));
+
+        const imageInput = form.querySelector('#productImageInput');
+        if (imageInput?.files?.[0]) {
+            formData.append('imagen', imageInput.files[0]);
+        }
+
+        return formData;
     }
 }
 
