@@ -104,8 +104,32 @@ const InventoryPage = {
             pageTitle.textContent = 'Inventario';
         }
 
+        this.loadUserInfo(container);
         this.setupEventListeners(container);
         this.initSidebarToggle(container);
+        this.setActiveNav('inventario');
+    },
+
+    loadUserInfo(container) {
+        if (typeof AuthService !== 'undefined') {
+            const session = AuthService.getSession();
+            const userNameEls = container.querySelectorAll('#userName');
+            if (session) {
+                userNameEls.forEach(el => {
+                    el.textContent = session.nombre || session.usuario || 'Admin';
+                });
+            }
+        }
+    },
+
+    setActiveNav(page) {
+        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+            link.classList.remove('active');
+            const href = link.getAttribute('href');
+            if (href && (href === '/' + page || href.includes(page))) {
+                link.classList.add('active');
+            }
+        });
     },
 
     setupEventListeners(container) {
@@ -114,13 +138,16 @@ const InventoryPage = {
             importButton.addEventListener('click', () => this.view?.showImportModal());
         }
 
-        const logoutBtn = container.querySelector('#logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', (event) => {
+        // Logout
+        const logoutBtns = container.querySelectorAll('#logoutBtn, #logoutBtnDropdown');
+        logoutBtns.forEach(btn => {
+            btn.addEventListener('click', (event) => {
                 event.preventDefault();
-                Router.logout();
+                if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+                    Router.logout();
+                }
             });
-        }
+        });
     },
 
     initSidebarToggle(container) {
@@ -128,11 +155,33 @@ const InventoryPage = {
         const collapseBtn = container.querySelector('#sidebarCollapseBtn');
         const mobileBtn = container.querySelector('#sidebarToggleMobile');
 
+        // Restaurar estado previo
+        const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        if (isCollapsed && sidebar && window.innerWidth > 768) {
+            sidebar.classList.add('collapsed');
+            document.body.classList.add('sidebar-collapsed');
+            const icon = sidebar.querySelector('.sidebar-toggle-icon');
+            if (icon) {
+                icon.classList.remove('fa-chevron-left');
+                icon.classList.add('fa-chevron-right');
+            }
+        } else if (!isCollapsed) {
+            document.body.classList.remove('sidebar-collapsed');
+        }
+
         if (collapseBtn && sidebar) {
             collapseBtn.addEventListener('click', (event) => {
                 event.preventDefault();
                 sidebar.classList.toggle('collapsed');
-                document.body.classList.toggle('sidebar-collapsed');
+                const nowCollapsed = sidebar.classList.contains('collapsed');
+                localStorage.setItem('sidebarCollapsed', nowCollapsed);
+                document.body.classList.toggle('sidebar-collapsed', nowCollapsed);
+                
+                const icon = sidebar.querySelector('.sidebar-toggle-icon');
+                if (icon) {
+                    icon.classList.toggle('fa-chevron-right', nowCollapsed);
+                    icon.classList.toggle('fa-chevron-left', !nowCollapsed);
+                }
             });
         }
 
