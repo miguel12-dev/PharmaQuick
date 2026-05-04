@@ -81,7 +81,6 @@ class ProductView {
         
         // Initialize form behaviors for the new modal
         productFormRenderer.setupCategoryField();
-        productFormRenderer.setupStockFieldBehavior();
     }
 
     /**
@@ -123,11 +122,6 @@ class ProductView {
         const formData = productFormRenderer.getFormData();
         const nombre = formData.get('nombre');
         
-        console.log('--- CREATE PRODUCT DEBUG ---');
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}: ${value}`);
-        }
-
         if (!nombre) {
             modal.showError('El nombre es requerido');
             return;
@@ -153,11 +147,6 @@ class ProductView {
         const formData = productFormRenderer.getFormData();
         const nombre = formData.get('nombre');
         
-        console.log('--- EDIT PRODUCT DEBUG ---');
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}: ${value}`);
-        }
-
         if (!nombre) {
             modal.showError('El nombre es requerido');
             return;
