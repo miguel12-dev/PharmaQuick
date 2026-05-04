@@ -17,8 +17,11 @@ class MovimientoInventarioRepository {
     }
 
     public function create(array $data): int {
+        $columns = $this->resolveColumns();
+        $descripcionCol = $columns['descripcion'];
+
         $stmt = $this->pdo->prepare("
-            INSERT INTO movimientos_inventario (lote_id, farmacia_id, usuario_id, tipo, cantidad, descripcion)
+            INSERT INTO movimientos_inventario (lote_id, farmacia_id, usuario_id, tipo, cantidad, {$descripcionCol})
             VALUES (:lote_id, :farmacia_id, :usuario_id, :tipo, :cantidad, :descripcion)
         ");
         $stmt->execute([
@@ -31,5 +34,20 @@ class MovimientoInventarioRepository {
         ]);
 
         return (int)$this->pdo->lastInsertId();
+    }
+
+    private function resolveColumns(): array {
+        static $cache = null;
+        if (is_array($cache)) {
+            return $cache;
+        }
+
+        $stmt = $this->pdo->query("SHOW COLUMNS FROM movimientos_inventario");
+        $cols = array_map(static fn(array $r): string => (string)$r['Field'], $stmt->fetchAll(PDO::FETCH_ASSOC) ?: []);
+        $cache = [
+            'descripcion' => in_array('observaciones', $cols, true) ? 'observaciones' : 'descripcion',
+        ];
+
+        return $cache;
     }
 }

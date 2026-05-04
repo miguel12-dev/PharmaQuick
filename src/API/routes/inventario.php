@@ -90,6 +90,26 @@ function inventarioQuerySemaforo(?string $raw): ?string {
     return in_array($value, ['VENCIDO', 'ROJO', 'AMARILLO', 'VERDE'], true) ? $value : null;
 }
 
+function inventarioMovimientosColumnas(PDO $pdo): array {
+    static $cache = null;
+    if (is_array($cache)) {
+        return $cache;
+    }
+
+    $stmt = $pdo->query("SHOW COLUMNS FROM movimientos_inventario");
+    $cols = array_map(static fn(array $r): string => (string)$r['Field'], $stmt->fetchAll(PDO::FETCH_ASSOC) ?: []);
+
+    $descripcionCol = in_array('observaciones', $cols, true) ? 'observaciones' : 'descripcion';
+    $fechaCol = in_array('creado_en', $cols, true) ? 'creado_en' : 'created_at';
+
+    $cache = [
+        'descripcion' => $descripcionCol,
+        'fecha' => $fechaCol,
+    ];
+
+    return $cache;
+}
+
 /**
  * GET /api/inventario/fefo?producto_id=123
  */
@@ -110,6 +130,9 @@ function handleGetFefo(): void {
 
     try {
         require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
+        require_once SRC_PATH . '/Infrastructure/Persistence/LoteRepository.php';
+        require_once SRC_PATH . '/Infrastructure/Persistence/MovimientoInventarioRepository.php';
+        require_once SRC_PATH . '/Domain/Services/InventarioMovimientoService.php';
         $pdo = PDOFactory::getCluster(1);
 
         $stmt = $pdo->prepare("
@@ -362,14 +385,17 @@ function handleGetMovimientosInventario(): void {
         ");
         $countStmt->execute($params);
         $total = (int)$countStmt->fetchColumn();
+        $movCols = inventarioMovimientosColumnas($pdo);
+        $descripcionCol = $movCols['descripcion'];
+        $fechaCol = $movCols['fecha'];
 
         $stmt = $pdo->prepare("
             SELECT
                 m.id,
                 m.tipo,
                 m.cantidad,
-                m.descripcion,
-                m.created_at,
+                m.{$descripcionCol} AS descripcion,
+                m.{$fechaCol} AS created_at,
                 l.codigo_lote,
                 p.id AS producto_id,
                 p.nombre AS producto_nombre,
@@ -451,7 +477,14 @@ function handlePostMovimientoInventario(): void {
 
     try {
         require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
+        require_once SRC_PATH . '/Infrastructure/Persistence/LoteRepository.php';
+        require_once SRC_PATH . '/Infrastructure/Persistence/MovimientoInventarioRepository.php';
+        require_once SRC_PATH . '/Domain/Services/InventarioMovimientoService.php';
         $pdo = PDOFactory::getCluster(1);
+
+        if (!class_exists(\PharmaQuick\Infrastructure\Persistence\LoteRepository::class)) {
+            throw new RuntimeException('No se pudo cargar LoteRepository');
+        }
 
         $loteRepo = new LoteRepository($pdo);
         $movRepo = new MovimientoInventarioRepository($pdo);
