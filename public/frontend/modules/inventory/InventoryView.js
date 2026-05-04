@@ -325,11 +325,20 @@ class InventoryView {
                 <div class="inventory-create-modal">
                     <div class="mb-4">
                         <label class="form-label fw-bold">1. Seleccionar Producto</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
-                            <input type="text" id="productSearchInput" class="form-control border-start-0" placeholder="Buscar por nombre o código de barras...">
+                        <div class="row g-2">
+                            <div class="col-md-7">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                                    <input type="text" id="productSearchInput" class="form-control border-start-0" placeholder="Buscar por nombre o código...">
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <select id="categoryFilter" class="form-select">
+                                    <option value="">Todas las categorías</option>
+                                </select>
+                            </div>
                         </div>
-                        <div id="productSearchResults" class="list-group mt-2 shadow-sm d-none" style="max-height: 200px; overflow-y: auto; z-index: 1050; position: absolute; width: calc(100% - 2rem);"></div>
+                        <div id="productSearchResults" class="list-group mt-2 shadow-sm d-none" style="max-height: 450px; overflow-y: auto; z-index: 1050; position: absolute; width: calc(100% - 2rem);"></div>
                         <div id="selectedProductInfo" class="mt-3 p-3 bg-light rounded d-none">
                             <div class="d-flex align-items-center gap-3">
                                 <div id="selectedProductIcon" class="bg-primary-soft text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
@@ -409,35 +418,56 @@ class InventoryView {
 
         // Lógica de búsqueda AJAX
         const searchInput = document.getElementById('productSearchInput');
+        const categoryFilter = document.getElementById('categoryFilter');
         const resultsBox = document.getElementById('productSearchResults');
         const selectedInfo = document.getElementById('selectedProductInfo');
         const createForm = document.getElementById('createLoteForm');
         let searchTimeout = null;
 
-        searchInput.addEventListener('input', (e) => {
-            const q = e.target.value.trim();
+        // Cargar categorías
+        const loadCategories = async () => {
+            try {
+                const response = await httpClient.get('/productos/categorias');
+                const categorias = response.data?.categorias || [];
+                categorias.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    categoryFilter.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error cargando categorías:', error);
+            }
+        };
+        loadCategories();
+
+        const performSearch = async () => {
+            const q = searchInput.value.trim();
+            const categoria = categoryFilter.value;
             clearTimeout(searchTimeout);
 
-            if (q.length < 2) {
+            if (q.length < 2 && !categoria) {
                 resultsBox.classList.add('d-none');
                 return;
             }
 
             searchTimeout = setTimeout(async () => {
                 try {
-                    const response = await httpClient.get('/productos/search', { q });
+                    const response = await httpClient.get('/productos/search', { q, categoria });
                     const productos = response.data?.productos || [];
-                    
+
                     if (productos.length === 0) {
-                        resultsBox.innerHTML = '<div class="list-group-item text-muted">No se encontraron productos</div>';
+                        resultsBox.innerHTML = '<div class="list-group-item text-muted text-center py-3">No se encontraron productos</div>';
                     } else {
                         resultsBox.innerHTML = productos.map(p => `
-                            <button type="button" class="list-group-item list-group-item-action p-3 product-select-item" data-id="${p.id}" data-nombre="${p.nombre}" data-barcode="${p.codigo_barras || ''}">
+                            <button type="button" class="list-group-item list-group-item-action p-3 product-select-item" data-id="${p.id}" data-nombre="${p.nombre}" data-barcode="${p.codigo || p.codigo_barras || ''}">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="fw-bold">${p.nombre}</span>
-                                    <span class="badge bg-light text-dark border">${p.codigo_barras || 'Sin código'}</span>
+                                    <div>
+                                        <span class="fw-bold d-block">${p.nombre}</span>
+                                        <small class="text-muted">${p.categoria || 'Sin categoría'} • ${p.presentacion || ''}</small>
+                                    </div>
+                                    <span class="badge bg-light text-dark border">${p.codigo || p.codigo_barras || 'Sin código'}</span>
                                 </div>
-                                <small class="text-muted">${p.presentacion || ''}</small>
                             </button>
                         `).join('');
 
@@ -450,8 +480,8 @@ class InventoryView {
                                 document.getElementById('targetProductoId').value = id;
                                 document.getElementById('selectedProductName').textContent = nombre;
                                 document.getElementById('selectedProductBarcode').textContent = barcode ? `Código: ${barcode}` : 'Sin código de barras';
-                                
-                                searchInput.parentElement.classList.add('d-none');
+
+                                searchInput.closest('.row').classList.add('d-none');
                                 resultsBox.classList.add('d-none');
                                 selectedInfo.classList.remove('d-none');
                                 createForm.classList.remove('d-none');
@@ -463,10 +493,13 @@ class InventoryView {
                     console.error('Error buscando productos:', error);
                 }
             }, 300);
-        });
+        };
+
+        searchInput.addEventListener('input', performSearch);
+        categoryFilter.addEventListener('change', performSearch);
 
         document.getElementById('changeProductBtn').addEventListener('click', () => {
-            searchInput.parentElement.classList.remove('d-none');
+            searchInput.closest('.row').classList.remove('d-none');
             selectedInfo.classList.add('d-none');
             createForm.classList.add('d-none');
             searchInput.value = '';
@@ -506,7 +539,7 @@ class InventoryView {
         try {
             const movimientos = await this.controller.loadMovimientosPorLote(loteId);
             const tbody = document.getElementById('historyTableBody');
-            
+
             if (movimientos.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">No hay movimientos registrados para este lote.</td></tr>';
                 return;

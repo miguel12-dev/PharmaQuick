@@ -226,9 +226,10 @@ function handleSearchProductos(): void {
     }
 
     $query = $_GET['q'] ?? $_GET['search'] ?? '';
+    $categoria = $_GET['categoria'] ?? null;
     
-    if (strlen($query) < 2) {
-        JsonResponse::error('Buscar mínimo 2 caracteres', 400);
+    if (strlen($query) < 2 && !$categoria) {
+        JsonResponse::error('Buscar mínimo 2 caracteres o seleccionar una categoría', 400);
         return;
     }
 
@@ -238,14 +239,45 @@ function handleSearchProductos(): void {
 
         $pdo = PDOFactory::getCluster(1);
         $repo = new ProductoRepository($pdo);
-        $productos = $repo->search($query, $farmaciaId);
+        
+        // Usar searchGlobal para permitir encontrar productos que no tienen lotes aún
+        $productos = $repo->searchGlobal($query, $categoria);
+
+        foreach ($productos as &$p) {
+            $p['imagen_url'] = buildProductoImagenUrl($p['imagen'] ?? null);
+        }
+        unset($p);
 
         JsonResponse::success([
             'productos' => $productos,
             'total' => count($productos),
             'query' => $query,
+            'categoria' => $categoria
         ]);
 
+    } catch (\Throwable $e) {
+        JsonResponse::error('Error: ' . $e->getMessage(), 500);
+    }
+}
+
+function handleGetCategorias(): void {
+    if (!Auth::farmaciaId()) {
+        JsonResponse::error('No autenticado', 401);
+        return;
+    }
+
+    try {
+        require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
+        require_once SRC_PATH . '/Infrastructure/Persistence/ProductoRepository.php';
+
+        $pdo = PDOFactory::getCluster(1);
+        $repo = new ProductoRepository($pdo);
+        $categorias = $repo->getCategorias();
+
+        JsonResponse::success([
+            'categorias' => $categorias,
+            'total' => count($categorias)
+        ]);
     } catch (\Throwable $e) {
         JsonResponse::error('Error: ' . $e->getMessage(), 500);
     }

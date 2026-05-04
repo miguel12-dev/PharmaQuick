@@ -244,19 +244,40 @@ class ProductoRepository {
      * Busca productos en el catálogo global (sin filtro de farmacia)
      * Útil para gestión de precios cuando el producto no tiene lotes
      */
-    public function searchGlobal(string $query): array {
-        $searchTerm = "%{$query}%";
-        $stmt = $this->pdo->prepare("
+    public function searchGlobal(string $query, ?string $categoria = null): array {
+        $where = ["(nombre LIKE :query OR codigo_barras LIKE :query)"];
+        $params = [':query' => "%{$query}%"];
+
+        if ($categoria && $categoria !== '') {
+            $where[] = "categoria = :categoria";
+            $params[':categoria'] = $categoria;
+        }
+
+        $sql = "
             SELECT id, nombre, codigo_barras, descripcion, categoria, presentacion, activo, imagen
             FROM productos
-            WHERE nombre LIKE :query OR codigo_barras LIKE :query
+            WHERE " . implode(' AND ', $where) . "
             ORDER BY nombre ASC
             LIMIT 50
-        ");
+        ";
         
-        $stmt->execute([':query' => $searchTerm]);
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
         
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Obtiene todas las categorías únicas del catálogo global
+     */
+    public function getCategorias(): array {
+        $stmt = $this->pdo->query("
+            SELECT DISTINCT categoria 
+            FROM productos 
+            WHERE categoria IS NOT NULL AND categoria != ''
+            ORDER BY categoria ASC
+        ");
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
     /**

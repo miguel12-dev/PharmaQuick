@@ -141,10 +141,17 @@ class PharmaRouter {
             return;
         }
 
-        // BÃƒÂºsqueda: /api/productos/search?q=...
+        // Búsqueda: /api/productos/search?q=...
         if ($this->uri === '/api/productos/search' && $this->method === 'GET') {
             require_once ROUTES_PATH . '/productos.php';
             handleSearchProductos();
+            return;
+        }
+
+        // Categorías: /api/productos/categorias
+        if ($this->uri === '/api/productos/categorias' && $this->method === 'GET') {
+            require_once ROUTES_PATH . '/productos.php';
+            handleGetCategorias();
             return;
         }
 
