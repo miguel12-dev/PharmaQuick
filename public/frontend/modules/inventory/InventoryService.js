@@ -61,6 +61,16 @@ class InventoryService {
         return response.data;
     }
 
+    static async crearLote(data) {
+        const response = await httpClient.post('/lotes', data);
+        return response.data;
+    }
+
+    static async getMovimientosByLote(loteId) {
+        const response = await httpClient.get('/inventario/movimientos', { lote_id: loteId });
+        return response.data?.movimientos || [];
+    }
+
     static async importExcel(file) {
         const formData = new FormData();
         formData.append('file', file);

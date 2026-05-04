@@ -91,15 +91,24 @@ class InventoryView {
                 <td>${item.dias_restantes ?? '-'}</td>
                 <td>${item.stock_actual}</td>
                 <td class="text-end">
-                    <button class="btn btn-sm btn-outline-primary inventory-action-btn" data-id="${item.lote_id}" data-action="movimiento">
-                        <i class="fas fa-exchange-alt me-1"></i>Movimiento
-                    </button>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary inventory-action-btn" data-id="${item.lote_id}" data-action="movimiento" title="Registrar Movimiento">
+                            <i class="fas fa-exchange-alt"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-info inventory-action-btn" data-id="${item.lote_id}" data-action="historial" title="Ver Historial">
+                            <i class="fas fa-history"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `).join('');
 
         tableBody.querySelectorAll('[data-action="movimiento"]').forEach((button) => {
             button.addEventListener('click', () => this.showMovimientoModal(button.dataset.id));
+        });
+
+        tableBody.querySelectorAll('[data-action="historial"]').forEach((button) => {
+            button.addEventListener('click', () => this.showHistorialModal(button.dataset.id));
         });
     }
 
@@ -306,5 +315,213 @@ class InventoryView {
                 ${erroresHtml}
             </div>
         `;
+    }
+
+    showCreateLoteModal() {
+        const modal = new Modal({
+            title: '<i class="fas fa-plus me-2 text-primary"></i>Nuevo Ingreso de Inventario',
+            size: 'lg',
+            content: `
+                <div class="inventory-create-modal">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">1. Seleccionar Producto</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                            <input type="text" id="productSearchInput" class="form-control border-start-0" placeholder="Buscar por nombre o código de barras...">
+                        </div>
+                        <div id="productSearchResults" class="list-group mt-2 shadow-sm d-none" style="max-height: 200px; overflow-y: auto; z-index: 1050; position: absolute; width: calc(100% - 2rem);"></div>
+                        <div id="selectedProductInfo" class="mt-3 p-3 bg-light rounded d-none">
+                            <div class="d-flex align-items-center gap-3">
+                                <div id="selectedProductIcon" class="bg-primary-soft text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                    <i class="fas fa-pills fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 id="selectedProductName" class="mb-1 fw-bold"></h6>
+                                    <p id="selectedProductBarcode" class="mb-0 text-muted small"></p>
+                                </div>
+                                <button type="button" id="changeProductBtn" class="btn btn-sm btn-link ms-auto text-decoration-none">Cambiar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="createLoteForm" class="d-none">
+                        <input type="hidden" name="producto_id" id="targetProductoId">
+                        <label class="form-label fw-bold mb-3">2. Detalles del Lote</label>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Código de Lote</label>
+                                <input type="text" name="codigo_lote" class="form-control" required placeholder="Ej: LOT-2026-001">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Fecha de Vencimiento</label>
+                                <input type="date" name="fecha_vencimiento" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Cantidad Inicial</label>
+                                <input type="number" name="stock_inicial" class="form-control" required min="1" step="1" placeholder="0">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Costo Unitario</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" name="costo_unitario" class="form-control" required min="0" step="0.01" placeholder="0.00">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            `,
+            onConfirm: async () => {
+                const form = document.getElementById('createLoteForm');
+                if (form.classList.contains('d-none')) {
+                    modal.showError('Debe seleccionar un producto primero.');
+                    return;
+                }
+
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                const formData = new FormData(form);
+                const payload = {
+                    producto_id: Number(formData.get('producto_id')),
+                    codigo_lote: formData.get('codigo_lote'),
+                    fecha_vencimiento: formData.get('fecha_vencimiento'),
+                    stock_inicial: Number(formData.get('stock_inicial')),
+                    costo_unitario: Number(formData.get('costo_unitario')),
+                };
+
+                try {
+                    modal.setLoading(true);
+                    await this.controller.crearLote(payload);
+                    modal.close();
+                    Toast.success('Lote creado e ingresado correctamente.');
+                } catch (error) {
+                    modal.showError(error.message || 'No fue posible crear el lote.');
+                } finally {
+                    modal.setLoading(false);
+                }
+            },
+        });
+
+        modal.open();
+
+        // Lógica de búsqueda AJAX
+        const searchInput = document.getElementById('productSearchInput');
+        const resultsBox = document.getElementById('productSearchResults');
+        const selectedInfo = document.getElementById('selectedProductInfo');
+        const createForm = document.getElementById('createLoteForm');
+        let searchTimeout = null;
+
+        searchInput.addEventListener('input', (e) => {
+            const q = e.target.value.trim();
+            clearTimeout(searchTimeout);
+
+            if (q.length < 2) {
+                resultsBox.classList.add('d-none');
+                return;
+            }
+
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const response = await httpClient.get('/productos/search', { q });
+                    const productos = response.data?.productos || [];
+                    
+                    if (productos.length === 0) {
+                        resultsBox.innerHTML = '<div class="list-group-item text-muted">No se encontraron productos</div>';
+                    } else {
+                        resultsBox.innerHTML = productos.map(p => `
+                            <button type="button" class="list-group-item list-group-item-action p-3 product-select-item" data-id="${p.id}" data-nombre="${p.nombre}" data-barcode="${p.codigo_barras || ''}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold">${p.nombre}</span>
+                                    <span class="badge bg-light text-dark border">${p.codigo_barras || 'Sin código'}</span>
+                                </div>
+                                <small class="text-muted">${p.presentacion || ''}</small>
+                            </button>
+                        `).join('');
+
+                        resultsBox.querySelectorAll('.product-select-item').forEach(item => {
+                            item.addEventListener('click', () => {
+                                const id = item.dataset.id;
+                                const nombre = item.dataset.nombre;
+                                const barcode = item.dataset.barcode;
+
+                                document.getElementById('targetProductoId').value = id;
+                                document.getElementById('selectedProductName').textContent = nombre;
+                                document.getElementById('selectedProductBarcode').textContent = barcode ? `Código: ${barcode}` : 'Sin código de barras';
+                                
+                                searchInput.parentElement.classList.add('d-none');
+                                resultsBox.classList.add('d-none');
+                                selectedInfo.classList.remove('d-none');
+                                createForm.classList.remove('d-none');
+                            });
+                        });
+                    }
+                    resultsBox.classList.remove('d-none');
+                } catch (error) {
+                    console.error('Error buscando productos:', error);
+                }
+            }, 300);
+        });
+
+        document.getElementById('changeProductBtn').addEventListener('click', () => {
+            searchInput.parentElement.classList.remove('d-none');
+            selectedInfo.classList.add('d-none');
+            createForm.classList.add('d-none');
+            searchInput.value = '';
+            searchInput.focus();
+        });
+    }
+
+    async showHistorialModal(loteId) {
+        const modal = new Modal({
+            title: '<i class="fas fa-history me-2 text-primary"></i>Historial de Movimientos',
+            size: 'lg',
+            confirmText: 'Cerrar',
+            showCancel: false,
+            content: `
+                <div class="inventory-history-modal">
+                    <div id="historyTableContainer" class="table-responsive">
+                        <table class="table table-sm table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Tipo</th>
+                                    <th>Cantidad</th>
+                                    <th>Descripción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody">
+                                <tr><td colspan="4" class="text-center py-4 text-muted">Cargando historial...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `,
+        });
+
+        modal.open();
+
+        try {
+            const movimientos = await this.controller.loadMovimientosPorLote(loteId);
+            const tbody = document.getElementById('historyTableBody');
+            
+            if (movimientos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">No hay movimientos registrados para este lote.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = movimientos.map(m => `
+                <tr>
+                    <td><small>${new Date(m.created_at).toLocaleString()}</small></td>
+                    <td><span class="badge inventory-semaforo-${m.tipo === 'ENTRADA' ? 'verde' : m.tipo === 'SALIDA' ? 'rojo' : 'amarillo'}">${m.tipo}</span></td>
+                    <td class="fw-bold">${m.cantidad}</td>
+                    <td><small class="text-muted">${m.descripcion || '-'}</small></td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            modal.showError('Error al cargar el historial.');
+        }
     }
 }

@@ -79,6 +79,29 @@ class InventoryController {
         }
     }
 
+    async crearLote(data) {
+        this.setLoading(true);
+        try {
+            const result = await InventoryService.crearLote(data);
+            await this.refreshCurrentView();
+            return result;
+        } catch (error) {
+            this.notify('onError', error.message || 'Error creando lote');
+            throw error;
+        } finally {
+            this.setLoading(false);
+        }
+    }
+
+    async loadMovimientosPorLote(loteId) {
+        try {
+            return await InventoryService.getMovimientosByLote(loteId);
+        } catch (error) {
+            this.notify('onError', error.message || 'Error cargando historial de movimientos');
+            throw error;
+        }
+    }
+
     async importExcel(file) {
         this.setLoading(true);
         try {

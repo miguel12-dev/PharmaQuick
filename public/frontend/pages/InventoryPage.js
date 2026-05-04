@@ -30,10 +30,16 @@ const InventoryPage = {
                             <h2 class="fw-bold mb-1 text-dark"><i class="fas fa-boxes-stacked me-2 text-primary"></i>Gestión de Inventario</h2>
                             <p class="text-muted small mb-0">Control FEFO, alertas de vencimiento y movimientos Kardex.</p>
                         </div>
-                        <button class="btn btn-primary d-flex align-items-center gap-2" id="importExcelBtn">
-                            <i class="fas fa-file-import"></i>
-                            <span>Carga masiva</span>
-                        </button>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-primary d-flex align-items-center gap-2" id="importExcelBtn">
+                                <i class="fas fa-file-import"></i>
+                                <span>Carga masiva</span>
+                            </button>
+                            <button class="btn btn-primary d-flex align-items-center gap-2" id="createLoteBtn">
+                                <i class="fas fa-plus"></i>
+                                <span>Nuevo Ingreso</span>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="card border-0 shadow-sm mb-4 inventory-loading-target">
@@ -136,6 +142,11 @@ const InventoryPage = {
         const importButton = container.querySelector('#importExcelBtn');
         if (importButton) {
             importButton.addEventListener('click', () => this.view?.showImportModal());
+        }
+
+        const createLoteButton = container.querySelector('#createLoteBtn');
+        if (createLoteButton) {
+            createLoteButton.addEventListener('click', () => this.view?.showCreateLoteModal());
         }
 
         // Logout

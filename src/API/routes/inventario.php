@@ -331,6 +331,7 @@ function handleGetMovimientosInventario(): void {
 
         $tipo = strtoupper(trim((string)($_GET['tipo'] ?? '')));
         $q = trim((string)($_GET['q'] ?? ''));
+        $loteId = isset($_GET['lote_id']) ? (int)$_GET['lote_id'] : 0;
 
         $where = ['m.farmacia_id = :farmacia_id'];
         $params = [':farmacia_id' => $farmaciaId];
@@ -338,6 +339,11 @@ function handleGetMovimientosInventario(): void {
         if ($tipo !== '' && in_array($tipo, ['ENTRADA', 'SALIDA', 'RESERVA', 'LIBERACION'], true)) {
             $where[] = 'm.tipo = :tipo';
             $params[':tipo'] = $tipo;
+        }
+
+        if ($loteId > 0) {
+            $where[] = 'm.lote_id = :lote_id';
+            $params[':lote_id'] = $loteId;
         }
 
         if ($q !== '') {
