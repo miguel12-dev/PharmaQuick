@@ -34,7 +34,8 @@ function setProductoStockTotal(
     int $usuarioId, 
     int $desiredStock, 
     ?string $codigoLote = null, 
-    ?string $fechaVencimiento = null
+    ?string $fechaVencimiento = null,
+    ?int $loteId = null
 ): void {
     if ($desiredStock < 0) {
         throw new \InvalidArgumentException('stock_total no puede ser negativo');
@@ -56,12 +57,13 @@ function setProductoStockTotal(
 
     error_log("setProductoStockTotal: prod=$productoId, farm=$farmaciaId, stock=$desiredStock, lote=$codigoLote, venc=$fechaVencimiento");
     
-    // Si se proporciona un lote específico, lo usamos (o creamos/actualizamos)
-    $targetLoteId = null;
-    if (!empty($codigoLote)) {
+    // Si se proporciona un lote específico (o ID), lo usamos (o creamos/actualizamos)
+    $targetLoteId = $loteId;
+    if (!empty($codigoLote) || !empty($loteId)) {
         require_once SRC_PATH . '/Infrastructure/Persistence/LoteRepository.php';
         $loteRepo = new \PharmaQuick\Infrastructure\Persistence\LoteRepository($pdo);
         $targetLoteId = $loteRepo->upsert([
+            'id' => $loteId,
             'producto_id' => $productoId,
             'farmacia_id' => $farmaciaId,
             'codigo_lote' => $codigoLote,
@@ -428,6 +430,7 @@ function handlePutProductos(int $id): void {
             
             $codigoLote = (isset($input['codigo_lote']) && trim($input['codigo_lote']) !== '') ? trim($input['codigo_lote']) : null;
             $fechaVencimiento = (isset($input['fecha_vencimiento']) && trim($input['fecha_vencimiento']) !== '') ? trim($input['fecha_vencimiento']) : null;
+            $loteId = (isset($input['lote_id']) && (int)$input['lote_id'] > 0) ? (int)$input['lote_id'] : null;
 
             setProductoStockTotal(
                 $pdo, 
@@ -436,7 +439,8 @@ function handlePutProductos(int $id): void {
                 (int)$usuarioId, 
                 $stockDesired,
                 $codigoLote,
-                $fechaVencimiento
+                $fechaVencimiento,
+                $loteId
             );
         }
 

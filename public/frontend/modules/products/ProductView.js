@@ -87,17 +87,23 @@ class ProductView {
     /**
      * Show edit modal
      */
-    showEditModal(id) {
-        const producto = this.controller.getProductoById(id);
-        if (!producto) return;
+    async showEditModal(id) {
+        try {
+            // Obtener datos frescos del servidor (incluye lote_id y metadata de inventario)
+            const producto = await this.controller.fetchById(id);
+            if (!producto) return;
 
-        const modal = new Modal({
-            title: 'Editar Producto',
-            content: productFormRenderer.getFormHtml(producto),
-            onConfirm: () => this.handleEdit(modal, id)
-        });
-        modal.open();
-        productFormRenderer.fillForm(producto);
+            const modal = new Modal({
+                title: 'Editar Producto',
+                content: productFormRenderer.getFormHtml(producto),
+                onConfirm: () => this.handleEdit(modal, id)
+            });
+            modal.open();
+            productFormRenderer.fillForm(producto);
+        } catch (error) {
+            console.error('Error opening edit modal:', error);
+            this.showError('No se pudo cargar la información del producto');
+        }
     }
 
     /**

@@ -47,36 +47,56 @@ class LoteRepository {
     }
 
     public function upsert(array $data): int {
-        $lote = $this->findByUniqueKey(
-            (int)$data['producto_id'], 
-            (int)$data['farmacia_id'], 
-            (string)$data['codigo_lote']
-        );
+        $lote = null;
+        $farmaciaId = (int)$data['farmacia_id'];
+        $productoId = (int)$data['producto_id'];
+
+        // 1. Intentar por ID si se proporciona
+        if (!empty($data['id'])) {
+            $lote = $this->findById((int)$data['id'], $farmaciaId);
+        }
+
+        // 2. Intentar por llave única (producto, farmacia, lote) si no se encontró por ID
+        if (!$lote && !empty($data['codigo_lote'])) {
+            $lote = $this->findByUniqueKey($productoId, $farmaciaId, (string)$data['codigo_lote']);
+        }
 
         if ($lote) {
-            // Actualizar metadata si cambió (vencimiento o costo)
-            $stmt = $this->pdo->prepare("
-                UPDATE lotes 
-                SET fecha_vencimiento = :fecha_vencimiento,
-                    costo_unitario = :costo_unitario
-                WHERE id = :id
-            ");
-            $stmt->execute([
-                ':id' => $lote['id'],
-                ':fecha_vencimiento' => (!empty($data['fecha_vencimiento'])) ? $data['fecha_vencimiento'] : $lote['fecha_vencimiento'],
-                ':costo_unitario' => $data['costo_unitario'] ?? $lote['costo_unitario'],
-            ]);
+            // Actualizar metadata
+            $fields = [];
+            $params = [':id' => $lote['id']];
+
+            if (isset($data['codigo_lote'])) {
+                $fields[] = "codigo_lote = :codigo_lote";
+                $params[':codigo_lote'] = $data['codigo_lote'];
+            }
+            if (isset($data['fecha_vencimiento'])) {
+                $fields[] = "fecha_vencimiento = :fecha_vencimiento";
+                $params[':fecha_vencimiento'] = !empty($data['fecha_vencimiento']) ? $data['fecha_vencimiento'] : null;
+            }
+            if (isset($data['costo_unitario'])) {
+                $fields[] = "costo_unitario = :costo_unitario";
+                $params[':costo_unitario'] = $data['costo_unitario'];
+            }
+
+            if (!empty($fields)) {
+                $sql = "UPDATE lotes SET " . implode(', ', $fields) . " WHERE id = :id";
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute($params);
+            }
+
             return (int)$lote['id'];
         }
 
+        // 3. Crear nuevo si no existe
         $stmt = $this->pdo->prepare("
             INSERT INTO lotes (producto_id, farmacia_id, codigo_lote, fecha_vencimiento, costo_unitario, stock_actual, stock_reservado)
             VALUES (:producto_id, :farmacia_id, :codigo_lote, :fecha_vencimiento, :costo_unitario, 0, 0)
         ");
         $stmt->execute([
-            ':producto_id' => $data['producto_id'],
-            ':farmacia_id' => $data['farmacia_id'],
-            ':codigo_lote' => $data['codigo_lote'],
+            ':producto_id' => $productoId,
+            ':farmacia_id' => $farmaciaId,
+            ':codigo_lote' => $data['codigo_lote'] ?? 'AJUSTE',
             ':fecha_vencimiento' => (!empty($data['fecha_vencimiento'])) ? $data['fecha_vencimiento'] : null,
             ':costo_unitario' => $data['costo_unitario'] ?? 0,
         ]);

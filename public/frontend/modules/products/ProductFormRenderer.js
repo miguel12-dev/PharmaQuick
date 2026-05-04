@@ -22,6 +22,7 @@ class ProductFormRenderer {
         
         return `
             <form id="productForm" class="p-2">
+                <input type="hidden" name="lote_id" value="${p.lote_id || ''}">
                 <div class="row g-3">
                     <!-- Nombre y Código -->
                     <div class="col-md-7">
@@ -223,6 +224,7 @@ class ProductFormRenderer {
             'categoria': producto.categoria,
             'precio': producto.precio ?? producto.precio_venta ?? producto.precio_activo ?? 0,
             'stock_total': Number.isFinite(Number(producto.stock_total)) ? Math.trunc(Number(producto.stock_total)) : 0,
+            'lote_id': producto.lote_id,
             'codigo_lote': producto.codigo_lote,
             'fecha_vencimiento': producto.fecha_vencimiento,
             'presentacion': producto.presentacion,
@@ -263,6 +265,9 @@ class ProductFormRenderer {
                 data[key] = value;
             }
         });
+
+        // Ensure lote_id is a number or null
+        if (data.lote_id === '') delete data.lote_id;
 
         // Paranoid check for batch fields if they came back empty from FormData
         const batchInput = form.querySelector('#codigo_lote_input');

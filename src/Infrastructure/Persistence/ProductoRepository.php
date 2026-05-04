@@ -83,7 +83,7 @@ class ProductoRepository {
 
         // Intentamos obtener el lote más próximo a vencer para mostrarlo en el formulario
         $stmtLote = $this->pdo->prepare("
-            SELECT codigo_lote, fecha_vencimiento
+            SELECT id, codigo_lote, fecha_vencimiento
             FROM lotes
             WHERE producto_id = :id AND farmacia_id = :farmacia_id AND stock_actual > 0
             ORDER BY (fecha_vencimiento IS NULL) ASC, fecha_vencimiento ASC
@@ -93,6 +93,7 @@ class ProductoRepository {
         $loteInfo = $stmtLote->fetch(PDO::FETCH_ASSOC);
 
         if ($loteInfo) {
+            $producto['lote_id'] = (int)$loteInfo['id'];
             $producto['codigo_lote'] = $loteInfo['codigo_lote'];
             $producto['fecha_vencimiento'] = $loteInfo['fecha_vencimiento'];
         }
