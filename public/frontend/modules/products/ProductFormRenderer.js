@@ -1,4 +1,4 @@
-﻿/**
+/**
  * PharmaQuick - Product Form Renderer
  * Renders product create/edit forms
  */
@@ -68,13 +68,31 @@ class ProductFormRenderer {
                         </div>
                     </div>
 
-                    <!-- Stock -->
-                    <div class="col-md-6">
+                    <!-- Stock y Lote (Crítico para FEFO) -->
+                    <div class="col-md-4">
                         <div class="form-group mb-3">
-                            <label class="form-label fw-bold small text-muted text-uppercase">Stock (cantidad disponible)</label>
+                            <label class="form-label fw-bold small text-muted text-uppercase">Stock Actual</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-white border-end-0"><i class="fas fa-cubes text-muted"></i></span>
                                 <input type="number" step="1" min="0" name="stock_total" class="form-control border-start-0" value="${(p.stock_total ?? 0)}" placeholder="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold small text-muted text-uppercase">Lote / Batch</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="fas fa-tag text-muted"></i></span>
+                                <input type="text" name="codigo_lote" id="codigo_lote_input" class="form-control border-start-0" placeholder="Ej. LOT-2024">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold small text-muted text-uppercase">Vencimiento</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="fas fa-calendar-alt text-danger"></i></span>
+                                <input type="date" name="fecha_vencimiento" id="fecha_vencimiento_input" class="form-control border-start-0">
                             </div>
                         </div>
                     </div>
@@ -161,19 +179,33 @@ class ProductFormRenderer {
     }
 
     setupStockFieldBehavior() {
-        const stockInput = document.querySelector('#productForm input[name="stock_total"]');
-        if (!stockInput) return;
+        const form = document.querySelector('.modal-overlay.show #productForm') || document.getElementById('productForm');
+        if (!form) return;
 
-        stockInput.addEventListener('focus', () => {
-            if (String(stockInput.value).trim() === '0') {
-                stockInput.value = '';
-            }
-        });
+        const stockInput = form.querySelector('input[name="stock_total"]');
+        if (stockInput) {
+            stockInput.addEventListener('focus', () => {
+                if (String(stockInput.value).trim() === '0') stockInput.value = '';
+            });
+            stockInput.addEventListener('blur', () => {
+                const normalized = Math.max(0, Math.trunc(Number(stockInput.value) || 0));
+                stockInput.value = String(normalized);
+            });
+        }
 
-        stockInput.addEventListener('blur', () => {
-            const normalized = Math.max(0, Math.trunc(Number(stockInput.value) || 0));
-            stockInput.value = String(normalized);
-        });
+        // DEBUG: Track live changes to batch fields
+        const batchInput = form.querySelector('#codigo_lote_input');
+        if (batchInput) {
+            batchInput.addEventListener('input', (e) => {
+                console.log('LIVE DEBUG: Lote input changed to:', e.target.value);
+            });
+        }
+        const dateInput = form.querySelector('#fecha_vencimiento_input');
+        if (dateInput) {
+            dateInput.addEventListener('input', (e) => {
+                console.log('LIVE DEBUG: Date input changed to:', e.target.value);
+            });
+        }
     }
 
     /**
@@ -191,6 +223,8 @@ class ProductFormRenderer {
             'categoria': producto.categoria,
             'precio': producto.precio ?? producto.precio_venta ?? producto.precio_activo ?? 0,
             'stock_total': Number.isFinite(Number(producto.stock_total)) ? Math.trunc(Number(producto.stock_total)) : 0,
+            'codigo_lote': producto.codigo_lote,
+            'fecha_vencimiento': producto.fecha_vencimiento,
             'presentacion': producto.presentacion,
             'descripcion': producto.descripcion
         };
@@ -210,26 +244,56 @@ class ProductFormRenderer {
      * Get form data as Object
      */
     getData() {
-        const form = document.getElementById('productForm');
-        if (!form) return {};
+        // Search for the form inside the active modal first, fallback to document
+        const form = document.querySelector('.modal-overlay.show #productForm') || document.getElementById('productForm');
+        if (!form) {
+            console.error('ProductFormRenderer: Form #productForm not found');
+            return {};
+        }
 
+        const formData = new FormData(form);
         const data = {};
-        const inputs = form.querySelectorAll('input, select, textarea');
         
-        inputs.forEach(input => {
-            if (input.name && input.type !== 'file') {
-                if (input.name === 'stock_total') {
-                    data[input.name] = String(Math.max(0, Math.trunc(Number(input.value) || 0)));
-                } else {
-                    data[input.name] = input.value;
-                }
+        console.log('--- EXTRACTING FORM DATA ---');
+        formData.forEach((value, key) => {
+            console.log(`Field: ${key}, Value: "${value}"`);
+            if (key === 'stock_total') {
+                data[key] = String(Math.max(0, Math.trunc(Number(value) || 0)));
+            } else {
+                data[key] = value;
             }
         });
 
-        if (data.categoria === '__OTRA__') {
-            data.categoria = document.getElementById('categoriaCustomInput')?.value?.trim() || '';
+        // Paranoid check for batch fields if they came back empty from FormData
+        const batchInput = form.querySelector('#codigo_lote_input');
+        const dateInput = form.querySelector('#fecha_vencimiento_input');
+        
+        if (!data.codigo_lote && batchInput && batchInput.value) {
+            console.warn('Paranoid check: codigo_lote was empty in FormData but has value in DOM:', batchInput.value);
+            data.codigo_lote = batchInput.value;
         }
         
+        if (!data.fecha_vencimiento && dateInput && dateInput.value) {
+            console.warn('Paranoid check: fecha_vencimiento was empty in FormData but has value in DOM:', dateInput.value);
+            data.fecha_vencimiento = dateInput.value;
+        }
+
+        // VALIDATION: If expiration date is provided, batch code SHOULD be provided
+        if (data.fecha_vencimiento && !data.codigo_lote) {
+            console.error('VALIDATION ERROR: Fecha provided without Lote');
+            // We could throw here, but for now let's just log and see if the paranoid check catches it
+        }
+
+        // Special handling for custom category
+        if (data.categoria === '__OTRA__') {
+            const customInput = form.querySelector('#categoriaCustomInput') || document.getElementById('categoriaCustomInput');
+            data.categoria = customInput?.value?.trim() || '';
+        }
+        
+        // Ensure image field is NOT in the plain object to avoid JSON issues
+        delete data.imagen;
+        
+        console.log('ProductFormRenderer.getData result:', data);
         return data;
     }
 
@@ -237,14 +301,20 @@ class ProductFormRenderer {
      * Get form data as FormData (for file uploads)
      */
     getFormData() {
-        const form = document.getElementById('productForm');
+        const form = document.querySelector('.modal-overlay.show #productForm') || document.getElementById('productForm');
         if (!form) return new FormData();
 
-        this.setupStockFieldBehavior();
         const data = this.getData();
         const formData = new FormData();
-        Object.entries(data).forEach(([key, value]) => formData.append(key, value));
+        
+        // Add all text fields
+        Object.entries(data).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+                formData.append(key, value);
+            }
+        });
 
+        // Add file field
         const imageInput = form.querySelector('#productImageInput');
         if (imageInput?.files?.[0]) {
             formData.append('imagen', imageInput.files[0]);

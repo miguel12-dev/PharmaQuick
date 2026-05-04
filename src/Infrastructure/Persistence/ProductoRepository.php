@@ -56,6 +56,7 @@ class ProductoRepository {
      * Busca un producto por ID (con filtro de farmacia via lote)
      */
     public function findById(int $productoId, int $farmaciaId): ?array {
+        // Obtenemos primero los datos del producto y stock total
         $stmt = $this->pdo->prepare("
             SELECT DISTINCT
                 p.id,
@@ -66,21 +67,37 @@ class ProductoRepository {
                 p.presentacion,
                 p.activo,
                 p.imagen,
-                SUM(l.stock_actual) AS stock_total,
+                COALESCE(SUM(l.stock_actual), 0) AS stock_total,
                 pr.precio AS precio_activo,
                 pr.id AS precio_id
             FROM productos p
-            INNER JOIN lotes l ON p.id = l.producto_id
+            LEFT JOIN lotes l ON p.id = l.producto_id AND l.farmacia_id = :farmacia_id
             LEFT JOIN precios pr ON p.id = pr.producto_id AND pr.farmacia_id = :farmacia_id AND pr.activo = 1
-            WHERE p.id = :id 
-                AND l.farmacia_id = :farmacia_id 
-                AND p.activo = 1
+            WHERE p.id = :id AND p.activo = 1
             GROUP BY p.id, p.nombre, p.codigo_barras, p.descripcion, p.categoria, p.presentacion, p.activo, p.imagen, pr.precio, pr.id
         ");
         $stmt->execute([':id' => $productoId, ':farmacia_id' => $farmaciaId]);
         $producto = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        return $producto ?: null;
+        if (!$producto) return null;
+
+        // Intentamos obtener el lote más próximo a vencer para mostrarlo en el formulario
+        $stmtLote = $this->pdo->prepare("
+            SELECT codigo_lote, fecha_vencimiento
+            FROM lotes
+            WHERE producto_id = :id AND farmacia_id = :farmacia_id AND stock_actual > 0
+            ORDER BY (fecha_vencimiento IS NULL) ASC, fecha_vencimiento ASC
+            LIMIT 1
+        ");
+        $stmtLote->execute([':id' => $productoId, ':farmacia_id' => $farmaciaId]);
+        $loteInfo = $stmtLote->fetch(PDO::FETCH_ASSOC);
+
+        if ($loteInfo) {
+            $producto['codigo_lote'] = $loteInfo['codigo_lote'];
+            $producto['fecha_vencimiento'] = $loteInfo['fecha_vencimiento'];
+        }
+
+        return $producto;
     }
 
     /**

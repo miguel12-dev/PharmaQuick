@@ -27,7 +27,15 @@ function buildProductoImagenUrl(?string $imagenDbPath): ?string {
  * Ajusta el stock total (sumatoria de lotes) creando movimientos de inventario.
  * Respeta el trigger `trg_kardex_stock` (no actualiza lotes.stock_actual directo).
  */
-function setProductoStockTotal(PDO $pdo, int $productoId, int $farmaciaId, int $usuarioId, int $desiredStock): void {
+function setProductoStockTotal(
+    PDO $pdo, 
+    int $productoId, 
+    int $farmaciaId, 
+    int $usuarioId, 
+    int $desiredStock, 
+    ?string $codigoLote = null, 
+    ?string $fechaVencimiento = null
+): void {
     if ($desiredStock < 0) {
         throw new \InvalidArgumentException('stock_total no puede ser negativo');
     }
@@ -42,11 +50,27 @@ function setProductoStockTotal(PDO $pdo, int $productoId, int $farmaciaId, int $
     $current = (int)($stmt->fetchColumn() ?: 0);
 
     $delta = $desiredStock - $current;
-    if ($delta === 0) {
+    if ($delta === 0 && empty($codigoLote)) {
         return; // Sin cambios relevantes
     }
 
-    // Lotes disponibles orden FEFO (NULL vencimiento al final)
+    error_log("setProductoStockTotal: prod=$productoId, farm=$farmaciaId, stock=$desiredStock, lote=$codigoLote, venc=$fechaVencimiento");
+    
+    // Si se proporciona un lote específico, lo usamos (o creamos/actualizamos)
+    $targetLoteId = null;
+    if (!empty($codigoLote)) {
+        require_once SRC_PATH . '/Infrastructure/Persistence/LoteRepository.php';
+        $loteRepo = new \PharmaQuick\Infrastructure\Persistence\LoteRepository($pdo);
+        $targetLoteId = $loteRepo->upsert([
+            'producto_id' => $productoId,
+            'farmacia_id' => $farmaciaId,
+            'codigo_lote' => $codigoLote,
+            'fecha_vencimiento' => $fechaVencimiento,
+            'costo_unitario' => 0
+        ]);
+    }
+
+    // Lotes disponibles orden FEFO (NULL vencimiento al final) para repartir salidas si aplica
     $stmt = $pdo->prepare("
         SELECT id, stock_actual, fecha_vencimiento
         FROM lotes
@@ -56,8 +80,8 @@ function setProductoStockTotal(PDO $pdo, int $productoId, int $farmaciaId, int $
     $stmt->execute([':producto_id' => $productoId, ':farmacia_id' => $farmaciaId]);
     $lotes = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-    // Si no hay lote, creamos uno "AJUSTE"
-    if (empty($lotes)) {
+    // Si no hay lote y no se pasó uno, creamos uno "AJUSTE" (fallback)
+    if (empty($lotes) && !$targetLoteId) {
         $stmt = $pdo->prepare("
             INSERT INTO lotes (producto_id, farmacia_id, codigo_lote, fecha_vencimiento, costo_unitario, stock_actual, stock_reservado)
             VALUES (:producto_id, :farmacia_id, :codigo_lote, NULL, 0, 0, 0)
@@ -68,8 +92,9 @@ function setProductoStockTotal(PDO $pdo, int $productoId, int $farmaciaId, int $
             ':codigo_lote' => 'AJUSTE',
         ]);
 
+        $targetLoteId = (int)$pdo->lastInsertId();
         $lotes = [[
-            'id' => (int)$pdo->lastInsertId(),
+            'id' => $targetLoteId,
             'stock_actual' => 0,
             'fecha_vencimiento' => null,
         ]];
@@ -91,28 +116,29 @@ function setProductoStockTotal(PDO $pdo, int $productoId, int $farmaciaId, int $
     };
 
     if ($delta > 0) {
-        // Entradas: agregar todo al primer lote (FEFO)
-        $firstLoteId = (int)$lotes[0]['id'];
-        $insertMov($firstLoteId, 'ENTRADA', $delta);
+        // Entradas: agregar al lote especificado o al primero disponible
+        $loteId = $targetLoteId ?: (int)$lotes[0]['id'];
+        $insertMov($loteId, 'ENTRADA', $delta);
         return;
     }
 
-    // Salidas: repartir descontando por FEFO según stock actual
-    $toRemove = abs($delta);
-    foreach ($lotes as $l) {
-        $loteId = (int)$l['id'];
-        $available = (int)($l['stock_actual'] ?? 0);
-        if ($available <= 0) continue;
-        if ($toRemove <= 0) break;
+    if ($delta < 0) {
+        // Salidas: repartir descontando por FEFO según stock actual
+        $toRemove = abs($delta);
+        foreach ($lotes as $l) {
+            $loteId = (int)$l['id'];
+            $available = (int)($l['stock_actual'] ?? 0);
+            if ($available <= 0) continue;
+            if ($toRemove <= 0) break;
 
-        $take = min($available, $toRemove);
-        $insertMov($loteId, 'SALIDA', $take);
-        $toRemove -= $take;
-    }
+            $take = min($available, $toRemove);
+            $insertMov($loteId, 'SALIDA', $take);
+            $toRemove -= $take;
+        }
 
-    if ($toRemove > 0.0005) {
-        // No debería pasar si desiredStock <= current, pero por consistencia.
-        throw new \RuntimeException('No hay stock suficiente en lotes para realizar el ajuste');
+        if ($toRemove > 0.0005) {
+            throw new \RuntimeException('No hay stock suficiente en lotes para realizar el ajuste');
+        }
     }
 }
 
@@ -240,6 +266,7 @@ function handlePostProductos(): void {
         $input = $_POST;
     }
     
+    file_put_contents(BASE_PATH . '/debug_api.json', json_encode(['input' => $input, 'post' => $_POST, 'files' => $_FILES], JSON_PRETTY_PRINT));
     if (empty($input) && empty($_FILES)) {
         JsonResponse::error('No se recibieron datos válidos en la petición', 400);
         return;
@@ -282,20 +309,28 @@ function handlePostProductos(): void {
             $precioService = new PrecioService($precioRepo, $repo);
             $precioService->crearYActivar($productoId, $farmaciaId, $precio);
         }
+        // Extraer datos de inventario
+        $stockDesired = isset($input['stock_total']) ? (int)$input['stock_total'] : null;
+        $codigoLote = (isset($input['codigo_lote']) && trim($input['codigo_lote']) !== '') ? trim($input['codigo_lote']) : null;
+        $fechaVencimiento = (isset($input['fecha_vencimiento']) && trim($input['fecha_vencimiento']) !== '') ? trim($input['fecha_vencimiento']) : null;
+        $usuarioId = Auth::userId() ?? 0;
 
-        if ($stockDesired !== null && $stockDesired > 0) {
-            $usuarioId = Auth::userId() ?? 0;
-            if (!$usuarioId) {
-                JsonResponse::error('Usuario no autenticado', 401);
-                return;
-            }
-            setProductoStockTotal($pdo, $productoId, $farmaciaId, (int)$usuarioId, $stockDesired);
+        // Persistir stock y lote si se proporciona alguno de los dos
+        if ($stockDesired !== null || $codigoLote !== null) {
+            setProductoStockTotal(
+                $pdo, 
+                $productoId, 
+                $farmaciaId, 
+                (int)$usuarioId, 
+                (int)($stockDesired ?? 0),
+                $codigoLote,
+                $fechaVencimiento
+            );
         }
 
         // Si hay una imagen en la misma petición, procesarla
         if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
             require_once ROUTES_PATH . '/upload.php';
-            // Esta función ya responde al cliente o lanza excepción
             handleUploadProductImage($productoId);
             return;
         }
@@ -390,7 +425,19 @@ function handlePutProductos(int $id): void {
                 JsonResponse::error('Usuario no autenticado', 401);
                 return;
             }
-            setProductoStockTotal($pdo, $id, $farmaciaId, (int)$usuarioId, $stockDesired);
+            
+            $codigoLote = (isset($input['codigo_lote']) && trim($input['codigo_lote']) !== '') ? trim($input['codigo_lote']) : null;
+            $fechaVencimiento = (isset($input['fecha_vencimiento']) && trim($input['fecha_vencimiento']) !== '') ? trim($input['fecha_vencimiento']) : null;
+
+            setProductoStockTotal(
+                $pdo, 
+                $id, 
+                $farmaciaId, 
+                (int)$usuarioId, 
+                $stockDesired,
+                $codigoLote,
+                $fechaVencimiento
+            );
         }
 
         // Procesar imagen si viene (PHP solo llena $_FILES en POST)

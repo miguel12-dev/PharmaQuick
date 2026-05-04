@@ -54,8 +54,18 @@ class LoteRepository {
         );
 
         if ($lote) {
-            // Update metadata if needed (e.g. expiration date if it was null or different)
-            // For now, let's just return the existing ID as per plan "upsert/lookup"
+            // Actualizar metadata si cambió (vencimiento o costo)
+            $stmt = $this->pdo->prepare("
+                UPDATE lotes 
+                SET fecha_vencimiento = :fecha_vencimiento,
+                    costo_unitario = :costo_unitario
+                WHERE id = :id
+            ");
+            $stmt->execute([
+                ':id' => $lote['id'],
+                ':fecha_vencimiento' => (!empty($data['fecha_vencimiento'])) ? $data['fecha_vencimiento'] : $lote['fecha_vencimiento'],
+                ':costo_unitario' => $data['costo_unitario'] ?? $lote['costo_unitario'],
+            ]);
             return (int)$lote['id'];
         }
 
@@ -67,7 +77,7 @@ class LoteRepository {
             ':producto_id' => $data['producto_id'],
             ':farmacia_id' => $data['farmacia_id'],
             ':codigo_lote' => $data['codigo_lote'],
-            ':fecha_vencimiento' => $data['fecha_vencimiento'] ?? null,
+            ':fecha_vencimiento' => (!empty($data['fecha_vencimiento'])) ? $data['fecha_vencimiento'] : null,
             ':costo_unitario' => $data['costo_unitario'] ?? 0,
         ]);
 
