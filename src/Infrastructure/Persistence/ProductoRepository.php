@@ -245,12 +245,21 @@ class ProductoRepository {
      * Útil para gestión de precios cuando el producto no tiene lotes
      */
     public function searchGlobal(string $query, ?string $categoria = null): array {
-        $where = ["(nombre LIKE :query OR codigo_barras LIKE :query)"];
-        $params = [':query' => "%{$query}%"];
+        $where = [];
+        $params = [];
+
+        if ($query !== '') {
+            $where[] = "(nombre LIKE :query OR codigo_barras LIKE :query)";
+            $params[':query'] = "%{$query}%";
+        }
 
         if ($categoria && $categoria !== '') {
-            $where[] = "categoria = :categoria";
-            $params[':categoria'] = $categoria;
+            $where[] = "TRIM(categoria) = :categoria";
+            $params[':categoria'] = trim($categoria);
+        }
+
+        if (empty($where)) {
+            $where[] = "1=1";
         }
 
         $sql = "

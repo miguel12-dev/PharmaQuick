@@ -318,11 +318,13 @@ class InventoryView {
     }
 
     showCreateLoteModal() {
+        const DEFAULT_CATEGORIES = ['Analgésicos', 'Antibióticos', 'Antiinflamatorios', 'Antihistamínicos', 'Gastrointestinales', 'Vitaminas y suplementos', 'Dermatológicos', 'Cardiovasculares', 'Respiratorios', 'Pediátricos'];
+        
         const modal = new Modal({
             title: '<i class="fas fa-plus me-2 text-primary"></i>Nuevo Ingreso de Inventario',
-            size: 'lg',
+            size: 'xl',
             content: `
-                <div class="inventory-create-modal">
+                <div class="inventory-create-modal" style="min-height: 450px;">
                     <div class="mb-4">
                         <label class="form-label fw-bold">1. Seleccionar Producto</label>
                         <div class="row g-2">
@@ -335,6 +337,7 @@ class InventoryView {
                             <div class="col-md-5">
                                 <select id="categoryFilter" class="form-select">
                                     <option value="">Todas las categorías</option>
+                                    ${DEFAULT_CATEGORIES.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
                                 </select>
                             </div>
                         </div>
@@ -417,23 +420,29 @@ class InventoryView {
         modal.open();
 
         // Lógica de búsqueda AJAX
-        const searchInput = document.getElementById('productSearchInput');
-        const categoryFilter = document.getElementById('categoryFilter');
-        const resultsBox = document.getElementById('productSearchResults');
-        const selectedInfo = document.getElementById('selectedProductInfo');
-        const createForm = document.getElementById('createLoteForm');
+        const searchInput = modal.element.querySelector('#productSearchInput');
+        const categoryFilter = modal.element.querySelector('#categoryFilter');
+        const resultsBox = modal.element.querySelector('#productSearchResults');
+        const selectedInfo = modal.element.querySelector('#selectedProductInfo');
+        const createForm = modal.element.querySelector('#createLoteForm');
         let searchTimeout = null;
 
-        // Cargar categorías
+        // Cargar categorías adicionales desde el API
         const loadCategories = async () => {
             try {
                 const response = await httpClient.get('/productos/categorias');
-                const categorias = response.data?.categorias || [];
-                categorias.forEach(cat => {
-                    const option = document.createElement('option');
-                    option.value = cat;
-                    option.textContent = cat;
-                    categoryFilter.appendChild(option);
+                const apiCategorias = response.data?.categorias || [];
+                
+                // Obtener categorías actuales para evitar duplicados
+                const currentOptions = Array.from(categoryFilter.options).map(opt => opt.value);
+
+                apiCategorias.forEach(cat => {
+                    if (cat && !currentOptions.includes(cat)) {
+                        const option = document.createElement('option');
+                        option.value = cat;
+                        option.textContent = cat;
+                        categoryFilter.appendChild(option);
+                    }
                 });
             } catch (error) {
                 console.error('Error cargando categorías:', error);
@@ -441,7 +450,7 @@ class InventoryView {
         };
         loadCategories();
 
-        const performSearch = async () => {
+        const performSearch = async (immediate = false) => {
             const q = searchInput.value.trim();
             const categoria = categoryFilter.value;
             clearTimeout(searchTimeout);
@@ -451,13 +460,24 @@ class InventoryView {
                 return;
             }
 
-            searchTimeout = setTimeout(async () => {
+            const searchLogic = async () => {
                 try {
-                    const response = await httpClient.get('/productos/search', { q, categoria });
-                    const productos = response.data?.productos || [];
+                    resultsBox.innerHTML = '<div class="list-group-item text-center py-3"><span class="spinner-border spinner-border-sm me-2"></span> Buscando...</div>';
+                    resultsBox.classList.remove('d-none');
 
+                    const params = {};
+                    if (q.length >= 2) {
+                        params.q = q;
+                    }
+                    if (categoria) {
+                        params.categoria = categoria;
+                    }
+
+                    const response = await httpClient.get('/productos/search', params);
+                    const productos = response.data?.productos || [];
+                    
                     if (productos.length === 0) {
-                        resultsBox.innerHTML = '<div class="list-group-item text-muted text-center py-3">No se encontraron productos</div>';
+                        resultsBox.innerHTML = '<div class="list-group-item text-muted text-center py-3">No se encontraron productos en esta categoría</div>';
                     } else {
                         resultsBox.innerHTML = productos.map(p => `
                             <button type="button" class="list-group-item list-group-item-action p-3 product-select-item" data-id="${p.id}" data-nombre="${p.nombre}" data-barcode="${p.codigo || p.codigo_barras || ''}">
@@ -480,7 +500,7 @@ class InventoryView {
                                 document.getElementById('targetProductoId').value = id;
                                 document.getElementById('selectedProductName').textContent = nombre;
                                 document.getElementById('selectedProductBarcode').textContent = barcode ? `Código: ${barcode}` : 'Sin código de barras';
-
+                                
                                 searchInput.closest('.row').classList.add('d-none');
                                 resultsBox.classList.add('d-none');
                                 selectedInfo.classList.remove('d-none');
@@ -488,15 +508,21 @@ class InventoryView {
                             });
                         });
                     }
-                    resultsBox.classList.remove('d-none');
                 } catch (error) {
                     console.error('Error buscando productos:', error);
+                    resultsBox.innerHTML = `<div class="list-group-item text-danger text-center py-3">Error: ${error.message}</div>`;
                 }
-            }, 300);
+            };
+
+            if (immediate) {
+                searchLogic();
+            } else {
+                searchTimeout = setTimeout(searchLogic, 300);
+            }
         };
 
         searchInput.addEventListener('input', performSearch);
-        categoryFilter.addEventListener('change', performSearch);
+        categoryFilter.addEventListener('change', () => performSearch(true)); // Pasar flag para búsqueda inmediata
 
         document.getElementById('changeProductBtn').addEventListener('click', () => {
             searchInput.closest('.row').classList.remove('d-none');

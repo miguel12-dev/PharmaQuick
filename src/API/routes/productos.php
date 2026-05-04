@@ -225,11 +225,11 @@ function handleSearchProductos(): void {
         return;
     }
 
-    $query = $_GET['q'] ?? $_GET['search'] ?? '';
-    $categoria = $_GET['categoria'] ?? null;
+    $query = isset($_GET['q']) ? trim($_GET['q']) : (isset($_GET['search']) ? trim($_GET['search']) : '');
+    $categoria = isset($_GET['categoria']) ? trim($_GET['categoria']) : '';
     
-    if (strlen($query) < 2 && !$categoria) {
-        JsonResponse::error('Buscar mínimo 2 caracteres o seleccionar una categoría', 400);
+    if (strlen($query) < 2 && $categoria === '') {
+        JsonResponse::error('Buscar mínimo 2 caracteres o seleccionar una categoría. Debug: ' . json_encode($_GET), 400);
         return;
     }
 
