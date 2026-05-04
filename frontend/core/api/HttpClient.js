@@ -127,7 +127,7 @@ class HttpClient {
             console.warn('HttpClient: 401 Unauthorized');
             localStorage.removeItem('pharmaSession');
             Router.redirectToLogin();
-            throw new Error('Sesión expirada. Por favor inicie sesión nuevamente.');
+            throw new Error(data?.message || 'Sesión expirada. Por favor inicie sesión nuevamente.');
         }
         
         if (response.status === 403) {

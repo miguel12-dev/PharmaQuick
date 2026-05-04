@@ -120,6 +120,9 @@ class Router {
     static async renderPage(route) {
         if (!this.rootElem) return;
         
+        // Guardar la ruta que se está intentando renderizar para control de concurrencia
+        const renderingRoute = route;
+        
         // Limpiar contenedor
         this.rootElem.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div></div>';
         
@@ -129,11 +132,18 @@ class Router {
                 await route.init(this.rootElem);
             }
         } catch (error) {
-            console.error('Error renderizando página:', error);
-            this.rootElem.innerHTML = `<div class="alert alert-danger m-3" role="alert">
-                <i class="bi bi-exclamation-triangle me-2"></i>
-                Error al cargar la página: ${error.message}
-            </div>`;
+            // Solo mostrar error si seguimos en la misma ruta
+            // Esto evita que errores de una página anterior (que gatilló un redirect)
+            // sobrescriban el contenido de la nueva página (ej: Login)
+            if (this.currentRoute?.route === renderingRoute) {
+                console.error('Error renderizando página:', error);
+                this.rootElem.innerHTML = `<div class="alert alert-danger m-3" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Error al cargar la página: ${error.message}
+                </div>`;
+            } else {
+                console.warn('Se descartó un error de una ruta inactiva:', error.message);
+            }
         }
     }
     
