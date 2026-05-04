@@ -260,12 +260,7 @@ const ProductsPage = {
         this.cargando = true;
         
         try {
-            const token = AuthService.getToken();
-            const response = await fetch('/api/productos', {
-                headers: { 'Authorization': 'Bearer ' + token }
-            });
-            
-            const data = await response.json();
+            const data = await httpClient.get('/productos');
             
             if (data.success) {
                 this.productos = data.data?.productos || [];
@@ -538,21 +533,8 @@ const ProductsPage = {
                 
                 modal.setLoading(true);
                 try {
-                    const token = AuthService.getToken();
-                    // Importante: Usamos POST para actualizaciones si hay archivos (FormData), 
-                    // ya que PHP no parsea PUT multipart/form-data automáticamente.
-                    const url = producto ? `/api/productos/${producto.id}` : '/api/productos';
-                    
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': 'Bearer ' + token
-                            // No establecemos Content-Type, el navegador lo hará con el boundary
-                        },
-                        body: formData
-                    });
-                    
-                    const result = await response.json();
+                    const endpoint = producto ? `/productos/${producto.id}` : '/productos';
+                    const result = await httpClient.post(endpoint, formData);
                     
                     if (result.success) {
                         modal.close();

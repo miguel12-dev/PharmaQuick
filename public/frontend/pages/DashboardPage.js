@@ -323,8 +323,6 @@ const DashboardPage = {
      * Cargar estadísticas del dashboard
      */
     async loadStats() {
-        const token = AuthService.getToken();
-        
         // Mock data para que el dashboard se vea "viable" y profesional
         const mockStats = {
             ventasHoy: 1250.50,
@@ -334,16 +332,8 @@ const DashboardPage = {
 
         this.updateStatsDisplay(mockStats);
         
-        if (!token) return;
-        
         try {
-            const response = await fetch('/api/productos', {
-                headers: {
-                    'Authorization': 'Bearer ' + token
-                }
-            });
-            
-            const data = await response.json();
+            const data = await httpClient.get('/productos');
             
             if (data.success) {
                 const total = data.data?.total || data.data?.productos?.length || 0;

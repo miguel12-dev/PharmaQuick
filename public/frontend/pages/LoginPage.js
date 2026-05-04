@@ -166,12 +166,7 @@ const LoginPage = {
         formData.append('email', email);
         formData.append('password', password);
         
-        const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const data = await response.json();
+        const data = await httpClient.post('/auth/login', formData, false);
         
         if (data.success) {
             // Guardar sesión
