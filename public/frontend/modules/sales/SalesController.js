@@ -12,14 +12,20 @@ class SalesController {
         // Hide search results if clicked outside
         document.addEventListener('click', (e) => {
             if (!e.target.closest('#posSearchResults') && e.target.id !== 'posSearchProduct') {
-                document.getElementById('posSearchResults').style.display = 'none';
+                const results = document.getElementById('posSearchResults');
+                if (results) {
+                    results.style.display = 'none';
+                }
             }
         });
 
         // Barcode scanner integration
-        document.getElementById('btnScanBarcode').addEventListener('click', () => {
-            this.toggleScanner();
-        });
+        const btnScan = document.getElementById('btnScanBarcode');
+        if (btnScan) {
+            btnScan.addEventListener('click', () => {
+                this.toggleScanner();
+            });
+        }
         
         this.updateView();
     }
