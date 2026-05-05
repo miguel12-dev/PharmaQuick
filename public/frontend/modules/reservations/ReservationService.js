@@ -1,10 +1,10 @@
 class ReservationService {
     static async getReservations() {
-        return HttpClient.get('/api/reservas');
+        return httpClient.get('/reservas');
     }
 
     static async createReservation(data) {
-        return HttpClient.post('/api/reservas', data);
+        return httpClient.post('/reservas', data);
     }
 }
 window.ReservationService = ReservationService;
