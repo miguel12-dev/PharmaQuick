@@ -2,6 +2,13 @@
 
 declare(strict_types=1);
 
+require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
+require_once SRC_PATH . '/Infrastructure/Persistence/ReservaRepository.php';
+require_once SRC_PATH . '/Infrastructure/Persistence/LoteRepository.php';
+require_once SRC_PATH . '/Infrastructure/Persistence/MovimientoInventarioRepository.php';
+require_once SRC_PATH . '/Domain/Services/ReservaService.php';
+require_once SRC_PATH . '/Domain/Services/InventarioMovimientoService.php';
+
 use PharmaQuick\Infrastructure\Persistence\PDOFactory;
 use PharmaQuick\Infrastructure\Persistence\ReservaRepository;
 use PharmaQuick\Infrastructure\Persistence\LoteRepository;

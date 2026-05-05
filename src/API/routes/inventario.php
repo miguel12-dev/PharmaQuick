@@ -482,7 +482,7 @@ function handlePostMovimientoInventario(): void {
         require_once SRC_PATH . '/Domain/Services/InventarioMovimientoService.php';
         $pdo = PDOFactory::getCluster(1);
 
-        if (!class_exists(\PharmaQuick\Infrastructure\Persistence\LoteRepository::class)) {
+        if (!class_exists(LoteRepository::class)) {
             throw new RuntimeException('No se pudo cargar LoteRepository');
         }
 
