@@ -21,6 +21,8 @@ require_once SRC_PATH . '/Core/Exceptions.php';
 // Precarga de firmas de rutas para anÃƒÂ¡lisis estÃƒÂ¡tico (y para evitar require condicional en editores).
 require_once ROUTES_PATH . '/lotes.php';
 require_once ROUTES_PATH . '/inventario.php';
+require_once ROUTES_PATH . '/ventas.php';
+require_once ROUTES_PATH . '/reservas.php';
 
 class PharmaRouter {
     private string $method;
@@ -299,6 +301,40 @@ class PharmaRouter {
         if ($this->uri === '/api/inventario/import-excel' && $this->method === 'POST') {
             require_once ROUTES_PATH . '/inventario.php';
             handlePostImportExcel();
+            return;
+        }
+
+        // ===================
+        // VENTAS Y RESERVAS
+        // ===================
+        if ($this->uri === '/api/ventas' && $this->method === 'GET') {
+            require_once ROUTES_PATH . '/ventas.php';
+            handleGetVentas();
+            return;
+        }
+        
+        if ($this->uri === '/api/ventas/crear' && $this->method === 'POST') {
+            require_once ROUTES_PATH . '/ventas.php';
+            handlePostVentasCrear();
+            return;
+        }
+
+        if ($this->uri === '/api/reservas' && $this->method === 'GET') {
+            require_once ROUTES_PATH . '/reservas.php';
+            handleGetReservas();
+            return;
+        }
+        
+        if ($this->uri === '/api/reservas' && $this->method === 'POST') {
+            require_once ROUTES_PATH . '/reservas.php';
+            handlePostReservas();
+            return;
+        }
+
+        // Endpoint Cronjob (Idealmente protegido o llamado interno)
+        if ($this->uri === '/api/reservas/cron' && $this->method === 'POST') {
+            require_once ROUTES_PATH . '/reservas.php';
+            handlePostReservasCron();
             return;
         }
 
