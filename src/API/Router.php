@@ -233,6 +233,21 @@ class PharmaRouter {
         }
 
         // ===================
+        // PERFIL
+        // ===================
+        if ($this->uri === '/api/perfil' && $this->method === 'GET') {
+            require_once ROUTES_PATH . '/perfil.php';
+            handleGetPerfil();
+            return;
+        }
+
+        if ($this->uri === '/api/perfil/password' && $this->method === 'PUT') {
+            require_once ROUTES_PATH . '/perfil.php';
+            handlePutPerfilPassword();
+            return;
+        }
+
+        // ===================
         // INVENTARIO (KARDEX + FEFO)
         // ===================
         // GET /api/inventario/fefo?producto_id=123 - sugerencia FEFO (lotes disponibles)

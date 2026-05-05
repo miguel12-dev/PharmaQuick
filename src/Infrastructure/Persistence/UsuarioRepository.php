@@ -49,4 +49,52 @@ class UsuarioRepository {
 
         return $user ?: null;
     }
+
+    public function findProfileById(int $userId): ?array {
+        $stmt = $this->pdo->prepare("
+            SELECT id, farmacia_id, email, rol, activo
+            FROM usuarios
+            WHERE id = :id
+        ");
+        $stmt->execute([':id' => $userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $user ?: null;
+    }
+
+    public function updatePassword(int $userId, string $passwordHash): bool {
+        $stmt = $this->pdo->prepare("
+            UPDATE usuarios
+            SET password_hash = :password_hash
+            WHERE id = :id AND activo = 1
+        ");
+
+        return $stmt->execute([
+            ':id' => $userId,
+            ':password_hash' => $passwordHash,
+        ]);
+    }
+
+    public function findFarmaciaNameById(int $farmaciaId): ?string {
+        $queries = [
+            "SELECT nombre FROM farmacias WHERE id = :id",
+            "SELECT nombre_farmacia AS nombre FROM farmacias WHERE id = :id",
+            "SELECT razon_social AS nombre FROM farmacias WHERE id = :id",
+        ];
+
+        foreach ($queries as $sql) {
+            try {
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute([':id' => $farmaciaId]);
+                $value = $stmt->fetchColumn();
+                if (is_string($value) && trim($value) !== '') {
+                    return trim($value);
+                }
+            } catch (\Throwable $e) {
+                continue;
+            }
+        }
+
+        return null;
+    }
 }
