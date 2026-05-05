@@ -404,7 +404,7 @@ function handleGetMovimientosInventario(): void {
             INNER JOIN lotes l ON l.id = m.lote_id
             INNER JOIN productos p ON p.id = l.producto_id
             WHERE {$whereSql}
-            ORDER BY m.created_at DESC, m.id DESC
+            ORDER BY m.{$fechaCol} DESC, m.id DESC
             LIMIT {$perPage} OFFSET {$offset}
         ");
         $stmt->execute($params);
