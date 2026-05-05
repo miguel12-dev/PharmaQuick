@@ -78,22 +78,31 @@ class ProductView {
             onConfirm: () => this.handleCreate(modal)
         });
         modal.open();
+        
+        // Initialize form behaviors for the new modal
+        productFormRenderer.setupCategoryField();
     }
 
     /**
      * Show edit modal
      */
-    showEditModal(id) {
-        const producto = this.controller.getProductoById(id);
-        if (!producto) return;
+    async showEditModal(id) {
+        try {
+            // Obtener datos frescos del servidor (incluye lote_id y metadata de inventario)
+            const producto = await this.controller.fetchById(id);
+            if (!producto) return;
 
-        const modal = new Modal({
-            title: 'Editar Producto',
-            content: productFormRenderer.getFormHtml(producto),
-            onConfirm: () => this.handleEdit(modal, id)
-        });
-        modal.open();
-        productFormRenderer.fillForm(producto);
+            const modal = new Modal({
+                title: 'Editar Producto',
+                content: productFormRenderer.getFormHtml(producto),
+                onConfirm: () => this.handleEdit(modal, id)
+            });
+            modal.open();
+            productFormRenderer.fillForm(producto);
+        } catch (error) {
+            console.error('Error opening edit modal:', error);
+            this.showError('No se pudo cargar la información del producto');
+        }
     }
 
     /**
@@ -110,20 +119,23 @@ class ProductView {
      * Handle create
      */
     async handleCreate(modal) {
-        const data = productFormRenderer.getData();
-        if (!data.nombre) {
+        const formData = productFormRenderer.getFormData();
+        const nombre = formData.get('nombre');
+        
+        if (!nombre) {
             modal.showError('El nombre es requerido');
             return;
         }
         
         modal.setLoading(true);
         try {
-            await this.controller.createProducto(data);
+            await this.controller.createProducto(formData);
             modal.close();
             if (typeof Toast !== 'undefined') {
                 Toast.success('Producto creado');
             }
         } catch (error) {
+            console.error('Create error:', error);
             modal.showError(error.message);
         }
     }
@@ -132,20 +144,23 @@ class ProductView {
      * Handle edit
      */
     async handleEdit(modal, id) {
-        const data = productFormRenderer.getData();
-        if (!data.nombre) {
+        const formData = productFormRenderer.getFormData();
+        const nombre = formData.get('nombre');
+        
+        if (!nombre) {
             modal.showError('El nombre es requerido');
             return;
         }
         
         modal.setLoading(true);
         try {
-            await this.controller.updateProducto(id, data);
+            await this.controller.updateProducto(id, formData);
             modal.close();
             if (typeof Toast !== 'undefined') {
                 Toast.success('Producto actualizado');
             }
         } catch (error) {
+            console.error('Update error:', error);
             modal.showError(error.message);
         }
     }

@@ -54,10 +54,9 @@ CREATE TABLE lotes (
     codigo_lote VARCHAR(50),
     fecha_vencimiento DATE,
 
-    costo_unitario DECIMAL(12,3),
-
-    stock_actual DECIMAL(12,3) DEFAULT 0,
-    stock_reservado DECIMAL(12,3) DEFAULT 0,
+    costo_unitario DECIMAL(12,2) DEFAULT 0,
+    stock_actual INT UNSIGNED DEFAULT 0,
+    stock_reservado INT UNSIGNED DEFAULT 0,
 
     UNIQUE(producto_id, farmacia_id, codigo_lote),
 
@@ -78,7 +77,8 @@ CREATE TABLE movimientos_inventario (
     usuario_id BIGINT UNSIGNED,
 
     tipo ENUM('ENTRADA','SALIDA','RESERVA','LIBERACION') NOT NULL,
-    cantidad DECIMAL(12,3),
+    cantidad INT UNSIGNED DEFAULT 0,
+
 
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
@@ -151,7 +151,8 @@ CREATE TABLE detalle_ventas (
     venta_id BIGINT UNSIGNED,
     lote_id BIGINT UNSIGNED,
 
-    cantidad DECIMAL(12,3),
+    cantidad INT UNSIGNED DEFAULT 0,
+
     precio DECIMAL(12,2),
     subtotal DECIMAL(12,2),
 

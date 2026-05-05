@@ -121,6 +121,8 @@ const ProductsPage = {
         // Configurar título de página en el navbar
         const pageTitle = container.querySelector('#pageTitle');
         if (pageTitle) pageTitle.textContent = 'Productos';
+        const userNameEl = container.querySelector('#userName');
+        if (userNameEl) userNameEl.textContent = AuthService.getUserName() || 'Admin';
 
         this.setupEventListeners();
         this.initSidebarToggle(container);
@@ -162,8 +164,10 @@ const ProductsPage = {
         if (sidebarToggleMobile) sidebarToggleMobile.addEventListener('click', (e) => { e.preventDefault(); sidebar.classList.toggle('show'); });
         
         // Logout
-        const logoutBtn = container.querySelector('#logoutBtn');
-        if (logoutBtn) logoutBtn.addEventListener('click', (e) => { e.preventDefault(); Router.logout(); });
+        ['#logoutBtn', '#logoutBtnDropdown'].forEach(selector => {
+            const logoutBtn = container.querySelector(selector);
+            if (logoutBtn) logoutBtn.addEventListener('click', (e) => { e.preventDefault(); Router.logout(); });
+        });
     },
     
     /**
@@ -171,10 +175,15 @@ const ProductsPage = {
      */
     setupEventListeners() {
         // Logout
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => Router.logout());
-        }
+        ['logoutBtn', 'logoutBtnDropdown'].forEach(id => {
+            const logoutBtn = document.getElementById(id);
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    Router.logout();
+                });
+            }
+        });
         
         // Nuevo producto
         const newProductBtn = document.getElementById('newProductBtn');
@@ -242,6 +251,12 @@ const ProductsPage = {
         if (imageInput) {
             imageInput.addEventListener('change', (e) => this.handleImagePreview(e));
         }
+        if (typeof productFormRenderer?.setupCategoryField === 'function') {
+            productFormRenderer.setupCategoryField();
+        }
+        if (typeof productFormRenderer?.setupStockFieldBehavior === 'function') {
+            productFormRenderer.setupStockFieldBehavior();
+        }
     },
     
     /**
@@ -254,12 +269,7 @@ const ProductsPage = {
         this.cargando = true;
         
         try {
-            const token = AuthService.getToken();
-            const response = await fetch('/api/productos', {
-                headers: { 'Authorization': 'Bearer ' + token }
-            });
-            
-            const data = await response.json();
+            const data = await httpClient.get('/productos');
             
             if (data.success) {
                 this.productos = data.data?.productos || [];
@@ -317,15 +327,12 @@ const ProductsPage = {
     renderCategoriaFilter() {
         const select = document.getElementById('categoriaFilter');
         const optionsHtml = this.categorias.map(c => `<option value="${c}">${c}</option>`).join('');
+        if (typeof productFormRenderer?.setDynamicCategories === 'function') {
+            productFormRenderer.setDynamicCategories(this.categorias);
+        }
         
         if (select) {
             select.innerHTML = `<option value="">Todas las categorías</option>${optionsHtml}`;
-        }
-        
-        // Poblar el datalist en el modal (si está abierto)
-        const datalist = document.getElementById('categoriasList');
-        if (datalist) {
-            datalist.innerHTML = this.categorias.map(c => `<option value="${c}">`).join('');
         }
     },
     
@@ -535,21 +542,8 @@ const ProductsPage = {
                 
                 modal.setLoading(true);
                 try {
-                    const token = AuthService.getToken();
-                    // Importante: Usamos POST para actualizaciones si hay archivos (FormData), 
-                    // ya que PHP no parsea PUT multipart/form-data automáticamente.
-                    const url = producto ? `/api/productos/${producto.id}` : '/api/productos';
-                    
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': 'Bearer ' + token
-                            // No establecemos Content-Type, el navegador lo hará con el boundary
-                        },
-                        body: formData
-                    });
-                    
-                    const result = await response.json();
+                    const endpoint = producto ? `/productos/${producto.id}` : '/productos';
+                    const result = await httpClient.post(endpoint, formData);
                     
                     if (result.success) {
                         modal.close();

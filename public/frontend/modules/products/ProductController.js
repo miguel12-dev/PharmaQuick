@@ -126,7 +126,19 @@ class ProductController {
     }
     
     /**
-     * Obtener producto por ID
+     * Obtener producto por ID (desde el API)
+     */
+    async fetchById(id) {
+        try {
+            return await ProductService.getById(id);
+        } catch (error) {
+            this.notify('onError', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtener producto por ID (desde cache local)
      */
     getProductoById(id) {
         return this.productos.find(p => p.id === id || p.producto_id === id);

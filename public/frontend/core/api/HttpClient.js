@@ -19,8 +19,12 @@ class HttpClient {
         return HttpClient.instance;
     }
 
-    getHeaders() {
-        const headers = { 'Content-Type': 'application/json' };
+    getHeaders(isFormData = false) {
+        const headers = {};
+        if (!isFormData) {
+            headers['Content-Type'] = 'application/json';
+        }
+        
         const session = this.getSession();
         if (session && session.token) {
             headers['Authorization'] = 'Bearer ' + session.token;
@@ -57,8 +61,8 @@ class HttpClient {
         return !!(session && session.token && session.farmaciaId);
     }
 
-    async get(endpoint, params = {}) {
-        if (!this.requireAuth()) throw new Error('No autenticado');
+    async get(endpoint, params = {}, requireAuth = true) {
+        if (requireAuth && !this.requireAuth()) throw new Error('No autenticado');
 
         const url = new URL(this.baseURL + endpoint, window.location.origin);
         Object.keys(params).forEach(key => {
@@ -72,19 +76,22 @@ class HttpClient {
         return this.handleResponse(response);
     }
 
-    async post(endpoint, data) {
-        if (!this.requireAuth()) throw new Error('No autenticado');
+    async post(endpoint, data, requireAuth = true) {
+        if (requireAuth && !this.requireAuth()) throw new Error('No autenticado');
+
+        const isFormData = data instanceof FormData;
+        const body = isFormData ? data : JSON.stringify(data);
 
         const response = await fetch(this.baseURL + endpoint, {
             method: 'POST',
-            headers: this.getHeaders(),
-            body: JSON.stringify(data)
+            headers: this.getHeaders(isFormData),
+            body: body
         });
         return this.handleResponse(response);
     }
 
-    async put(endpoint, data) {
-        if (!this.requireAuth()) throw new Error('No autenticado');
+    async put(endpoint, data, requireAuth = true) {
+        if (requireAuth && !this.requireAuth()) throw new Error('No autenticado');
 
         const response = await fetch(this.baseURL + endpoint, {
             method: 'PUT',
@@ -94,8 +101,8 @@ class HttpClient {
         return this.handleResponse(response);
     }
 
-    async delete(endpoint) {
-        if (!this.requireAuth()) throw new Error('No autenticado');
+    async delete(endpoint, requireAuth = true) {
+        if (requireAuth && !this.requireAuth()) throw new Error('No autenticado');
 
         const response = await fetch(this.baseURL + endpoint, {
             method: 'DELETE',

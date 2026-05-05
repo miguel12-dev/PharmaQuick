@@ -31,7 +31,20 @@ class JsonResponse {
     private static function send(array $data, int $statusCode): void {
         http_response_code($statusCode);
         header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($data, JSON_UNESCAPED_UNICODE);
+        $json = json_encode(
+            $data,
+            JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE
+        );
+
+        if ($json === false) {
+            $fallback = [
+                'success' => false,
+                'message' => 'Error interno serializando respuesta JSON',
+            ];
+            $json = json_encode($fallback, JSON_UNESCAPED_UNICODE) ?: '{"success":false,"message":"Error interno"}';
+        }
+
+        echo $json;
         exit;
     }
 }

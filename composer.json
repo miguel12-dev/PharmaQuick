@@ -4,12 +4,14 @@
     "type": "project",
     "license": "MIT",
     "require": {
-        "php": ">=8.2"
+        "php": ">=8.2",
+        "phpoffice/phpspreadsheet": "^2.1"
     },
     "require-dev": {},
     "autoload": {
         "psr-4": {
             "PharmaQuick\\Core\\": "src/Core/",
+            "PharmaQuick\\Domain\\": "src/Domain/",
             "PharmaQuick\\Infrastructure\\": "src/Infrastructure/",
             "PharmaQuick\\API\\": "src/API/"
         }

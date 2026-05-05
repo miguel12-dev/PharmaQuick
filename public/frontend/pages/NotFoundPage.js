@@ -12,7 +12,7 @@ const NotFoundPage = {
         this.renderLayout(container);
         
         // Inicializar layout
-        this.initLayout();
+        this.initLayout(container);
     },
     
     /**
@@ -32,62 +32,46 @@ const NotFoundPage = {
         if (pageContent) {
             pageContent.innerHTML = this.get404ContentHtml();
         }
+
+        const pageTitle = container.querySelector('#pageTitle');
+        if (pageTitle) {
+            pageTitle.textContent = 'Página no encontrada';
+        }
         
         // Cargar info del usuario
-        this.loadUserInfo();
+        this.loadUserInfo(container);
+        this.initLayout(container);
     },
     
     /**
-     * Obtener HTML del layout
+     * Obtener HTML del layout (Fallback)
      */
     getLayoutHtml() {
         return `
-            <nav class="navbar navbar-expand-lg navbar-light fixed-top">
-                <div class="container-fluid">
-                    <button class="navbar-toggler me-2" type="button" id="sidebarToggle">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
-                    <a class="navbar-brand" href="/dashboard">
-                        <i class="bi bi-capsule me-2"></i>PharmaQuick
-                    </a>
-                    <div class="d-flex align-items-center ms-auto">
-                        <div class="dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                                <i class="bi bi-person-circle me-1"></i>
-                                <span id="userName">Usuario</span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="#">Perfil</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#" id="logoutBtn">Cerrar Sesión</a></li>
-                            </ul>
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <div class="d-flex align-items-center w-100">
+                        <h4 class="m-0 fw-bold text-white">PharmaQuick</h4>
+                    </div>
+                </div>
+                <nav class="nav flex-column py-3">
+                    <a class="nav-link" href="/dashboard"><i class="fas fa-chart-pie"></i> Dashboard</a>
+                    <a class="nav-link" href="/productos"><i class="fas fa-pills"></i> Productos</a>
+                </nav>
+            </aside>
+            <main class="main-content" id="mainContent">
+                <nav class="navbar navbar-expand-lg fixed-top px-4">
+                    <div class="container-fluid p-0">
+                        <button class="btn btn-link link-dark p-0 me-3 d-md-none" id="sidebarToggleMobile">
+                            <i class="fas fa-bars fa-lg"></i>
+                        </button>
+                        <div class="ms-auto">
+                            <span class="fw-semibold small" id="userName">Admin</span>
                         </div>
                     </div>
-                </div>
-            </nav>
-
-            <nav class="sidebar" id="sidebar">
-                <div class="py-3">
-                    <div class="px-3 mb-3">
-                        <small class="text-muted text-uppercase fw-bold">Menú</small>
-                    </div>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="/dashboard" data-page="dashboard">
-                                <i class="bi bi-speedometer2"></i>Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/productos" data-page="productos">
-                                <i class="bi bi-box-seam"></i>Productos
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
-
-            <main class="main-content" id="mainContent">
-                <div class="container-fluid">
+                </nav>
+                <div class="container-fluid py-4">
+                    <h4 class="m-0 mb-4 fw-bold text-dark" id="pageTitle">404</h4>
                     <div class="page-content"></div>
                 </div>
             </main>
@@ -100,10 +84,14 @@ const NotFoundPage = {
     get404ContentHtml() {
         return `
             <div class="text-center py-5">
-                <i class="bi bi-exclamation-circle text-warning" style="font-size: 4rem;"></i>
-                <h2 class="mt-3">Página no encontrada</h2>
-                <p class="text-muted">La página que buscas no existe.</p>
-                <a href="/dashboard" class="btn btn-primary mt-3">Volver al Dashboard</a>
+                <div class="mb-4">
+                    <i class="fas fa-exclamation-circle text-warning opacity-25" style="font-size: 6rem;"></i>
+                </div>
+                <h2 class="fw-bold text-dark">Página no encontrada</h2>
+                <p class="text-muted mb-4">Lo sentimos, la página que buscas no existe o ha sido movida.</p>
+                <a href="/dashboard" class="btn btn-primary px-4 py-2">
+                    <i class="fas fa-home me-2"></i>Volver al Dashboard
+                </a>
             </div>
         `;
     },
@@ -111,67 +99,69 @@ const NotFoundPage = {
     /**
      * Inicializar layout
      */
-    initLayout() {
-        const sidebar = document.getElementById('sidebar');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const mainContent = document.getElementById('mainContent');
-        
-        if (sidebarToggle && sidebar) {
-            let isMobile = window.innerWidth <= 768;
-            
-            sidebarToggle.addEventListener('click', () => {
-                if (isMobile) {
-                    sidebar.classList.toggle('show');
-                } else if (mainContent) {
-                    mainContent.classList.toggle('sidebar-open');
-                }
-            });
-            
-            window.addEventListener('resize', () => {
-                const wasMobile = isMobile;
-                isMobile = window.innerWidth <= 768;
+    initLayout(container) {
+        const sidebar = container.querySelector('#sidebar');
+        const collapseBtn = container.querySelector('#sidebarCollapseBtn');
+        const mobileBtn = container.querySelector('#sidebarToggleMobile');
+
+        // Restaurar estado previo
+        const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        if (isCollapsed && sidebar && window.innerWidth > 768) {
+            sidebar.classList.add('collapsed');
+            document.body.classList.add('sidebar-collapsed');
+            const icon = sidebar.querySelector('.sidebar-toggle-icon');
+            if (icon) {
+                icon.classList.remove('fa-chevron-left');
+                icon.classList.add('fa-chevron-right');
+            }
+        } else if (!isCollapsed) {
+            document.body.classList.remove('sidebar-collapsed');
+        }
+
+        if (collapseBtn && sidebar) {
+            collapseBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                sidebar.classList.toggle('collapsed');
+                const nowCollapsed = sidebar.classList.contains('collapsed');
+                localStorage.setItem('sidebarCollapsed', nowCollapsed);
+                document.body.classList.toggle('sidebar-collapsed', nowCollapsed);
                 
-                if (wasMobile !== isMobile) {
-                    if (!isMobile) {
-                        sidebar.classList.remove('show');
-                        if (mainContent) mainContent.classList.remove('sidebar-open');
-                    }
+                const icon = sidebar.querySelector('.sidebar-toggle-icon');
+                if (icon) {
+                    icon.classList.toggle('fa-chevron-right', nowCollapsed);
+                    icon.classList.toggle('fa-chevron-left', !nowCollapsed);
                 }
             });
         }
-        
+
+        if (mobileBtn && sidebar) {
+            mobileBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                sidebar.classList.toggle('show');
+            });
+        }
+
         // Logout
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', (e) => {
-                e.preventDefault();
+        const logoutBtns = container.querySelectorAll('#logoutBtn, #logoutBtnDropdown');
+        logoutBtns.forEach(btn => {
+            btn.addEventListener('click', (event) => {
+                event.preventDefault();
                 Router.logout();
             });
-        }
-        
-        // Set active nav
-        this.setActiveNav('');
+        });
     },
     
     /**
      * Cargar información del usuario
      */
-    loadUserInfo() {
-        const session = AuthService.getSession();
-        
-        const userNameEl = document.getElementById('userName');
-        if (userNameEl && session) {
-            userNameEl.textContent = session.nombre || session.usuario || 'Usuario';
+    loadUserInfo(container) {
+        if (typeof AuthService !== 'undefined') {
+            const userNameEls = container.querySelectorAll('#userName');
+            const displayName = AuthService.getUserName() || 'Admin';
+            userNameEls.forEach(el => {
+                el.textContent = displayName;
+            });
         }
-    },
-    
-    /**
-     * Establecer enlace activo
-     */
-    setActiveNav(page) {
-        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
-            link.classList.remove('active');
-        });
     }
 };
 

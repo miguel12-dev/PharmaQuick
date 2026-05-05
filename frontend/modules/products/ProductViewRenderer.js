@@ -106,7 +106,7 @@ class ProductViewRenderer {
                 </td>
                 <td><span class="badge bg-light text-dark border fw-normal">${p.codigo || p.codigo_barras || '-'}</span></td>
                 <td>${p.categoria || '<span class="text-muted italic">Sin categoría</span>'}</td>
-                <td class="text-center ${stockClass}">${p.stock_total || 0}</td>
+                <td class="text-center ${stockClass}">${Math.round(p.stock_total || 0)}</td>
                 <td>
                     ${p.activo ? 
                         '<span class="badge rounded-pill" style="background-color: var(--color-primary-soft); color: var(--color-primary);">Activo</span>' : 

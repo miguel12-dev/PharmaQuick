@@ -65,9 +65,9 @@ CREATE TABLE IF NOT EXISTS lotes (
     farmacia_id INT UNSIGNED,
     codigo_lote VARCHAR(50),
     fecha_vencimiento DATE,
-    costo_unitario DECIMAL(12,3),
-    stock_actual DECIMAL(12,3) DEFAULT 0,
-    stock_reservado DECIMAL(12,3) DEFAULT 0,
+    costo_unitario DECIMAL(12,2) DEFAULT 0,
+    stock_actual INT UNSIGNED DEFAULT 0,
+    stock_reservado INT UNSIGNED DEFAULT 0,
     UNIQUE(producto_id, farmacia_id, codigo_lote),
     INDEX idx_fefo_lookup (farmacia_id, producto_id, fecha_vencimiento, stock_actual)
     -- FK a productos y farmacias locales solo si existen
@@ -82,7 +82,8 @@ CREATE TABLE IF NOT EXISTS movimientos_inventario (
     farmacia_id INT UNSIGNED,
     usuario_id BIGINT UNSIGNED,
     tipo ENUM('ENTRADA','SALIDA','RESERVA','LIBERACION') NOT NULL,
-    cantidad DECIMAL(12,3),
+    cantidad INT UNSIGNED DEFAULT 0,
+
     referencia VARCHAR(100) DEFAULT NULL,
     observaciones TEXT,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -66,3 +66,4 @@ docker/nginx/logs/error.log
 /docker/nginx/logs
 *.log
 /public/uploads/productos/1/imagenes
+/public/uploads/productos/1/imagenes

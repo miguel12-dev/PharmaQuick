@@ -17,6 +17,9 @@ services:
     volumes:
       - ./src:/var/www/html/src:rw
       - ./public:/var/www/html/public:rw
+      - ./vendor:/var/www/html/vendor:rw
+      - ./composer.json:/var/www/html/composer.json:ro
+      - ./composer.lock:/var/www/html/composer.lock:ro
     environment:
       - PHP_MEMORY_LIMIT=256M
       - PHP_UPLOAD_MAX_FILESIZE=50M

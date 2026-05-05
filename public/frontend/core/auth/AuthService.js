@@ -47,7 +47,20 @@ class AuthService {
      */
     static getUserName() {
         const session = this.getSession();
-        return session?.nombre || session?.usuario || null;
+        if (!session) return null;
+
+        const nombre = this.resolveDisplayText(session.nombre);
+        if (nombre) return nombre;
+
+        const usuario = session.usuario;
+        if (typeof usuario === 'string') return usuario;
+        if (usuario && typeof usuario === 'object') {
+            return this.resolveDisplayText(usuario.nombre)
+                || this.resolveDisplayText(usuario.usuario)
+                || this.resolveDisplayText(usuario.email);
+        }
+
+        return null;
     }
     
     /**
@@ -55,21 +68,39 @@ class AuthService {
      */
     static getUserEmail() {
         const session = this.getSession();
-        return session?.usuario || null;
+        if (!session) return null;
+        if (typeof session.usuario === 'string') return session.usuario;
+        if (session.usuario && typeof session.usuario === 'object') {
+            return session.usuario.email || session.usuario.usuario || null;
+        }
+        return null;
     }
     
     /**
      * Guardar sesión
      */
     static setSession(data) {
+        const usuario = data?.usuario;
+        const usuarioValue = typeof usuario === 'string'
+            ? usuario
+            : (usuario?.email || usuario?.usuario || '');
+        const nombreValue = data?.nombre
+            || usuario?.nombre
+            || usuario?.usuario
+            || usuarioValue;
+
         const session = {
             isAuthenticated: true,
-            usuario: data.usuario,
+            usuario: usuarioValue,
             farmaciaId: data.farmacia_id,
-            nombre: data.nombre,
+            nombre: nombreValue,
             token: data.token
         };
         localStorage.setItem(this.SESSION_KEY, JSON.stringify(session));
+    }
+
+    static resolveDisplayText(value) {
+        return typeof value === 'string' && value.trim() !== '' ? value.trim() : null;
     }
     
     /**

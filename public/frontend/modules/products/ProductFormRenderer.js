@@ -5,16 +5,24 @@
 
 class ProductFormRenderer {
     static NO_IMAGE_FALLBACK = "data:image/gif;base64,R0lGODlhAQABAAAAACw=";
+    static DEFAULT_CATEGORIES = ['Analgésicos', 'Antibióticos', 'Antiinflamatorios', 'Antihistamínicos', 'Gastrointestinales', 'Vitaminas y suplementos', 'Dermatológicos', 'Cardiovasculares', 'Respiratorios', 'Pediátricos'];
+    
+    constructor() {
+        this.dynamicCategories = [];
+    }
+
     /**
      * Get form HTML
      */
     getFormHtml(producto = null) {
         const p = producto || {};
         const barcode = p.codigo_barras || p.codigo || '';
+        const precioInicial = p.precio ?? p.precio_venta ?? p.precio_activo ?? '';
         const imageUrl = this.getImageUrl(p);
         
         return `
             <form id="productForm" class="p-2">
+                <input type="hidden" name="lote_id" value="${p.lote_id || ''}">
                 <div class="row g-3">
                     <!-- Nombre y Código -->
                     <div class="col-md-7">
@@ -40,10 +48,14 @@ class ProductFormRenderer {
                     <div class="col-md-6">
                         <div class="form-group mb-3">
                             <label class="form-label fw-bold small text-muted text-uppercase">Categoría</label>
-                            <div class="input-group">
+                            <div class="input-group mb-2">
                                 <span class="input-group-text bg-white border-end-0"><i class="fas fa-tag text-muted"></i></span>
-                                <input type="text" name="categoria" class="form-control border-start-0" value="${p.categoria || ''}" list="categoriasList" placeholder="Ej. Antibióticos">
-                                <datalist id="categoriasList"></datalist>
+                                <select name="categoria" id="categoriaSelect" class="form-select border-start-0">
+                                    ${this.getCategoryOptionsHtml(p.categoria || '')}
+                                </select>
+                            </div>
+                            <div id="categoriaCustomContainer" class="${this.shouldShowCustomCategory(p.categoria || '') ? '' : 'd-none'}">
+                                <input type="text" id="categoriaCustomInput" class="form-control" value="${this.isDefaultCategory(p.categoria || '') ? '' : (p.categoria || '')}" placeholder="Escriba la nueva categoría">
                             </div>
                         </div>
                     </div>
@@ -52,18 +64,7 @@ class ProductFormRenderer {
                             <label class="form-label fw-bold small text-muted text-uppercase">Precio de Venta <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text bg-white border-end-0"><i class="fas fa-dollar-sign text-success"></i></span>
-                                <input type="number" step="0.01" name="precio" class="form-control border-start-0" value="${p.precio || ''}" placeholder="0.00" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Stock -->
-                    <div class="col-md-6">
-                        <div class="form-group mb-3">
-                            <label class="form-label fw-bold small text-muted text-uppercase">Stock (cantidad disponible)</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-white border-end-0"><i class="fas fa-cubes text-muted"></i></span>
-                                <input type="number" step="0.001" min="0" name="stock_total" class="form-control border-start-0" value="${(p.stock_total ?? 0)}" placeholder="0">
+                                <input type="number" step="0.01" name="precio" class="form-control border-start-0" value="${precioInicial}" placeholder="0.00" required>
                             </div>
                         </div>
                     </div>
@@ -108,22 +109,58 @@ class ProductFormRenderer {
         return null;
     }
 
-    /**
-     * Fill form with data (Robust handling for different field names)
-     */
+    isDefaultCategory(category) {
+        return ProductFormRenderer.DEFAULT_CATEGORIES.includes(category);
+    }
+
+    shouldShowCustomCategory(category) {
+        return Boolean(category) && !this.isDefaultCategory(category);
+    }
+
+    setDynamicCategories(categories = []) {
+        const cleaned = categories
+            .map(c => String(c || '').trim())
+            .filter(Boolean);
+        this.dynamicCategories = [...new Set(cleaned)];
+    }
+
+    getCategoryOptionsHtml(selectedCategory) {
+        const merged = [...new Set([...ProductFormRenderer.DEFAULT_CATEGORIES, ...this.dynamicCategories])];
+        const options = merged.map(category => {
+            const selected = category === selectedCategory ? 'selected' : '';
+            return `<option value="${category}" ${selected}>${category}</option>`;
+        }).join('');
+        const useOther = this.shouldShowCustomCategory(selectedCategory);
+        return `<option value="">Seleccione categoría</option>${options}<option value="__OTRA__" ${useOther ? 'selected' : ''}>Otra...</option>`;
+    }
+
+    setupCategoryField() {
+        const select = document.getElementById('categoriaSelect');
+        const customContainer = document.getElementById('categoriaCustomContainer');
+        const customInput = document.getElementById('categoriaCustomInput');
+        if (!select || !customContainer || !customInput) return;
+
+        const toggle = () => {
+            const isOther = select.value === '__OTRA__';
+            customContainer.classList.toggle('d-none', !isOther);
+            if (!isOther) customInput.value = '';
+        };
+
+        select.addEventListener('change', toggle);
+        toggle();
+    }
+
     fillForm(producto) {
         if (!producto) return;
 
         const form = document.getElementById('productForm');
         if (!form) return;
 
-        // Mapeo de campos (name en form -> key en objeto)
         const mapping = {
             'nombre': producto.nombre,
             'codigo_barras': producto.codigo_barras || producto.codigo,
             'categoria': producto.categoria,
-            'precio': producto.precio || producto.precio_venta || 0,
-            'stock_total': producto.stock_total ?? 0,
+            'precio': producto.precio ?? producto.precio_venta ?? producto.precio_activo ?? 0,
             'presentacion': producto.presentacion,
             'descripcion': producto.descripcion
         };
@@ -134,23 +171,32 @@ class ProductFormRenderer {
                 input.value = mapping[name];
             }
         });
+
+        this.setupCategoryField();
     }
 
     /**
      * Get form data as Object
      */
     getData() {
-        const form = document.getElementById('productForm');
+        const form = document.querySelector('.modal-overlay.show #productForm') || document.getElementById('productForm');
         if (!form) return {};
 
+        const formData = new FormData(form);
         const data = {};
-        const inputs = form.querySelectorAll('input, select, textarea');
         
-        inputs.forEach(input => {
-            if (input.name && input.type !== 'file') {
-                data[input.name] = input.value;
-            }
+        formData.forEach((value, key) => {
+            data[key] = value;
         });
+
+        // Special handling for custom category
+        if (data.categoria === '__OTRA__') {
+            const customInput = form.querySelector('#categoriaCustomInput') || document.getElementById('categoriaCustomInput');
+            data.categoria = customInput?.value?.trim() || '';
+        }
+        
+        // Ensure image field is NOT in the plain object to avoid JSON issues
+        delete data.imagen;
         
         return data;
     }
@@ -159,9 +205,26 @@ class ProductFormRenderer {
      * Get form data as FormData (for file uploads)
      */
     getFormData() {
-        const form = document.getElementById('productForm');
+        const form = document.querySelector('.modal-overlay.show #productForm') || document.getElementById('productForm');
         if (!form) return new FormData();
-        return new FormData(form);
+
+        const data = this.getData();
+        const formData = new FormData();
+        
+        // Add all text fields
+        Object.entries(data).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+                formData.append(key, value);
+            }
+        });
+
+        // Add file field
+        const imageInput = form.querySelector('#productImageInput');
+        if (imageInput?.files?.[0]) {
+            formData.append('imagen', imageInput.files[0]);
+        }
+
+        return formData;
     }
 }
 

@@ -180,8 +180,21 @@ const ProductsPage = {
                                                     <datalist id="categoriasList"></datalist>
                                                 </div>
                                                 <div class="col-12">
-                                                    <label class="form-label fw-semibold small text-muted">Presentación</label>
-                                                    <input type="text" class="form-control rounded-3" name="presentacion" id="formPresentacion" placeholder="Caja x 30 unidades">
+                                                    <label class="form-label fw-semibold small text-muted">Presentación / Envase</label>
+                                                    <input type="text" class="form-control rounded-3" name="presentacion" id="formPresentacion" placeholder="Ej. Caja x 30 unidades">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label fw-semibold small text-muted">Stock Inicial</label>
+                                                    <input type="number" class="form-control rounded-3" name="stock_total" id="formStock" placeholder="0" min="0" step="1">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label fw-semibold small text-muted">Precio de Venta *</label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-text bg-light border-end-0"><i class="fas fa-tag small text-muted"></i></span>
+                                                        <input type="text" class="form-control border-start-0 ps-0 rounded-end-3" id="formPrecioDisplay" placeholder="Ej. 20.000">
+                                                        <input type="hidden" name="precio" id="formPrecio">
+                                                    </div>
+
                                                 </div>
                                                 <div class="col-12">
                                                     <label class="form-label fw-semibold small text-muted">Descripción</label>
@@ -277,6 +290,22 @@ const ProductsPage = {
         const saveProductBtn = document.getElementById('saveProductBtn');
         if (saveProductBtn) {
             saveProductBtn.addEventListener('click', () => this.saveProduct());
+        }
+
+        // Precio formatting logic
+        const precioDisplay = document.getElementById('formPrecioDisplay');
+        const precioValue = document.getElementById('formPrecio');
+
+        if (precioDisplay && precioValue) {
+            precioDisplay.addEventListener('input', (e) => {
+                let val = e.target.value.replace(/\D/g, '');
+                precioValue.value = val;
+                if (val !== '') {
+                    e.target.value = new Intl.NumberFormat('es-CO').format(val);
+                } else {
+                    e.target.value = '';
+                }
+            });
         }
     },
     
@@ -434,9 +463,15 @@ const ProductsPage = {
                     <div class="card-body">
                         <h6 class="card-title fw-bold text-dark mb-1">${producto.nombre || 'Sin nombre'}</h6>
                         <p class="text-primary small mb-2 fw-medium">${producto.categoria || 'Sin categoría'}</p>
-                        <p class="small mb-0 text-muted">
+                        <p class="small mb-2 text-muted">
                             <i class="fas fa-barcode me-1"></i> ${producto.codigo_barras || producto.codigo || 'Sin código'}
                         </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-dark">${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(producto.precio_activo || producto.precio || 0)}</span>
+                            <span class="badge ${producto.stock_total > 10 ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'} rounded-pill px-2 py-1" style="font-size: 0.75rem;">
+                                ${Math.round(producto.stock_total || 0)} unid.
+                            </span>
+                        </div>
                     </div>
                     <div class="card-footer bg-white border-0 pt-0 pb-3">
                         <button class="btn btn-sm btn-light w-100 border rounded-pill text-primary fw-medium" 
@@ -567,6 +602,14 @@ const ProductsPage = {
             document.getElementById('formPresentacion').value = producto.presentacion || '';
             document.getElementById('formDescripcion').value = producto.descripcion || '';
             
+            // Stock
+            document.getElementById('formStock').value = Math.round(producto.stock_total || 0);
+            
+            // Precio
+            const precio = producto.precio_activo || producto.precio || 0;
+            document.getElementById('formPrecio').value = precio;
+            document.getElementById('formPrecioDisplay').value = precio > 0 ? new Intl.NumberFormat('es-CO').format(precio) : '';
+
             if (producto.imagen) {
                 const imgUrl = producto.imagen.startsWith('/') ? producto.imagen : `/uploads/productos/${producto.imagen}`;
                 document.getElementById('imagePreview').innerHTML = `

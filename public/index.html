@@ -94,12 +94,13 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="d-flex align-items-center w-100">
-                    <i class="fas fa-capsules fa-lg me-2 text-primary-light"></i>
-                    <span class="fw-bold fs-5 nav-text">PharmaQuick</span>
-                    <button class="btn btn-link link-light ms-auto p-0 d-none d-md-block" id="sidebarCollapseBtn">
-                        <i class="fas fa-chevron-left sidebar-toggle-icon"></i>
-                    </button>
+                    <img src="image/logo_pharmaQuick.png" alt="PharmaQuick" class="sidebar-logo">
                 </div>
+            </div>
+            <div class="sidebar-collapse-control d-none d-md-flex">
+                <button class="btn btn-link link-light p-0" id="sidebarCollapseBtn" type="button" aria-label="Colapsar sidebar">
+                    <i class="fas fa-chevron-left sidebar-toggle-icon"></i>
+                </button>
             </div>
             <nav class="nav flex-column py-3">
                 <a class="nav-link active" href="/dashboard" data-page="dashboard">
@@ -127,6 +128,10 @@
                     <i class="fas fa-cog"></i>
                     <span class="nav-text">Configuración</span>
                 </a>
+                <a class="nav-link" href="/perfil" data-page="perfil">
+                    <i class="fas fa-user"></i>
+                    <span class="nav-text">Perfil</span>
+                </a>
             </nav>
             
             <div class="mt-auto p-3 border-top border-white-50 border-opacity-10">
@@ -140,12 +145,11 @@
         <div class="main-content" id="mainContent">
             <nav class="navbar navbar-expand-lg fixed-top px-4">
                 <div class="container-fluid p-0">
+                    <img src="image/logo_pharmaQuick.png" alt="PharmaQuick" class="navbar-logo-collapsed me-3">
                     <button class="btn btn-link link-dark p-0 me-3 d-md-none" id="sidebarToggleMobile">
                         <i class="fas fa-bars fa-lg"></i>
                     </button>
-                    
-                    <h4 class="m-0 fw-bold text-dark" id="pageTitle">Dashboard</h4>
-                    
+
                     <div class="ms-auto d-flex align-items-center">
                         <div class="dropdown">
                             <button class="btn btn-light rounded-circle p-0 me-3 position-relative" style="width: 40px; height: 40px;" data-bs-toggle="dropdown">
@@ -164,7 +168,7 @@
                                 <i class="fas fa-chevron-down x-small opacity-50"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2">
-                                <li><a class="dropdown-item py-2" href="#"><i class="fas fa-user me-2 opacity-50"></i> Perfil</a></li>
+                                <li><a class="dropdown-item py-2" href="/perfil"><i class="fas fa-user me-2 opacity-50"></i> Perfil</a></li>
                                 <li><a class="dropdown-item py-2" href="#"><i class="fas fa-cog me-2 opacity-50"></i> Ajustes</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item py-2 text-danger" href="#" id="logoutBtnDropdown"><i class="fas fa-power-off me-2 opacity-50"></i> Salir</a></li>
@@ -176,6 +180,7 @@
 
             <!-- Main Content Area -->
             <div class="container-fluid py-4">
+                <h4 class="m-0 mb-4 fw-bold text-dark" id="pageTitle">Dashboard</h4>
                 <div class="page-content fade-in-up"></div>
             </div>
         </div>
@@ -368,11 +373,16 @@
     <script src="frontend/modules/prices/PriceService.js"></script>
     <script src="frontend/modules/prices/PriceController.js"></script>
     <script src="frontend/modules/prices/PriceView.js"></script>
+    <script src="frontend/modules/inventory/InventoryService.js"></script>
+    <script src="frontend/modules/inventory/InventoryController.js"></script>
+    <script src="frontend/modules/inventory/InventoryView.js"></script>
     
     <!-- Pages -->
     <script src="frontend/pages/LoginPage.js"></script>
     <script src="frontend/pages/DashboardPage.js"></script>
     <script src="frontend/pages/ProductsPage.js"></script>
+    <script src="frontend/pages/InventoryPage.js"></script>
+    <script src="frontend/pages/ProfilePage.js"></script>
     <script src="frontend/pages/NotFoundPage.js"></script>
     
     <!-- App -->
