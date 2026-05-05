@@ -15,6 +15,8 @@
         '/dashboard': DashboardPage,
         '/productos': ProductsPage,
         '/inventario': InventoryPage,
+        '/ventas': SalesPage,
+        '/reservas': ReservationsPage,
         '/perfil': ProfilePage,
         '/404': NotFoundPage
     };
