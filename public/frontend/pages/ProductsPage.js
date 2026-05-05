@@ -43,7 +43,8 @@ const ProductsPage = {
         const template = document.getElementById('template-layout');
         
         if (template) {
-            container.innerHTML = template.innerHTML;
+            container.innerHTML = '';
+            container.appendChild(template.content.cloneNode(true));
         } else {
             // Fallback (pero deberíamos usar el template)
             container.innerHTML = `

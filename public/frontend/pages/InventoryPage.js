@@ -18,7 +18,8 @@ const InventoryPage = {
     renderLayout(container) {
         const template = document.getElementById('template-layout');
         if (template) {
-            container.innerHTML = template.innerHTML;
+            container.innerHTML = '';
+            container.appendChild(template.content.cloneNode(true));
         }
 
         const pageContent = container.querySelector('.page-content');

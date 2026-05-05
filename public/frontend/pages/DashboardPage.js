@@ -31,8 +31,9 @@ const DashboardPage = {
         const template = document.getElementById('template-layout');
         const dashboardTemplate = document.getElementById('template-dashboard');
         
+        container.innerHTML = '';
         if (template) {
-            container.innerHTML = template.innerHTML;
+            container.appendChild(template.content.cloneNode(true));
         } else {
             container.innerHTML = this.getLayoutHtml();
         }
@@ -40,7 +41,8 @@ const DashboardPage = {
         // Insertar contenido de dashboard en el contenedor correcto
         const pageContent = container.querySelector('.page-content');
         if (pageContent && dashboardTemplate) {
-            pageContent.innerHTML = dashboardTemplate.innerHTML;
+            pageContent.innerHTML = '';
+            pageContent.appendChild(dashboardTemplate.content.cloneNode(true));
         } else if (pageContent) {
             pageContent.innerHTML = this.getDashboardContentHtml();
         }
