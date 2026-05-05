@@ -297,13 +297,11 @@ const DashboardPage = {
      * Cargar información del usuario
      */
     loadUserInfo() {
-        const session = AuthService.getSession();
         const userNameEls = document.querySelectorAll('#userName');
-        if (session) {
-            userNameEls.forEach(el => {
-                el.textContent = session.nombre || session.usuario || 'Admin';
-            });
-        }
+        const displayName = AuthService.getUserName() || 'Admin';
+        userNameEls.forEach(el => {
+            el.textContent = displayName;
+        });
     },
     
     /**

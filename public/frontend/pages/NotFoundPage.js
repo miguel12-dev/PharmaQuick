@@ -12,7 +12,7 @@ const NotFoundPage = {
         this.renderLayout(container);
         
         // Inicializar layout
-        this.initLayout();
+        this.initLayout(container);
     },
     
     /**
@@ -156,13 +156,11 @@ const NotFoundPage = {
      */
     loadUserInfo(container) {
         if (typeof AuthService !== 'undefined') {
-            const session = AuthService.getSession();
             const userNameEls = container.querySelectorAll('#userName');
-            if (session) {
-                userNameEls.forEach(el => {
-                    el.textContent = session.nombre || session.usuario || 'Admin';
-                });
-            }
+            const displayName = AuthService.getUserName() || 'Admin';
+            userNameEls.forEach(el => {
+                el.textContent = displayName;
+            });
         }
     }
 };

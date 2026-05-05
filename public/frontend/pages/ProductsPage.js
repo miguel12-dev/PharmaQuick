@@ -121,6 +121,8 @@ const ProductsPage = {
         // Configurar título de página en el navbar
         const pageTitle = container.querySelector('#pageTitle');
         if (pageTitle) pageTitle.textContent = 'Productos';
+        const userNameEl = container.querySelector('#userName');
+        if (userNameEl) userNameEl.textContent = AuthService.getUserName() || 'Admin';
 
         this.setupEventListeners();
         this.initSidebarToggle(container);
@@ -162,8 +164,10 @@ const ProductsPage = {
         if (sidebarToggleMobile) sidebarToggleMobile.addEventListener('click', (e) => { e.preventDefault(); sidebar.classList.toggle('show'); });
         
         // Logout
-        const logoutBtn = container.querySelector('#logoutBtn');
-        if (logoutBtn) logoutBtn.addEventListener('click', (e) => { e.preventDefault(); Router.logout(); });
+        ['#logoutBtn', '#logoutBtnDropdown'].forEach(selector => {
+            const logoutBtn = container.querySelector(selector);
+            if (logoutBtn) logoutBtn.addEventListener('click', (e) => { e.preventDefault(); Router.logout(); });
+        });
     },
     
     /**
@@ -171,10 +175,15 @@ const ProductsPage = {
      */
     setupEventListeners() {
         // Logout
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => Router.logout());
-        }
+        ['logoutBtn', 'logoutBtnDropdown'].forEach(id => {
+            const logoutBtn = document.getElementById(id);
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    Router.logout();
+                });
+            }
+        });
         
         // Nuevo producto
         const newProductBtn = document.getElementById('newProductBtn');
