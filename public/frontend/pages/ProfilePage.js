@@ -8,6 +8,8 @@ const ProfilePage = {
         this.renderLayout(container);
         await this.loadProfile(container);
         this.setupEventListeners(container);
+        this.initSidebarToggle(container);
+        this.setActiveNav('perfil');
     },
 
     renderLayout(container) {
@@ -61,6 +63,59 @@ const ProfilePage = {
             if (typeof Toast !== 'undefined') Toast.success('Contraseña actualizada');
             form.reset();
         });
+    }
+    ,
+
+    setActiveNav(page) {
+        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+            link.classList.remove('active');
+            const href = link.getAttribute('href');
+            if (href && (href === '/' + page || href.includes(page))) {
+                link.classList.add('active');
+            }
+        });
+    },
+
+    initSidebarToggle(container) {
+        const sidebar = container.querySelector('#sidebar');
+        const collapseBtn = container.querySelector('#sidebarCollapseBtn');
+        const mobileBtn = container.querySelector('#sidebarToggleMobile');
+
+        const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        if (isCollapsed && sidebar && window.innerWidth > 768) {
+            sidebar.classList.add('collapsed');
+            document.body.classList.add('sidebar-collapsed');
+            const icon = sidebar.querySelector('.sidebar-toggle-icon');
+            if (icon) {
+                icon.classList.remove('fa-chevron-left');
+                icon.classList.add('fa-chevron-right');
+            }
+        } else if (!isCollapsed) {
+            document.body.classList.remove('sidebar-collapsed');
+        }
+
+        if (collapseBtn && sidebar) {
+            collapseBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                sidebar.classList.toggle('collapsed');
+                const nowCollapsed = sidebar.classList.contains('collapsed');
+                localStorage.setItem('sidebarCollapsed', nowCollapsed);
+                document.body.classList.toggle('sidebar-collapsed', nowCollapsed);
+
+                const icon = sidebar.querySelector('.sidebar-toggle-icon');
+                if (icon) {
+                    icon.classList.toggle('fa-chevron-right', nowCollapsed);
+                    icon.classList.toggle('fa-chevron-left', !nowCollapsed);
+                }
+            });
+        }
+
+        if (mobileBtn && sidebar) {
+            mobileBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                sidebar.classList.toggle('show');
+            });
+        }
     }
 };
 
