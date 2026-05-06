@@ -20,33 +20,7 @@
     scroll-margin-top: 5.5rem;
 }
 
-.home-nav {
-    position: sticky;
-    top: 0;
-    z-index: 1020;
-    background: rgba(255, 255, 255, 0.82);
-    backdrop-filter: blur(14px) saturate(1.2);
-    -webkit-backdrop-filter: blur(14px) saturate(1.2);
-    border-bottom: 1px solid rgba(var(--pq-primary-rgb), 0.08);
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset;
-}
-
-/* Logo header: ancho fluido para que escale en móvil/tablet */
-.home-brand-logo-wrap {
-    display: block;
-    width: min(100%, clamp(160px, 42vw, 240px));
-    max-width: 240px;
-    line-height: 0;
-}
-
-.home-brand-logo {
-    display: block;
-    width: 100%;
-    height: auto;
-    max-height: clamp(40px, 10vw, 52px);
-    object-fit: contain;
-    object-position: left center;
-}
+/* Cabecera: css/site-header.css (.pq-site-header) */
 
 .home-hero {
     position: relative;
@@ -473,8 +447,8 @@
     filter: blur(0);
 }
 
-.home-nav.home-reveal,
-.home-nav.home-reveal--visible {
+.home-landing .pq-site-header.home-reveal,
+.home-landing .pq-site-header.home-reveal--visible {
     filter: none !important;
 }
 

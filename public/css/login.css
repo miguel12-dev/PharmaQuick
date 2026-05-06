@@ -1,0 +1,42 @@
+/**
+ * Página de sesión /login (shell + contenido)
+ * Requiere styles.css y site-header.css.
+ */
+
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(165deg, #ffffff 0%, #f0fdf9 38%, #f8fafc 100%);
+    color: var(--pq-text);
+}
+
+.login-page__main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.login-page__main > .container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.login-page .login-card {
+    border-radius: 20px;
+    border: 1px solid rgba(var(--pq-primary-rgb), 0.12);
+    box-shadow:
+        0 4px 24px rgba(15, 23, 42, 0.06),
+        0 1px 0 rgba(255, 255, 255, 0.9) inset;
+}
+
+.login-page .login-card .card-body {
+    padding: 1.75rem;
+}
+
+.login-page .login-subtitle {
+    font-size: 0.95rem;
+    color: var(--pq-text-secondary);
+}

@@ -33,21 +33,12 @@ const HomePage = {
         const primaryLabel = loggedIn ? 'Ir al panel' : 'Iniciar sesión';
         return `
 <div class="home-landing">
-    <header class="home-nav home-reveal" data-delay="0">
-        <div class="container py-3 d-flex align-items-center justify-content-between">
-            <a href="/" class="home-brand text-decoration-none d-inline-flex align-items-center">
-                <span class="home-brand-logo-wrap">
-                    <img src="/image/logo_pharmaQuick.png" alt="PharmaQuick" class="home-brand-logo" loading="eager" decoding="async">
-                </span>
-            </a>
-            <div class="d-flex align-items-center gap-2">
-                ${loggedIn
-                    ? `<a href="/dashboard" class="btn btn-primary btn-sm px-3">${primaryLabel}</a>`
-                    : `<a href="/login" class="btn btn-outline-primary btn-sm px-3">Acceder</a>`
-                }
-            </div>
-        </div>
-    </header>
+    ${SiteHeader.render({
+        variant: 'marketing',
+        loggedIn,
+        headerExtraClass: 'home-reveal',
+        revealDelay: 0
+    })}
 
     <main>
         <section class="home-hero">
