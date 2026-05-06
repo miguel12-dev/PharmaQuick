@@ -12,6 +12,7 @@
     const routes = {
         '/': HomePage,
         '/login': LoginPage,
+        '/tienda': PublicStorePage,
         '/dashboard': DashboardPage,
         '/productos': ProductsPage,
         '/inventario': InventoryPage,

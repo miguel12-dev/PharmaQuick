@@ -9,6 +9,7 @@ const Config = {
     API_VERSION: 'v1',
     
     // UI
+    PUBLIC_STORE_FARMACIA_ID: 1, // ID de la farmacia para el catálogo público
     ANIMATION_DURATION: 250, // ms
     DEBOUNCE_DELAY: 300, // ms
     TOAST_DURATION: 3000, // ms

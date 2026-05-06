@@ -82,7 +82,13 @@ class PharmaRouter {
             return;
         }
 
-        // Todas las demÃƒÂ¡s rutas requieren JWT
+        // Rutas pÃºblicas sin JWT (vitrina e-commerce)
+        if (strpos($this->uri, '/api/public/') === 0) {
+            $this->handlePublicApi();
+            return;
+        }
+
+        // Todas las demÃ¡s rutas requieren JWT
         require_once SRC_PATH . '/Infrastructure/Services/JwtService.php';
         require_once SRC_PATH . '/API/Middleware/JwtMiddleware.php';
 
@@ -94,6 +100,22 @@ class PharmaRouter {
 
         // Enrutar segÃƒÂºn URI
         $this->dispatchRoutes();
+    }
+
+    private function handlePublicApi(): void {
+        require_once ROUTES_PATH . '/public.php';
+
+        if ($this->uri === '/api/public/catalogo' && $this->method === 'GET') {
+            handleGetPublicCatalogo();
+            return;
+        }
+
+        if ($this->uri === '/api/public/productos-top' && $this->method === 'GET') {
+            handleGetPublicProductosTop();
+            return;
+        }
+
+        JsonResponse::error('Recurso publico no encontrado', 404);
     }
 
     private function dispatchRoutes(): void {
@@ -307,6 +329,12 @@ class PharmaRouter {
         // ===================
         // VENTAS Y RESERVAS
         // ===================
+        if ($this->uri === '/api/ventas/top-productos' && $this->method === 'GET') {
+            require_once ROUTES_PATH . '/public.php';
+            handleGetTopProductosAuth();
+            return;
+        }
+
         if ($this->uri === '/api/ventas' && $this->method === 'GET') {
             require_once ROUTES_PATH . '/ventas.php';
             handleGetVentas();

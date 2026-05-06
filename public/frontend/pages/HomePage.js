@@ -57,6 +57,7 @@ const HomePage = {
                         </p>
                         <div class="home-hero-actions home-reveal d-flex flex-wrap gap-3 mb-4" data-delay="240">
                             <button type="button" class="btn btn-primary btn-lg px-4 shadow-sm" data-home-action="primary">${primaryLabel}</button>
+<a href="/tienda" class="btn btn-outline-primary btn-lg px-4 ms-2 home-reveal" data-delay="280">Catálogo público</a>
                             <a href="#funciones" class="btn btn-outline-primary btn-lg px-4 home-reveal home-btn-secondary" data-delay="280">Ver funciones</a>
                         </div>
                         <ul class="home-pills home-reveal list-unstyled d-flex flex-wrap gap-2 mb-0" data-delay="300">
