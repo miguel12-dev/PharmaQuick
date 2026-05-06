@@ -67,3 +67,5 @@ docker/nginx/logs/error.log
 *.log
 /public/uploads/productos/1/imagenes
 /public/uploads/productos/1/imagenes
+/QA/node_modules
+QA/package-lock.json

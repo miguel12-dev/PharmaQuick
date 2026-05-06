@@ -1,0 +1,24 @@
+{
+  "name": "pharmaquick-qa",
+  "version": "1.0.0",
+  "description": "Load Testing con Artillery para PharmaQuick",
+  "main": "index.js",
+  "scripts": {
+    "test:basic": "artillery run tests/basico.yaml --output resultados/basico.json",
+    "test:auth": "artillery run tests/jwt-auth.yaml --output resultados/jwt-auth.json",
+    "test:api": "artillery run tests/api-rest.yaml --output resultados/api-rest.json",
+    "test:all": "npm run test:basic && npm run test:auth && npm run test:api"
+  },
+  "keywords": [
+    "artillery",
+    "load-testing",
+    "performance",
+    "qa",
+    "pharmaquick"
+  ],
+  "author": "PharmaQuick QA Team",
+  "license": "MIT",
+  "devDependencies": {
+    "artillery": "^2.0.0"
+  }
+}

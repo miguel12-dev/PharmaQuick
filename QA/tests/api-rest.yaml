@@ -1,0 +1,162 @@
+# PharmaQuick - Test API REST (CRUD Completo)
+# Este test prueba operaciones CRUD sobre productos y otros recursos
+# Requiere autenticación JWT para todos los endpoints excepto los públicos
+
+config:
+  target: "http://localhost:8080"
+  phases:
+    - name: "Warm-up"
+      duration: 20
+      arrivalRate: 2
+    - name: "Carga normal"
+      duration: 40
+      arrivalRate: 2
+      rampTo: 8
+    - name: "Carga pico"
+      duration: 30
+      arrivalRate: 8
+  payload:
+    path: "data/usuarios.csv"
+    fields:
+      - "email"
+      - "password"
+      - "nombre"
+    order: "random"
+  ensure:
+    thresholds:
+      - http.response_time.p95: 800
+      - http.response_time.p99: 1500
+      - http.codes.201: "> 0"
+    conditions:
+      - expression: "http.codes.200 > 0"
+        strict: true
+
+scenarios:
+  - name: "CRUD Productos completo"
+    flow:
+      # LOGIN - Obtener token JWT
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "admin@pharmaquick.com"
+            password: "password"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # READ - Listar productos existentes
+      - get:
+          url: "/api/productos"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 2
+
+      # READ - Obtener categorías
+      - get:
+          url: "/api/productos/categorias"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # READ - Obtener precios
+      - get:
+          url: "/api/precios"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 2
+
+      # READ - Obtener lotes
+      - get:
+          url: "/api/lotes"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # READ - Obtener inventario FEFO
+      - get:
+          url: "/api/inventario/fefo"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 2
+
+      # READ - Obtener ventas
+      - get:
+          url: "/api/ventas"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # READ - Obtener reservas
+      - get:
+          url: "/api/reservas"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 2
+
+      # READ - Obtener movimientos de inventario
+      - get:
+          url: "/api/inventario/movimientos"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+  - name: "Búsqueda y navegación"
+    weight: 30
+    flow:
+      # LOGIN
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "admin@pharmaquick.com"
+            password: "password"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # SEARCH - Buscar productos
+      - get:
+          url: "/api/productos/search?q=para"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 2
+
+      # READ - Top productos
+      - get:
+          url: "/api/ventas/top-productos"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200

@@ -1,0 +1,47 @@
+# PharmaQuick - Test Básico HTTP (Sin Autenticación)
+# Este test simula usuarios navegando páginas públicas sin auth
+# Endpoints probados: /, /health, /api/public/*
+
+config:
+  target: "http://localhost:8080"
+  phases:
+    - name: "Warm-up"
+      duration: 20
+      arrivalRate: 2
+    - name: "Carga gradual"
+      duration: 40
+      arrivalRate: 2
+      rampTo: 10
+    - name: "Carga sostenida"
+      duration: 60
+      arrivalRate: 10
+  ensure:
+    thresholds:
+      - http.response_time.p95: 500
+      - http.response_time.p99: 1000
+    conditions:
+      - expression: "http.codes.200 > 0"
+        strict: true
+
+scenarios:
+  - name: "Navegación páginas públicas"
+    flow:
+      - get:
+          url: "/"
+          expect:
+            - statusCode: 200
+      - think: 2
+      - get:
+          url: "/health"
+          expect:
+            - statusCode: 200
+      - think: 1
+      - get:
+          url: "/api/public/catalogo"
+          expect:
+            - statusCode: 200
+      - think: 2
+      - get:
+          url: "/api/public/productos-top"
+          expect:
+            - statusCode: 200
