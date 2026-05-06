@@ -10,7 +10,7 @@
      * Configuración de rutas
      */
     const routes = {
-        '/': LoginPage,
+        '/': HomePage,
         '/login': LoginPage,
         '/dashboard': DashboardPage,
         '/productos': ProductsPage,

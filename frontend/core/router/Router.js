@@ -69,6 +69,11 @@ class Router {
      */
     static navigateTo(path, pushState = true) {
         path = this.normalizePath(path);
+
+        if (!this.isPublicRoute(path) && !this.isAuthenticated()) {
+            this.redirectToLogin();
+            return;
+        }
         
         // Buscar route coincidente
         const route = this.findRoute(path);
@@ -201,6 +206,9 @@ class Router {
     static normalizePath(path) {
         if (!path || path === '') return '/';
         if (path === '/index.html' || path === 'index.html') return '/';
+        if (!path.startsWith('/')) {
+            path = '/' + path;
+        }
         if (path.endsWith('/') && path !== '/') return path.slice(0, -1);
         return path;
     }
@@ -209,7 +217,7 @@ class Router {
      * Verificar si es ruta pública
      */
     static isPublicRoute(path) {
-        const publicRoutes = ['/login', '/404', '/500', '/403'];
+        const publicRoutes = ['/', '/login', '/404', '/500', '/403'];
         return publicRoutes.includes(path);
     }
     
