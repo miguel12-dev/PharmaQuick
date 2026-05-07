@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PharmaQuick QA - Reporte de Carga</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1a1a2e; color: #eee; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { color: #00d4ff; text-align: center; margin-bottom: 10px; }
+    .subtitle { text-align: center; color: #888; margin-bottom: 30px; }
+    
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+    .kpi { background: #16213e; padding: 20px; border-radius: 10px; text-align: center; border: 1px solid #0f3460; }
+    .kpi-value { font-size: 2.5em; font-weight: bold; color: #00d4ff; }
+    .kpi-label { color: #888; margin-top: 5px; font-size: 0.9em; }
+    .kpi.success .kpi-value { color: #00ff88; }
+    .kpi.warning .kpi-value { color: #ffaa00; }
+    .kpi.error .kpi-value { color: #ff4444; }
+    
+    .section { background: #16213e; padding: 25px; border-radius: 15px; margin-bottom: 25px; }
+    .section h2 { color: #00d4ff; margin-bottom: 20px; border-bottom: 1px solid #0f3460; padding-bottom: 10px; }
+    
+    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
+    .chart-container { background: #1a1a2e; padding: 15px; border-radius: 10px; }
+    .chart-container h3 { color: #00d4ff; margin-bottom: 15px; font-size: 1em; }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #0f3460; }
+    th { background: #0f3460; color: #00d4ff; }
+    tr:hover { background: #1a1a2e; }
+    .num { font-family: monospace; }
+    
+    .veredicto { text-align: center; padding: 30px; border-radius: 15px; margin: 20px 0; }
+    .veredicto.aprobado { background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%); color: #000; }
+    .veredicto.aprobado h2 { color: #000; font-size: 2em; }
+    .veredicto.aprobado p { color: #333; }
+    
+    .footer { text-align: center; color: #666; padding: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 PharmaQuick - Reporte de Pruebas de Carga</h1>
+    <p class="subtitle">Archivo: jwt-auth.json | Fecha: 6/5/2026, 11:35:35 a. m.</p>
+    
+    <!-- KPIs Principales -->
+    <div class="kpi-grid">
+      <div class="kpi success">
+        <div class="kpi-value">2163</div>
+        <div class="kpi-label">Requests Totales</div>
+      </div>
+      <div class="kpi success">
+        <div class="kpi-value">400</div>
+        <div class="kpi-label">VUs Completados</div>
+      </div>
+      <div class="kpi success">
+        <div class="kpi-value">0</div>
+        <div class="kpi-label">VUs Fallidos</div>
+      </div>
+      <div class="kpi success">
+        <div class="kpi-value">36</div>
+        <div class="kpi-label">Req/seg (promedio)</div>
+      </div>
+    </div>
+    
+    <!-- Códigos HTTP -->
+    <div class="kpi-grid">
+      <div class="kpi success">
+        <div class="kpi-value">1763</div>
+        <div class="kpi-label">Códigos 200 (Éxito)</div>
+      </div>
+      <div class="kpi warning">
+        <div class="kpi-value">400</div>
+        <div class="kpi-label">Códigos 400 (Error cliente)</div>
+      </div>
+      <div class="kpi success">
+        <div class="kpi-value">0</div>
+        <div class="kpi-label">Códigos 500 (Error servidor)</div>
+      </div>
+      <div class="kpi success">
+        <div class="kpi-value">5.17 MB</div>
+        <div class="kpi-label">Datos Descargados</div>
+      </div>
+    </div>
+    
+    <!-- Veredicto -->
+    <div class="veredicto aprobado">
+      <h2>✅ TEST APROBADO</h2>
+      <p>p95: 92.8ms | p99: 108.9ms | Todos los thresholds cumplidos</p>
+    </div>
+    
+    <!-- Latencia -->
+    <div class="section">
+      <h2>📈 Métricas de Latencia</h2>
+      <div class="charts-grid">
+        <div class="chart-container">
+          <h3>Tiempos de Respuesta (ms)</h3>
+          <canvas id="latenciaChart"></canvas>
+        </div>
+        <div class="chart-container">
+          <h3>Distribución Percentiles</h3>
+          <canvas id="percentilesChart"></canvas>
+        </div>
+      </div>
+      <table>
+        <tr>
+          <th>Métrica</th>
+          <th>Valor (ms)</th>
+          <th>Estado</th>
+        </tr>
+        <tr><td class="num">Min</td><td class="num">1</td><td>✅</td></tr>
+        <tr><td class="num">Mean</td><td class="num">19.9</td><td>✅</td></tr>
+        <tr><td class="num">Median (p50)</td><td class="num">7.9</td><td>✅</td></tr>
+        <tr><td class="num">p90</td><td class="num">undefined</td><td>✅</td></tr>
+        <tr><td class="num">p95</td><td class="num">92.8</td><td>✅</td></tr>
+        <tr><td class="num">p99</td><td class="num">108.9</td><td>✅</td></tr>
+        <tr><td class="num">Max</td><td class="num">135</td><td>✅</td></tr>
+      </table>
+    </div>
+    
+    <!-- Endpoints -->
+    <div class="section">
+      <h2>🔗 Rendimiento por Endpoint</h2>
+      <div class="chart-container">
+        <h3>Tiempos de Respuesta por Endpoint</h3>
+        <canvas id="endpointsChart"></canvas>
+      </div>
+      <table>
+        <tr>
+          <th>Endpoint</th>
+          <th>Count</th>
+          <th>p50</th>
+          <th>p95</th>
+          <th>p99</th>
+        </tr>
+        
+        <tr>
+          <td>/api/auth/login</td>
+          <td class="num">321</td>
+          <td class="num">85.6</td>
+          <td class="num">111.1</td>
+          <td class="num">125.2</td>
+        </tr>
+        
+        <tr>
+          <td>/api/perfil</td>
+          <td class="num">321</td>
+          <td class="num">7.0</td>
+          <td class="num">16.0</td>
+          <td class="num">21.1</td>
+        </tr>
+        
+        <tr>
+          <td>/api/productos</td>
+          <td class="num">321</td>
+          <td class="num">7.9</td>
+          <td class="num">15.0</td>
+          <td class="num">29.1</td>
+        </tr>
+        
+        <tr>
+          <td>/api/public/catalogo</td>
+          <td class="num">400</td>
+          <td class="num">4.0</td>
+          <td class="num">10.1</td>
+          <td class="num">27.9</td>
+        </tr>
+        
+        <tr>
+          <td>/</td>
+          <td class="num">79</td>
+          <td class="num">10.1</td>
+          <td class="num">16.9</td>
+          <td class="num">22.0</td>
+        </tr>
+        
+        <tr>
+          <td>/api/inventario/resumen</td>
+          <td class="num">321</td>
+          <td class="num">7.9</td>
+          <td class="num">16.0</td>
+          <td class="num">22.9</td>
+        </tr>
+        
+        <tr>
+          <td>/api/inventario/alertas</td>
+          <td class="num">321</td>
+          <td class="num">7.9</td>
+          <td class="num">15.0</td>
+          <td class="num">22.0</td>
+        </tr>
+        
+        <tr>
+          <td>/health</td>
+          <td class="num">79</td>
+          <td class="num">8.9</td>
+          <td class="num">16.0</td>
+          <td class="num">19.1</td>
+        </tr>
+        
+      </table>
+    </div>
+    
+    <!-- Códigos HTTP -->
+    <div class="section">
+      <h2>📊 Distribución de Códigos HTTP</h2>
+      <div class="chart-container">
+        <canvas id="codigosChart"></canvas>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>Generado automáticamente por PharmaQuick QA | Artillery v2</p>
+    </div>
+  </div>
+  
+  <script>
+    // Gráfico de Latencia
+    new Chart(document.getElementById('latenciaChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Min', 'Mean', 'p50', 'p90', 'p95', 'p99', 'Max'],
+        datasets: [{
+          label: 'Tiempo de respuesta (ms)',
+          data: [1, 19.9, 7.9, undefined, 92.8, 108.9, 135],
+          backgroundColor: ['#00ff88', '#00d4ff', '#00d4ff', '#00d4ff', '#00d4ff', '#00d4ff', '#ffaa00']
+        }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+    
+    // Gráfico de Percentiles
+    new Chart(document.getElementById('percentilesChart'), {
+      type: 'line',
+      data: {
+        labels: ['p50', 'p75', 'p90', 'p95', 'p99', 'p999'],
+        datasets: [{
+          label: 'Percentiles (ms)',
+          data: [7.9, 11.850000000000001, undefined, 92.8, 108.9, 130.68],
+          borderColor: '#00d4ff',
+          backgroundColor: 'rgba(0, 212, 255, 0.1)',
+          fill: true
+        }]
+      },
+      options: { responsive: true }
+    });
+    
+    // Gráfico de Endpoints
+    new Chart(document.getElementById('endpointsChart'), {
+      type: 'bar',
+      data: {
+        labels: ["/api/auth/login","/api/perfil","/api/productos","/api/public/catalogo","/","/api/inventario/resumen","/api/inventario/alertas","/health"],
+        datasets: [{
+          label: 'p95 (ms)',
+          data: [111.1,16,15,10.1,16.9,16,15,16],
+          backgroundColor: '#00d4ff'
+        }, {
+          label: 'p99 (ms)',
+          data: [125.2,21.1,29.1,27.9,22,22.9,22,19.1],
+          backgroundColor: '#ffaa00'
+        }]
+      },
+      options: { indexAxis: 'y', responsive: true }
+    });
+    
+    // Gráfico de Códigos
+    new Chart(document.getElementById('codigosChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['200 OK', '400 Error', '500 Error'],
+        datasets: [{
+          data: [1763, 400, 0],
+          backgroundColor: ['#00ff88', '#ffaa00', '#ff4444']
+        }]
+      },
+      options: { responsive: true }
+    });
+  </script>
+</body>
+</html>
