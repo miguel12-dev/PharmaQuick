@@ -11,6 +11,8 @@
     "test:stress": "artillery run tests/advanced/stress-test.yaml --output resultados/stress-test.json",
     "test:realistic": "artillery run tests/advanced/realistic-scenario.yaml --output resultados/realistic-test.json",
     "test:spike": "artillery run tests/advanced/spike-test.yaml --output resultados/spike-test.json",
+    "test:stress:1000": "artillery run tests/advanced/stress-1000.yaml --output resultados/stress-1000.json",
+    "test:stress:1000:ps1": "powershell -ExecutionPolicy Bypass -File tests/advanced/scripts/run-stress-1000.ps1",
     "test:advanced:all": "powershell -ExecutionPolicy Bypass -File tests/advanced/scripts/run-all-advanced-tests.ps1",
     "test:stress:ps1": "powershell -ExecutionPolicy Bypass -File tests/advanced/scripts/run-stress-test.ps1",
     "test:realistic:ps1": "powershell -ExecutionPolicy Bypass -File tests/advanced/scripts/run-realistic-test.ps1",
