@@ -279,10 +279,13 @@ const DashboardPage = {
         });
         
         // Logout event listeners
-        const logoutHandler = (e) => {
+        const logoutHandler = async (e) => {
             e.preventDefault();
-            if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
-                Router.logout();
+            e.stopPropagation();
+            const confirmed = await Confirm('¿Estás seguro que deseas cerrar sesión?');
+            if (confirmed) {
+                localStorage.removeItem('pharmaSession');
+                window.location.href = '/login';
             }
         };
 

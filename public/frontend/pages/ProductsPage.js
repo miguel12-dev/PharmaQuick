@@ -167,7 +167,13 @@ const ProductsPage = {
         // Logout
         ['#logoutBtn', '#logoutBtnDropdown'].forEach(selector => {
             const logoutBtn = container.querySelector(selector);
-            if (logoutBtn) logoutBtn.addEventListener('click', (e) => { e.preventDefault(); Router.logout(); });
+            if (logoutBtn) logoutBtn.addEventListener('click', async (e) => { 
+                e.preventDefault(); 
+                if (await Confirm('¿Estás seguro que deseas cerrar sesión?')) {
+                    localStorage.removeItem('pharmaSession');
+                    window.location.href = '/login';
+                }
+            });
         });
     },
     
@@ -179,9 +185,12 @@ const ProductsPage = {
         ['logoutBtn', 'logoutBtnDropdown'].forEach(id => {
             const logoutBtn = document.getElementById(id);
             if (logoutBtn) {
-                logoutBtn.addEventListener('click', (e) => {
+                logoutBtn.addEventListener('click', async (e) => {
                     e.preventDefault();
-                    Router.logout();
+                    if (await Confirm('¿Estás seguro que deseas cerrar sesión?')) {
+                        localStorage.removeItem('pharmaSession');
+                        window.location.href = '/login';
+                    }
                 });
             }
         });

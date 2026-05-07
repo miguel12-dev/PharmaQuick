@@ -18,6 +18,12 @@ if (!defined('ROUTES_PATH')) define('ROUTES_PATH', SRC_PATH . DIRECTORY_SEPARATO
 require_once SRC_PATH . '/Core/App.php';
 require_once SRC_PATH . '/Core/JsonResponse.php';
 require_once SRC_PATH . '/Core/Exceptions.php';
+// Precarga de rutas públicas (auth sin middleware JWT)
+require_once ROUTES_PATH . '/auth.php';
+require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
+require_once SRC_PATH . '/Infrastructure/Persistence/UsuarioRepository.php';
+require_once SRC_PATH . '/Infrastructure/Services/JwtService.php';
+require_once SRC_PATH . '/Infrastructure/Services/AuthService.php';
 // Precarga de firmas de rutas para anÃƒÂ¡lisis estÃƒÂ¡tico (y para evitar require condicional en editores).
 require_once ROUTES_PATH . '/lotes.php';
 require_once ROUTES_PATH . '/inventario.php';
@@ -68,14 +74,12 @@ class PharmaRouter {
     private function handleApi(): void {
         // Verificar si es ruta pÃƒÂºblica (login)
         if (in_array($this->uri, $this->publicRoutes) && $this->method === 'POST') {
-            require_once ROUTES_PATH . '/auth.php';
             handleAuthLogin();
             return;
         }
 
         // Verificar si es login GET para testing
         if ($this->method === 'GET' && $this->uri === '/api/auth/login') {
-            require_once ROUTES_PATH . '/auth.php';
             $email = $_GET['email'] ?? 'admin@pharmaquick.com';
             $password = $_GET['password'] ?? 'password';
             handleAuthLogin();

@@ -6,6 +6,7 @@ declare(strict_types=1);
  * PharmaQuick - Rutas de Autenticación
  * 
  * Maneja el login y logout (rutas públicas, SIN middleware JWT)
+ * Las dependencias se precargan en Router.php al inicio del servidor
  */
 
 function handleAuthLogin(): void {
@@ -29,13 +30,6 @@ function handleAuthLogin(): void {
     }
 
     try {
-        // Cargar dependencias en orden
-        require_once SRC_PATH . '/Core/Exceptions.php';
-        require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
-        require_once SRC_PATH . '/Infrastructure/Persistence/UsuarioRepository.php';
-        require_once SRC_PATH . '/Infrastructure/Services/JwtService.php';
-        require_once SRC_PATH . '/Infrastructure/Services/AuthService.php';
-
         $authService = new AuthService(1);
         $result = $authService->login($email, $password);
 

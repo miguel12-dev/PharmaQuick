@@ -246,3 +246,41 @@ class Modal {
 
 // Exportar global
 const ModalComponent = Modal;
+
+/**
+ * Confirmación personalizada como alternativa a confirm() nativo
+ * Uso: await Confirm('¿Estás seguro?')
+ */
+const Confirm = (message, title = 'Confirmar') => {
+    return new Promise((resolve) => {
+        let resolved = false;
+        const handleConfirm = () => {
+            if (resolved) return;
+            resolved = true;
+            resolve(true);
+            setTimeout(() => modal.close(), 50);
+        };
+        const handleCancel = () => {
+            if (resolved) return;
+            resolved = true;
+            resolve(false);
+            setTimeout(() => modal.close(), 50);
+        };
+        const modal = new Modal({
+            title: title,
+            content: `<p class="mb-0">${message}</p>`,
+            size: 'sm',
+            showFooter: true,
+            confirmText: 'Aceptar',
+            cancelText: 'Cancelar',
+            onConfirm: handleConfirm,
+            onCancel: handleCancel,
+            onClose: () => { /* No resolver aquí para evitar double resolve */ }
+        });
+        modal.open();
+    });
+};
+window.Confirm = Confirm;
+
+// Alias
+Modal.confirm = Confirm;

@@ -290,7 +290,7 @@ class PriceView {
      * Manejar eliminar precio
      */
     async handleDelete(id) {
-        if (!confirm('¿Está seguro de eliminar este precio?')) {
+        if (!await Confirm('¿Está seguro de eliminar este precio?')) {
             return;
         }
         
