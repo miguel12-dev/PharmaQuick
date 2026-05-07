@@ -6,10 +6,19 @@ declare(strict_types=1);
  * PharmaQuick - Rutas de Autenticación
  * 
  * Maneja el login y logout (rutas públicas, SIN middleware JWT)
- * Las dependencias se precargan en Router.php al inicio del servidor
+ * OPTIMIZADO: Usa singleton de AuthService
+ * @version 1.1.0
  */
 
+// Singleton de AuthService para reuse
+static $authService = null;
+if ($authService === null) {
+    $authService = new AuthService(1);
+}
+
 function handleAuthLogin(): void {
+    global $authService;
+    
     // Soporta tanto JSON como FormData
     $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
     
@@ -30,7 +39,6 @@ function handleAuthLogin(): void {
     }
 
     try {
-        $authService = new AuthService(1);
         $result = $authService->login($email, $password);
 
         JsonResponse::authSuccess(1, $result['user'], $result['token'], 'Autenticacion exitosa');

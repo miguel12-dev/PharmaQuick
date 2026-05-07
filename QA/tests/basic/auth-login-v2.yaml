@@ -1,0 +1,64 @@
+# PharmaQuick - Test de Optimización Auth Login
+# Este test mide específicamente el endpoint /api/auth/login
+# Comparado con test anterior para verificar mejoras
+
+config:
+  target: "http://localhost:8080"
+  phases:
+    - name: "Warm-up"
+      duration: 10
+      arrivalRate: 10
+    - name: "Load test"
+      duration: 30
+      arrivalRate: 10
+      rampTo: 30
+    - name: "Sustained"
+      duration: 60
+      arrivalRate: 30
+  plugins:
+    metrics-by-endpoint:
+      enabled: true
+  variables:
+    email: "admin@pharmaquick.com"
+    password: "password"
+  ensure:
+    thresholds:
+      - http.response_time.p95: 100
+      - plugins.metrics-by-endpoint.response_time./api/auth/login.p95: 100
+
+scenarios:
+  - name: "Login exitoso"
+    weight: 70
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+
+  - name: "Login inválido"
+    weight: 15
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "wrong"
+          expect:
+            - statusCode: 401
+
+  - name: "Campos vacíos"
+    weight: 15
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: ""
+            password: ""
+          expect:
+            - statusCode: 400

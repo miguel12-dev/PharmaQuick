@@ -1,0 +1,89 @@
+# PharmaQuick - Test específico de Autenticación
+# Este test se enfoca en medir latencia y rendimiento del endpoint /api/auth/login
+# Incluye múltiples escenarios de login
+
+config:
+  target: "http://localhost:8080"
+  phases:
+    - name: "Warm-up"
+      duration: 10
+      arrivalRate: 5
+    - name: "Login load test"
+      duration: 30
+      arrivalRate: 5
+      rampTo: 20
+    - name: "Sustained load"
+      duration: 60
+      arrivalRate: 20
+  plugins:
+    metrics-by-endpoint:
+      enabled: true
+  variables:
+    email: "admin@pharmaquick.com"
+    password: "password"
+  ensure:
+    thresholds:
+      - http.response_time.p95: 100
+      - http.response_time.p99: 200
+      - plugins.metrics-by-endpoint.response_time./api/auth/login.p95: 100
+    conditions:
+      - expression: "http.codes.200 > 0"
+        strict: true
+
+scenarios:
+  # Escenario 1: Login exitoso repetido (mismo usuario)
+  - name: "Login usuario válido"
+    weight: 60
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+            - hasProperty: "data.token"
+            - contentType: "application/json"
+      - think: 1
+
+  # Escenario 2: Login con credenciales inválidas
+  - name: "Login credenciales incorrectas"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "wrongpassword"
+          expect:
+            - statusCode: 401
+      - think: 1
+
+  # Escenario 3: Login con email inválido
+  - name: "Login email inválido"
+    weight: 10
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "invalid@pharmaquick.com"
+            password: "password"
+          expect:
+            - statusCode: 401
+      - think: 1
+
+  # Escenario 4: Login con campos vacíos
+  - name: "Login campos vacíos"
+    weight: 10
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: ""
+            password: ""
+          expect:
+            - statusCode: 400
+      - think: 1

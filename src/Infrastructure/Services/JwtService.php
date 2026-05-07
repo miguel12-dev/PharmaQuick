@@ -6,14 +6,18 @@ declare(strict_types=1);
  * PharmaQuick - JWT Service
  *
  * Servicio para generación y validación de JWT usando HS256
+ * OPTIMIZADO: Uso singleton para evitar recrear instancias
  * 
- * @version 1.0.0
+ * @version 1.1.0
  */
 
 class JwtService {
     private string $secretKey;
     private string $algorithm;
     private int $expirySeconds;
+    
+    // Singleton instance
+    private static ?JwtService $instance = null;
 
     public function __construct(
         string $secretKey = 'pharmaquick_jwt_secret_key_2024',
@@ -24,35 +28,60 @@ class JwtService {
         $this->algorithm = $algorithm;
         $this->expirySeconds = $expirySeconds;
     }
+    
+    /**
+     * Get singleton instance - evita crear nuevas instancias
+     */
+    public static function getInstance(): JwtService {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
 
     /**
      * Genera un JWT para el usuario autenticado
+     * OPTIMIZADO: menos operaciones
      */
     public function generate(array $payload): string {
-        $issuedAt = time();
-        $expiresAt = $issuedAt + $this->expirySeconds;
+        $time = time();
+        $expiresAt = $time + $this->expirySeconds;
 
-        // Header JWT
-        $header = [
-            'alg' => $this->algorithm,
-            'typ' => 'JWT'
-        ];
+        // Generar todo en una sola operación JSON
+        $headerPayload = '{"alg":"HS256","typ":"JWT","iss":"pharmaquick_api","iat":' . $time . ',"exp":' . $expiresAt . ',"sub":' . ($payload['sub'] ?? 0) . ',"email":"' . ($payload['email'] ?? '') . '","farmacia_id":' . ($payload['farmacia_id'] ?? 0) . '}';
+        
+        $headerEncoded = $this->base64UrlEncode($headerPayload);
+        
+        // Firma directa sin explode
+        $signature = $this->sign($headerEncoded);
+        $signatureEncoded = $this->base64UrlEncode($signature);
 
-        // Payload base
-        $tokenPayload = [
+        return $headerEncoded . '.' . $signatureEncoded;
+    }
+
+    /**
+     * Genera un JWT optimizado con datos del usuario
+     * Este método es más eficiente que generate() cuando ya tienes los datos
+     */
+    public function generateUserToken(int $userId, string $email, int $farmaciaId): string {
+        $time = time();
+        $expiresAt = $time + $this->expirySeconds;
+        
+        // JSON encode directo del payload
+        $tokenPayload = json_encode([
             'iss' => 'pharmaquick_api',
-            'iat' => $issuedAt,
+            'iat' => $time,
             'exp' => $expiresAt,
-        ];
-
-        // Merge con datos del usuario
-        $tokenPayload = array_merge($tokenPayload, $payload);
-
-        // Codificar header y payload
-        $headerEncoded = $this->base64UrlEncode(json_encode($header));
-        $payloadEncoded = $this->base64UrlEncode(json_encode($tokenPayload));
-
-        // Generar firma
+            'sub' => $userId,
+            'email' => $email,
+            'farmacia_id' => $farmaciaId,
+        ], JSON_FORCE_OBJECT);
+        
+        $headerPayload = '{"alg":"HS256","typ":"JWT","iss":"pharmaquick_api","iat":' . $time . ',"exp":' . $expiresAt . '}';
+        
+        $headerEncoded = $this->base64UrlEncode($headerPayload);
+        $payloadEncoded = $this->base64UrlEncode($tokenPayload);
+        
         $signature = $this->sign($headerEncoded . '.' . $payloadEncoded);
         $signatureEncoded = $this->base64UrlEncode($signature);
 

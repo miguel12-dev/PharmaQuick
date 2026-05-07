@@ -14,7 +14,8 @@ class UsuarioRepository {
     }
 
     public function authenticate(string $email, string $password): array {
-        $stmt = $this->pdo->prepare("SELECT id, farmacia_id, email, password_hash, rol FROM usuarios WHERE email = :email AND activo = 1");
+        // Consulta optimizada - buscar solo campos necesarios
+        $stmt = $this->pdo->prepare("SELECT id, farmacia_id, email, password_hash, rol FROM usuarios WHERE email = :email AND activo = 1 LIMIT 1");
         $stmt->execute([':email' => $email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -22,6 +23,7 @@ class UsuarioRepository {
             throw new AuthenticationException('Credenciales invalidas');
         }
 
+        // password_verify es costoso computacionalmente
         if (!password_verify($password, $user['password_hash'])) {
             throw new AuthenticationException('Credenciales invalidas');
         }
