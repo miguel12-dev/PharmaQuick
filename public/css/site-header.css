@@ -47,3 +47,43 @@
     border-radius: 12px;
     font-weight: 600;
 }
+
+/* Nuevos estilos para navegación */
+.pq-nav-link {
+    color: #4a5568;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.5rem 0;
+    transition: color 0.2s ease;
+    font-family: 'Outfit', sans-serif;
+}
+
+.pq-nav-link:hover {
+    color: var(--pq-primary);
+}
+
+.pq-site-header .btn-link {
+    transition: transform 0.2s ease, color 0.2s ease;
+    text-decoration: none;
+}
+
+.pq-site-header .btn-link:hover {
+    transform: translateY(-1px);
+    color: var(--pq-primary) !important;
+}
+
+.border-start {
+    border-color: rgba(var(--pq-primary-rgb), 0.1) !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .pq-nav-link {
+        font-size: 0.85rem;
+    }
+    .pq-site-header__inner {
+        padding-top: 0.75rem !important;
+        padding-bottom: 0.75rem !important;
+    }
+}

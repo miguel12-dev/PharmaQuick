@@ -25,9 +25,31 @@ class PublicStorePage {
             const products = await this.service.getCatalog(this.currentQuery);
             const loggedIn = window.Router ? window.Router.isAuthenticated() : false;
             this.view.render(products, this.currentQuery, loggedIn);
+            
+            // Trigger animations
+            this.runEntranceAnimations();
         } catch (error) {
             console.error('PublicStorePage Error:', error);
             this.view.showError('No se pudo cargar el catálogo. Por favor, intenta de nuevo más tarde.');
+        }
+    }
+
+    static runEntranceAnimations() {
+        const reveals = this.container.querySelectorAll('.store-reveal');
+        requestAnimationFrame(() => {
+            reveals.forEach((el, i) => {
+                const delay = Number(el.dataset.delay ?? i * 70);
+                setTimeout(() => el.classList.add('store-reveal--visible'), delay);
+            });
+        });
+
+        // Grid cards
+        const grid = document.getElementById('publicProductsGrid');
+        if (grid) {
+            const cards = grid.querySelectorAll('.product-card-reveal');
+            cards.forEach((card, i) => {
+                setTimeout(() => card.classList.add('product-card-reveal--visible'), i * 50 + 250);
+            });
         }
     }
 

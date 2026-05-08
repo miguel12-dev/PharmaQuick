@@ -27,9 +27,32 @@ const SiteHeader = {
             if (variant === 'auth') {
                 right = '<a href="/" class="btn btn-outline-primary btn-sm px-3">Inicio</a>';
             } else {
-                right = loggedIn
-                    ? '<a href="/dashboard" class="btn btn-primary btn-sm px-3">Ir al panel</a>'
+                const navLinks = [];
+                
+                // Tienda (Siempre visible)
+                navLinks.push('<a href="/tienda" class="pq-nav-link d-none d-sm-inline-block">Tienda</a>');
+                
+                if (loggedIn) {
+                    // Ventas y Reservas (Solo logueado)
+                    navLinks.push('<a href="/ventas" class="pq-nav-link">Ventas</a>');
+                    navLinks.push('<a href="/reservas" class="pq-nav-link">Reservas</a>');
+                }
+
+                const authBtn = loggedIn
+                    ? '<a href="/dashboard" class="btn btn-primary btn-sm px-3 shadow-sm">Ir al panel</a>'
                     : '<a href="/login" class="btn btn-outline-primary btn-sm px-3">Acceder</a>';
+
+                right = `
+                    <nav class="d-flex align-items-center gap-3 me-2">
+                        ${navLinks.join('')}
+                    </nav>
+                    <div class="d-flex align-items-center gap-2 border-start ps-3 ms-2">
+                        <a href="/tienda" class="btn btn-link text-secondary p-1 position-relative" title="Carrito de compras">
+                            <i class="fas fa-shopping-cart fa-lg"></i>
+                        </a>
+                        ${authBtn}
+                    </div>
+                `;
             }
         }
 

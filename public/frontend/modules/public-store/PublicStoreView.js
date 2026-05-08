@@ -7,31 +7,34 @@ class PublicStoreView {
     }
 
     render(products, query = '', loggedIn = false) {
-        // Only render the full shell if it's not already rendered or if we want a full reset
         const shellExists = this.container.querySelector('.public-store-container');
         
         if (!shellExists) {
-            const headerHtml = window.SiteHeader ? window.SiteHeader.render({ loggedIn, variant: 'marketing' }) : '';
+            const headerHtml = window.SiteHeader ? window.SiteHeader.render({ 
+                loggedIn, 
+                variant: 'marketing',
+                headerExtraClass: 'store-reveal',
+                revealDelay: 0
+            }) : '';
             
             this.container.innerHTML = `
                 ${headerHtml}
-                <div class="public-store-container py-4">
+                <div class="public-store-container py-5">
                     <div class="container">
-                        <div class="row mb-4 align-items-center">
-                            <div class="col-md-6">
-                                <h2 class="h3 mb-0 text-primary fw-bold">Catálogo de Productos</h2>
-                                <p class="text-muted mb-0">Encuentra los mejores medicamentos y productos de salud</p>
+                        <div class="row mb-5 align-items-center">
+                            <div class="col-md-7">
+                                <h2 class="store-section-title store-reveal mb-2" data-delay="60">Catálogo de Productos</h2>
+                                <p class="text-muted mb-0 store-reveal" data-delay="120">Encuentra los mejores medicamentos y productos de salud con trazabilidad garantizada.</p>
                             </div>
-                            <div class="col-md-6 mt-3 mt-md-0">
-                                <div class="search-box">
-                                    <div class="input-group shadow-sm rounded">
-                                        <span class="input-group-text bg-white border-end-0">
-                                            <i class="bi bi-search text-muted"></i>
+                            <div class="col-md-5 mt-4 mt-md-0">
+                                <div class="public-search-container store-reveal" data-delay="180">
+                                    <div class="input-group shadow-sm">
+                                        <span class="input-group-text border-0 bg-white ps-3">
+                                            <i class="fas fa-search text-muted"></i>
                                         </span>
-                                        <input type="text" id="publicSearchInput" class="form-control border-start-0 ps-0" placeholder="Buscar medicamentos, marcas, categorías..." value="${query}">
-                                        <button class="btn btn-primary px-4" id="publicSearchBtn" type="button">Buscar</button>
+                                        <input type="text" id="publicSearchInput" class="form-control border-0 py-2" placeholder="¿Qué medicamento buscas?" value="${query}">
+                                        <div id="searchBadgeContainer" class="position-absolute end-0 top-50 translate-middle-y me-2" style="z-index: 5;"></div>
                                     </div>
-                                    <div id="searchBadgeContainer" class="mt-2" style="height: 24px;"></div>
                                 </div>
                             </div>
                         </div>
@@ -44,7 +47,6 @@ class PublicStoreView {
             `;
             this.attachEvents();
         } else {
-            // Just update the grid and search input value if needed
             const searchInput = document.getElementById('publicSearchInput');
             if (searchInput && searchInput.value !== query) {
                 searchInput.value = query;
@@ -59,7 +61,14 @@ class PublicStoreView {
             grid.innerHTML = this.renderProductsList(products);
             this.attachActionEvents();
             
-            // Clear loading state if any
+            // Trigger animations for new products
+            const cards = grid.querySelectorAll('.product-card-reveal');
+            cards.forEach((card, i) => {
+                setTimeout(() => {
+                    card.classList.add('product-card-reveal--visible');
+                }, i * 40);
+            });
+
             grid.classList.remove('opacity-50');
             const badge = document.getElementById('searchBadgeContainer');
             if (badge) badge.innerHTML = '';
@@ -84,7 +93,7 @@ class PublicStoreView {
     }
 
     renderProductCard(product) {
-        const defaultImage = '/img/default-product.png';
+        const defaultImage = '/image/logo_pharmaQuick.png';
         const image = product.imagen || defaultImage;
         const price = parseFloat(product.precio_activo || 0);
         const formatPrice = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(price);
@@ -92,27 +101,27 @@ class PublicStoreView {
         
         return `
             <div class="col-sm-6 col-md-4 col-lg-3">
-                <div class="card h-100 product-card shadow-sm border-0 position-relative">
+                <div class="card h-100 product-card product-card-reveal shadow-sm border-0 position-relative">
                     ${!hasStock ? '<span class="badge bg-danger position-absolute top-0 end-0 m-2 z-index-1">Agotado</span>' : ''}
                     
-                    <div class="product-img-wrapper p-3 text-center bg-light">
-                        <img src="${image}" class="card-img-top product-img" alt="${product.nombre}" onerror="this.src='${defaultImage}'">
+                    <div class="product-img-wrapper">
+                        <img src="${image}" class="product-img" alt="${product.nombre}" onerror="this.src='${defaultImage}'">
                     </div>
                     
-                    <div class="card-body d-flex flex-column">
-                        <div class="mb-1 text-muted small">${product.categoria || 'Sin categoría'}</div>
-                        <h5 class="card-title text-secondary fs-6 mb-1">${product.nombre}</h5>
-                        <p class="card-text text-muted small mb-3">${product.presentacion || ''}</p>
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="mb-1 text-muted small fw-semibold text-uppercase">${product.categoria || 'Medicamento'}</div>
+                        <h5 class="card-title h6 fw-bold mb-2 text-dark">${product.nombre}</h5>
+                        <p class="card-text text-secondary small mb-3">${product.presentacion || ''}</p>
                         
                         <div class="mt-auto">
                             <div class="fs-5 fw-bold text-primary mb-3">${formatPrice}</div>
                             
                             <div class="d-grid gap-2">
                                 <button class="btn btn-primary btn-sm action-buy" data-id="${product.id}" ${!hasStock ? 'disabled' : ''}>
-                                    <i class="bi bi-cart-plus me-1"></i> Comprar
+                                    <i class="fas fa-cart-plus me-1"></i> Comprar
                                 </button>
                                 <button class="btn btn-outline-primary btn-sm action-reserve" data-id="${product.id}" ${!hasStock ? 'disabled' : ''}>
-                                    <i class="bi bi-calendar-check me-1"></i> Reservar
+                                    <i class="fas fa-calendar-check me-1"></i> Reservar
                                 </button>
                             </div>
                         </div>
