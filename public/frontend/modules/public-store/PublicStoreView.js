@@ -7,38 +7,63 @@ class PublicStoreView {
     }
 
     render(products, query = '', loggedIn = false) {
-        const headerHtml = window.SiteHeader ? window.SiteHeader.render({ loggedIn, variant: 'marketing' }) : '';
+        // Only render the full shell if it's not already rendered or if we want a full reset
+        const shellExists = this.container.querySelector('.public-store-container');
         
-        this.container.innerHTML = `
-            ${headerHtml}
-            <div class="public-store-container py-4">
-                <div class="container">
-                    <div class="row mb-4 align-items-center">
-                        <div class="col-md-6">
-                            <h2 class="h3 mb-0 text-primary fw-bold">Catálogo de Productos</h2>
-                            <p class="text-muted mb-0">Encuentra los mejores medicamentos y productos de salud</p>
-                        </div>
-                        <div class="col-md-6 mt-3 mt-md-0">
-                            <div class="search-box">
-                                <div class="input-group">
-                                    <span class="input-group-text bg-white border-end-0">
-                                        <i class="bi bi-search text-muted"></i>
-                                    </span>
-                                    <input type="text" id="publicSearchInput" class="form-control border-start-0 ps-0" placeholder="Buscar medicamentos, marcas, categorías..." value="${query}">
-                                    <button class="btn btn-primary" id="publicSearchBtn" type="button">Buscar</button>
+        if (!shellExists) {
+            const headerHtml = window.SiteHeader ? window.SiteHeader.render({ loggedIn, variant: 'marketing' }) : '';
+            
+            this.container.innerHTML = `
+                ${headerHtml}
+                <div class="public-store-container py-4">
+                    <div class="container">
+                        <div class="row mb-4 align-items-center">
+                            <div class="col-md-6">
+                                <h2 class="h3 mb-0 text-primary fw-bold">Catálogo de Productos</h2>
+                                <p class="text-muted mb-0">Encuentra los mejores medicamentos y productos de salud</p>
+                            </div>
+                            <div class="col-md-6 mt-3 mt-md-0">
+                                <div class="search-box">
+                                    <div class="input-group shadow-sm rounded">
+                                        <span class="input-group-text bg-white border-end-0">
+                                            <i class="bi bi-search text-muted"></i>
+                                        </span>
+                                        <input type="text" id="publicSearchInput" class="form-control border-start-0 ps-0" placeholder="Buscar medicamentos, marcas, categorías..." value="${query}">
+                                        <button class="btn btn-primary px-4" id="publicSearchBtn" type="button">Buscar</button>
+                                    </div>
+                                    <div id="searchBadgeContainer" class="mt-2" style="height: 24px;"></div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div id="publicProductsGrid" class="row g-4">
-                        ${this.renderProductsList(products)}
+                        
+                        <div id="publicProductsGrid" class="row g-4 min-vh-50">
+                            ${this.renderProductsList(products)}
+                        </div>
                     </div>
                 </div>
-            </div>
-        `;
+            `;
+            this.attachEvents();
+        } else {
+            // Just update the grid and search input value if needed
+            const searchInput = document.getElementById('publicSearchInput');
+            if (searchInput && searchInput.value !== query) {
+                searchInput.value = query;
+            }
+            this.updateGrid(products);
+        }
+    }
 
-        this.attachEvents();
+    updateGrid(products) {
+        const grid = document.getElementById('publicProductsGrid');
+        if (grid) {
+            grid.innerHTML = this.renderProductsList(products);
+            this.attachActionEvents();
+            
+            // Clear loading state if any
+            grid.classList.remove('opacity-50');
+            const badge = document.getElementById('searchBadgeContainer');
+            if (badge) badge.innerHTML = '';
+        }
     }
 
     renderProductsList(products) {
@@ -115,18 +140,37 @@ class PublicStoreView {
             searchInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') handleSearch();
             });
+            
+            // For live search (input event)
+            searchInput.addEventListener('input', (e) => {
+                if (this.onSearch) {
+                    this.onSearch(e.target.value.trim(), true); // true indicates it's a live search
+                }
+            });
         }
 
+        this.attachActionEvents();
+    }
+
+    attachActionEvents() {
         // Buy and Reserve buttons
         this.container.querySelectorAll('.action-buy').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            // Avoid double binding
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            
+            newBtn.addEventListener('click', (e) => {
                 const id = e.currentTarget.dataset.id;
                 if (this.onBuy) this.onBuy(id);
             });
         });
 
         this.container.querySelectorAll('.action-reserve').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            // Avoid double binding
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            
+            newBtn.addEventListener('click', (e) => {
                 const id = e.currentTarget.dataset.id;
                 if (this.onReserve) this.onReserve(id);
             });
@@ -134,18 +178,43 @@ class PublicStoreView {
     }
 
     showLoading() {
+        const shellExists = this.container.querySelector('.public-store-container');
+        if (shellExists) {
+            this.showGridLoading();
+            return;
+        }
+
         const loggedIn = window.Router ? window.Router.isAuthenticated() : false;
         const headerHtml = window.SiteHeader ? window.SiteHeader.render({ loggedIn, variant: 'marketing' }) : '';
         
         this.container.innerHTML = `
             ${headerHtml}
-            <div class="text-center py-5">
-                <div class="spinner-border text-primary" role="status">
+            <div class="text-center py-5 min-vh-50 d-flex flex-column justify-content-center">
+                <div class="spinner-border text-primary mx-auto" role="status" style="width: 3rem; height: 3rem;">
                     <span class="visually-hidden">Cargando catálogo...</span>
                 </div>
-                <p class="mt-3 text-muted">Cargando productos...</p>
+                <p class="mt-3 text-muted fw-medium">Cargando catálogo de productos...</p>
             </div>
         `;
+    }
+
+    showGridLoading() {
+        const grid = document.getElementById('publicProductsGrid');
+        const badge = document.getElementById('searchBadgeContainer');
+        
+        if (grid) {
+            grid.classList.add('opacity-50');
+            grid.style.transition = 'opacity 0.2s ease';
+        }
+        
+        if (badge) {
+            badge.innerHTML = `
+                <span class="badge rounded-pill bg-light text-primary border">
+                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    Buscando...
+                </span>
+            `;
+        }
     }
 
     showError(message) {

@@ -14,20 +14,43 @@ class PublicStorePage {
         await this.loadCatalog();
     }
 
-    static async loadCatalog() {
-        this.view.showLoading();
+    static async loadCatalog(isPartial = false) {
+        if (isPartial) {
+            this.view.showGridLoading();
+        } else {
+            this.view.showLoading();
+        }
+
         try {
             const products = await this.service.getCatalog(this.currentQuery);
             const loggedIn = window.Router ? window.Router.isAuthenticated() : false;
             this.view.render(products, this.currentQuery, loggedIn);
         } catch (error) {
+            console.error('PublicStorePage Error:', error);
             this.view.showError('No se pudo cargar el catálogo. Por favor, intenta de nuevo más tarde.');
         }
     }
 
-    static handleSearch(query) {
+    static handleSearch(query, isLive = false) {
+        // Clear existing timeout
+        if (this.searchTimeout) {
+            clearTimeout(this.searchTimeout);
+        }
+
         this.currentQuery = query;
-        // Update URL
+
+        // If it's a live search, debounce
+        if (isLive) {
+            this.searchTimeout = setTimeout(() => {
+                this.executeSearch(query);
+            }, 300);
+        } else {
+            this.executeSearch(query);
+        }
+    }
+
+    static executeSearch(query) {
+        // Update URL without full reload
         const url = new URL(window.location);
         if (query) {
             url.searchParams.set('q', query);
@@ -36,7 +59,7 @@ class PublicStorePage {
         }
         window.history.pushState({}, '', url);
         
-        this.loadCatalog();
+        this.loadCatalog(true); // Partial load
     }
 
     static handleBuy(productId) {

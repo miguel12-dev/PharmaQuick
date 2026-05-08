@@ -22,13 +22,22 @@ function handleGetPublicCatalogo()
         $repo = new ProductoRepository($pdo);
 
         $products = $repo->findAllByFarmacia((int) $farmaciaId);
-        $products = array_slice($products, $offset, $limit);
-        // Optionally filter by search term
+        
+        // 1. Filter by search term FIRST (so we slice the filtered results)
         if ($q !== '') {
             $products = array_filter($products, function ($p) use ($q) {
-                return stripos($p['nombre'], $q) !== false || stripos($p['presentacion'], $q) !== false;
+                $term = mb_strtolower($q);
+                return mb_stripos($p['nombre'], $term) !== false || 
+                       mb_stripos($p['presentacion'], $term) !== false ||
+                       mb_stripos($p['categoria'] ?? '', $term) !== false;
             });
+            // Important: reset keys after array_filter to ensure a JSON array is returned
+            $products = array_values($products);
         }
+
+        // 2. Then slice for pagination
+        $products = array_slice($products, $offset, $limit);
+
         // Return minimal fields for storefront
         $data = array_map(function ($p) {
             return [

@@ -19,8 +19,9 @@ class PublicCatalogService {
             }
             
             const data = await response.json();
-            // La respuesta es {success: true, data: {data: [...]}} - doble anidamiento
-            return data.success && data.data ? data.data.data : [];
+            const products = data.success && data.data ? data.data.data : [];
+            // Defensive: ensure we have an array if backend returned an object due to array_filter
+            return Array.isArray(products) ? products : Object.values(products);
         } catch (error) {
             console.error('PublicCatalogService error:', error);
             throw error;
