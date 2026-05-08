@@ -1,0 +1,121 @@
+# PharmaQuick - Test Simple sin CSV
+# Usa credenciales hardcodeadas para evitar problemas de autenticación
+
+config:
+  target: "http://localhost:8080"
+  variables:
+    email: "admin@pharmaquick.com"
+    password: "password"
+  phases:
+    # Fase 1: Warm-up muy lento (1 min)
+    - name: "Warm-up"
+      duration: 60
+      arrivalRate: 2
+      rampTo: 5
+
+    # Fase 2: Carga ligera (2 min)
+    - name: "Carga ligera"
+      duration: 120
+      arrivalRate: 5
+      rampTo: 10
+
+    # Fase 3: Pico bajo (2 min)
+    - name: "Pico"
+      duration: 120
+      arrivalRate: 10
+      rampTo: 15
+
+    # Fase 4: Sostención (2 min)
+    - name: "Sostención"
+      duration: 120
+      arrivalRate: 12
+
+    # Fase 5: Enfriamiento (30 seg)
+    - name: "Enfriamiento"
+      duration: 30
+      arrivalRate: 12
+      rampTo: 2
+
+  ensure:
+    thresholds:
+      - http.response_time.p95: 2000
+      - http.response_time.p99: 4000
+    conditions:
+      - expression: "http.codes.200 > 0"
+        strict: false
+
+  http2: false
+  timeout: 60
+
+scenarios:
+  # Escenario 1: Login + Perfil
+  - name: "Login y Perfil"
+    weight: 50
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+
+      - think: 2
+
+      - get:
+          url: "/api/perfil"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+  # Escenario 2: Login + Productos
+  - name: "Ver Productos"
+    weight: 30
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+
+      - think: 2
+
+      - get:
+          url: "/api/productos"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+  # Escenario 3: Login + Inventario
+  - name: "Ver Inventario"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+
+      - think: 2
+
+      - get:
+          url: "/api/inventario/resumen"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
