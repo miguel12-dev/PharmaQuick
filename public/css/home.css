@@ -245,6 +245,9 @@
         border-color 0.3s ease;
     border: 1px solid rgba(15, 23, 42, 0.06) !important;
     overflow: hidden;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .home-feature-card::before {
@@ -296,6 +299,9 @@
 .home-feature-card h3 {
     font-family: var(--home-font-display);
     letter-spacing: -0.02em;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    hyphens: auto;
 }
 
 .home-compliance {
@@ -478,4 +484,82 @@
     .home-feature-card::before {
         display: none;
     }
+}
+
+/* ========================================
+   Product Catalog Section
+   ======================================== */
+
+.home-search-container {
+    max-width: 450px;
+    margin-left: auto;
+}
+
+.home-search-container .input-group {
+    background: #fff;
+    border: 1px solid rgba(var(--pq-primary-rgb), 0.15);
+    border-radius: 16px !important;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.home-search-container .input-group:focus-within {
+    border-color: var(--pq-primary);
+    box-shadow: 0 8px 24px rgba(var(--pq-primary-rgb), 0.12) !important;
+    transform: translateY(-2px);
+}
+
+.home-search-container input::placeholder {
+    color: #94a3b8;
+    font-size: 0.95rem;
+}
+
+.product-card-reveal {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.product-card-reveal--visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.home-landing .product-img-wrapper {
+    overflow: hidden;
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    border-radius: 14px;
+    margin: 1.5rem 1.5rem 0.5rem;
+    border: 1px solid rgba(var(--pq-primary-rgb), 0.05);
+}
+
+.home-landing .product-img {
+    max-height: 150px;
+    max-width: 85%;
+    width: auto;
+    object-fit: contain;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.home-feature-card:hover .product-img {
+    transform: scale(1.08);
+}
+
+.z-index-1 {
+    z-index: 1;
+}
+
+.home-section .row.g-4 > div {
+    display: flex;
+}
+
+.empty-state {
+    padding: 3rem;
+    background: rgba(var(--pq-primary-rgb), 0.03);
+    border-radius: 24px;
+    border: 1px dashed rgba(var(--pq-primary-rgb), 0.15);
 }

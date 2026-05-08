@@ -7,6 +7,15 @@
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     overflow: hidden;
     border-radius: 0.75rem;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-card .card-title {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    hyphens: auto;
 }
 
 .product-card:hover {
@@ -15,16 +24,18 @@
 }
 
 .product-img-wrapper {
-    height: 200px;
+    height: 180px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #fff;
+    background-color: #f8fafc;
     border-bottom: 1px solid rgba(0,0,0,.05);
+    padding: 1rem !important;
 }
 
 .product-img {
-    max-height: 100%;
+    max-height: 150px;
+    max-width: 90%;
     object-fit: contain;
 }
 
@@ -41,4 +52,8 @@
 .empty-state {
     max-width: 400px;
     margin: 0 auto;
+}
+
+#publicProductsGrid > div {
+    display: flex;
 }

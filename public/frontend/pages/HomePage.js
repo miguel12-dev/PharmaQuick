@@ -10,13 +10,125 @@ const HomePage = {
         container.innerHTML = this.getHtml(loggedIn);
 
         this.runEntranceAnimations(container);
+        
+        // Cargar catálogo inicial (8 productos)
+        this.loadCatalog(container);
 
+        this.setupEventListeners(container, loggedIn);
+    },
+
+    setupEventListeners(container, loggedIn) {
         container.querySelectorAll('[data-home-action="primary"]').forEach((btn) => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
                 Router.navigate(loggedIn ? '/dashboard' : '/login');
             });
         });
+
+        // Search handler
+        const searchInput = container.querySelector('#homeSearchInput');
+        if (searchInput) {
+            let timeout;
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    this.loadCatalog(container, e.target.value.trim());
+                }, 300);
+            });
+        }
+        
+        // Action handlers (Buy/Reserve)
+        container.addEventListener('click', (e) => {
+            const buyBtn = e.target.closest('.action-buy');
+            const reserveBtn = e.target.closest('.action-reserve');
+            
+            if (buyBtn) {
+                const id = buyBtn.dataset.id;
+                const nextUrl = encodeURIComponent(`/ventas?producto=${id}`);
+                Router.navigate(`/login?next=${nextUrl}`);
+            }
+            
+            if (reserveBtn) {
+                const id = reserveBtn.dataset.id;
+                const nextUrl = encodeURIComponent(`/reservas?producto=${id}`);
+                Router.navigate(`/login?next=${nextUrl}`);
+            }
+        });
+    },
+
+    async loadCatalog(container, query = '') {
+        const grid = container.querySelector('#homeProductsGrid');
+        if (!grid) return;
+
+        // Mostrar skeleton o loading si es necesario
+        if (query) {
+            grid.classList.add('opacity-50');
+        }
+
+        try {
+            const products = await window.publicCatalogService.getCatalog(query, 8);
+            grid.innerHTML = this.renderProductsList(products);
+            grid.classList.remove('opacity-50');
+            
+            // Animaciones de entrada para las cards
+            const cards = grid.querySelectorAll('.product-card-reveal');
+            cards.forEach((card, i) => {
+                setTimeout(() => {
+                    card.classList.add('product-card-reveal--visible');
+                }, i * 50);
+            });
+        } catch (error) {
+            console.error('Error loading home catalog:', error);
+            grid.innerHTML = '<div class="col-12 text-center text-danger">No se pudo cargar el catálogo.</div>';
+        }
+    },
+
+    renderProductsList(products) {
+        if (!products || products.length === 0) {
+            return `
+                <div class="col-12 text-center py-5">
+                    <div class="empty-state">
+                        <i class="fas fa-search display-4 text-muted mb-3 d-block"></i>
+                        <h4 class="text-secondary">No encontramos lo que buscas</h4>
+                        <p class="text-muted">Intenta con otros términos o explora el catálogo completo.</p>
+                    </div>
+                </div>`;
+        }
+        return products.map((p, i) => this.renderProductCard(p, i)).join('');
+    },
+
+    renderProductCard(product, index) {
+        const defaultImage = '/image/logo_pharmaQuick.png';
+        const image = product.imagen || defaultImage;
+        const price = parseFloat(product.precio_activo || 0);
+        const formatPrice = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(price);
+        const hasStock = parseInt(product.stock_total || 0) > 0;
+
+        return `
+            <div class="col-sm-6 col-md-4 col-lg-3">
+                <article class="home-feature-card product-card-reveal card h-100 border-0" data-id="${product.id}">
+                    ${!hasStock ? '<span class="badge bg-danger position-absolute top-0 end-0 m-2 z-index-1">Agotado</span>' : ''}
+                    <div class="product-img-wrapper">
+                        <img src="${image}" class="product-img" alt="${product.nombre}" onerror="this.src='${defaultImage}'">
+                    </div>
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="mb-1 text-muted small fw-semibold text-uppercase">${product.categoria || 'Medicamento'}</div>
+                        <h3 class="h6 fw-bold mb-2 text-dark">${product.nombre}</h3>
+                        <p class="small text-secondary mb-3">${product.presentacion || ''}</p>
+                        <div class="mt-auto">
+                            <div class="fs-5 fw-bold text-primary mb-3">${formatPrice}</div>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-primary btn-sm action-buy" data-id="${product.id}" ${!hasStock ? 'disabled' : ''}>
+                                    <i class="fas fa-cart-plus me-1"></i> Comprar
+                                </button>
+                                <button class="btn btn-outline-primary btn-sm action-reserve" data-id="${product.id}" ${!hasStock ? 'disabled' : ''}>
+                                    <i class="fas fa-calendar-check me-1"></i> Reservar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>`;
     },
 
     runEntranceAnimations(container) {
@@ -127,6 +239,37 @@ const HomePage = {
                         delay: 340,
                         body: 'Modelo por clústeres de bases de datos para aislar farmacias, escalar por región y mantener buen rendimiento.'
                     })}
+                </div>
+            </div>
+        </section>
+
+        <section id="home-catalog" class="home-section py-5 bg-white">
+            <div class="container">
+                <div class="row mb-5 align-items-end">
+                    <div class="col-md-7">
+                        <h2 class="home-section-title home-reveal mb-2" data-delay="0">Catálogo de Venta</h2>
+                        <p class="home-reveal text-secondary mb-0 home-lead-section" data-delay="60">
+                            Encuentra lo que necesitas y resérvalo desde la comodidad de tu hogar.
+                        </p>
+                    </div>
+                    <div class="col-md-5 mt-4 mt-md-0">
+                        <div class="home-search-container home-reveal" data-delay="120">
+                            <div class="input-group shadow-sm">
+                                <span class="input-group-text border-0 bg-white ps-3"><i class="fas fa-search text-muted"></i></span>
+                                <input type="text" id="homeSearchInput" class="form-control border-0 py-2" placeholder="¿Qué medicamento buscas?">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="homeProductsGrid" class="row g-4 min-vh-25">
+                    <!-- Los productos se cargarán aquí dinámicamente -->
+                </div>
+                
+                <div class="text-center mt-5 home-reveal" data-delay="200">
+                    <a href="/tienda" class="btn btn-outline-primary px-5 py-2 rounded-pill fw-semibold">
+                        Ver catálogo completo <i class="fas fa-arrow-right ms-2"></i>
+                    </a>
                 </div>
             </div>
         </section>
