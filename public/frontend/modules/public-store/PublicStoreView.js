@@ -6,8 +6,11 @@ class PublicStoreView {
         this.onReserve = null;
     }
 
-    render(products, query = '') {
+    render(products, query = '', loggedIn = false) {
+        const headerHtml = window.SiteHeader ? window.SiteHeader.render({ loggedIn, variant: 'marketing' }) : '';
+        
         this.container.innerHTML = `
+            ${headerHtml}
             <div class="public-store-container py-4">
                 <div class="container">
                     <div class="row mb-4 align-items-center">
@@ -131,7 +134,11 @@ class PublicStoreView {
     }
 
     showLoading() {
+        const loggedIn = window.Router ? window.Router.isAuthenticated() : false;
+        const headerHtml = window.SiteHeader ? window.SiteHeader.render({ loggedIn, variant: 'marketing' }) : '';
+        
         this.container.innerHTML = `
+            ${headerHtml}
             <div class="text-center py-5">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Cargando catálogo...</span>
@@ -142,7 +149,11 @@ class PublicStoreView {
     }
 
     showError(message) {
+        const loggedIn = window.Router ? window.Router.isAuthenticated() : false;
+        const headerHtml = window.SiteHeader ? window.SiteHeader.render({ loggedIn, variant: 'marketing' }) : '';
+
         this.container.innerHTML = `
+            ${headerHtml}
             <div class="container py-5">
                 <div class="alert alert-danger shadow-sm border-0" role="alert">
                     <i class="bi bi-exclamation-triangle-fill me-2"></i> ${message}

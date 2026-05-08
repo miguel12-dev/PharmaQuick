@@ -18,7 +18,8 @@ class PublicStorePage {
         this.view.showLoading();
         try {
             const products = await this.service.getCatalog(this.currentQuery);
-            this.view.render(products, this.currentQuery);
+            const loggedIn = window.Router ? window.Router.isAuthenticated() : false;
+            this.view.render(products, this.currentQuery, loggedIn);
         } catch (error) {
             this.view.showError('No se pudo cargar el catálogo. Por favor, intenta de nuevo más tarde.');
         }
