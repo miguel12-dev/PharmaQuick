@@ -38,7 +38,7 @@ class PublicStorePage {
         const reveals = this.container.querySelectorAll('.store-reveal');
         requestAnimationFrame(() => {
             reveals.forEach((el, i) => {
-                const delay = Number(el.dataset.delay ?? i * 70);
+                const delay = Number(el.dataset.delay ?? i * 15);
                 setTimeout(() => el.classList.add('store-reveal--visible'), delay);
             });
         });
@@ -48,7 +48,7 @@ class PublicStorePage {
         if (grid) {
             const cards = grid.querySelectorAll('.product-card-reveal');
             cards.forEach((card, i) => {
-                setTimeout(() => card.classList.add('product-card-reveal--visible'), i * 50 + 250);
+                setTimeout(() => card.classList.add('product-card-reveal--visible'), i * 15 + 50);
             });
         }
     }
