@@ -5,7 +5,7 @@ class SalesController {
         this.searchTimeout = null;
     }
 
-    init() {
+    async init() {
         SalesView.bindSearchInput(this.handleSearch.bind(this));
         SalesView.bindCompleteSale(this.handleCompleteSale.bind(this));
         
@@ -25,6 +25,20 @@ class SalesController {
             btnScan.addEventListener('click', () => {
                 this.toggleScanner();
             });
+        }
+
+        // Check for direct product addition from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('producto');
+        if (productId) {
+            try {
+                const response = await productService.getById(productId);
+                if (response.success && response.data) {
+                    this.addToCart(response.data);
+                }
+            } catch (error) {
+                console.error('Error adding product from URL:', error);
+            }
         }
         
         this.updateView();

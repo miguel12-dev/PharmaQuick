@@ -10,7 +10,7 @@ const HomePage = {
         container.innerHTML = this.getHtml(loggedIn);
 
         this.runEntranceAnimations(container);
-        
+
         // Cargar catálogo inicial (8 productos)
         this.loadCatalog(container);
 
@@ -36,22 +36,30 @@ const HomePage = {
                 }, 300);
             });
         }
-        
+
         // Action handlers (Buy/Reserve)
         container.addEventListener('click', (e) => {
             const buyBtn = e.target.closest('.action-buy');
             const reserveBtn = e.target.closest('.action-reserve');
-            
+
             if (buyBtn) {
                 const id = buyBtn.dataset.id;
-                const nextUrl = encodeURIComponent(`/ventas?producto=${id}`);
-                Router.navigate(`/login?next=${nextUrl}`);
+                if (loggedIn) {
+                    Router.navigate(`/ventas?producto=${id}`);
+                } else {
+                    const nextUrl = encodeURIComponent(`/ventas?producto=${id}`);
+                    Router.navigate(`/login?next=${nextUrl}`);
+                }
             }
-            
+
             if (reserveBtn) {
                 const id = reserveBtn.dataset.id;
-                const nextUrl = encodeURIComponent(`/reservas?producto=${id}`);
-                Router.navigate(`/login?next=${nextUrl}`);
+                if (loggedIn) {
+                    Router.navigate(`/reservas?producto=${id}`);
+                } else {
+                    const nextUrl = encodeURIComponent(`/reservas?producto=${id}`);
+                    Router.navigate(`/login?next=${nextUrl}`);
+                }
             }
         });
     },
@@ -69,7 +77,7 @@ const HomePage = {
             const products = await window.publicCatalogService.getCatalog(query, 8);
             grid.innerHTML = this.renderProductsList(products);
             grid.classList.remove('opacity-50');
-            
+
             // Animaciones de entrada para las cards
             const cards = grid.querySelectorAll('.product-card-reveal');
             cards.forEach((card, i) => {
@@ -143,14 +151,15 @@ const HomePage = {
 
     getHtml(loggedIn) {
         const primaryLabel = loggedIn ? 'Ir al panel' : 'Iniciar sesión';
+        const registerBtn = loggedIn ? '' : `<a href="/register" class="btn btn-outline-primary btn-lg px-4 ms-2 home-reveal" data-delay="260">Regístrate</a>`;
         return `
 <div class="home-landing">
     ${SiteHeader.render({
-        variant: 'marketing',
-        loggedIn,
-        headerExtraClass: 'home-reveal',
-        revealDelay: 0
-    })}
+            variant: 'marketing',
+            loggedIn,
+            headerExtraClass: 'home-reveal',
+            revealDelay: 0
+        })}
 
     <main>
         <section class="home-hero">
@@ -169,8 +178,8 @@ const HomePage = {
                         </p>
                         <div class="home-hero-actions home-reveal d-flex flex-wrap gap-3 mb-4" data-delay="240">
                             <button type="button" class="btn btn-primary btn-lg px-4 shadow-sm" data-home-action="primary">${primaryLabel}</button>
-<a href="/tienda" class="btn btn-outline-primary btn-lg px-4 ms-2 home-reveal" data-delay="280">Catálogo público</a>
-                            <a href="#funciones" class="btn btn-outline-primary btn-lg px-4 home-reveal home-btn-secondary" data-delay="280">Ver funciones</a>
+                            ${registerBtn}
+                            <a href="/tienda" class="btn btn-outline-primary btn-lg px-4 ms-2 home-reveal" data-delay="280">Catálogo público</a>
                         </div>
                         <ul class="home-pills home-reveal list-unstyled d-flex flex-wrap gap-2 mb-0" data-delay="300">
                             <li><span class="home-pill">Inventario FEFO</span></li>
@@ -204,41 +213,41 @@ const HomePage = {
                 </div>
                 <div class="row g-4">
                     ${this.featureCard({
-                        icon: 'fa-chart-line',
-                        title: 'Dashboard y CRM operativo',
-                        delay: 40,
-                        body: 'Resumen de alertas, ventas y actividad. Rutas para clientes, proveedores, perfil y configuración para coordinar el día a día del equipo.'
-                    })}
+            icon: 'fa-chart-line',
+            title: 'Dashboard y CRM operativo',
+            delay: 40,
+            body: 'Resumen de alertas, ventas y actividad. Rutas para clientes, proveedores, perfil y configuración para coordinar el día a día del equipo.'
+        })}
                     ${this.featureCard({
-                        icon: 'fa-boxes-stacked',
-                        title: 'Inventario con FEFO y semáforos',
-                        delay: 100,
-                        body: 'Prioriza lotes próximos a vencer en POS y reportes; alertas por criticidad de vencimiento y bloqueo parametrizable de lotes en ventana de riesgo.'
-                    })}
+            icon: 'fa-boxes-stacked',
+            title: 'Inventario con FEFO y semáforos',
+            delay: 100,
+            body: 'Prioriza lotes próximos a vencer en POS y reportes; alertas por criticidad de vencimiento y bloqueo parametrizable de lotes en ventana de riesgo.'
+        })}
                     ${this.featureCard({
-                        icon: 'fa-cash-register',
-                        title: 'Punto de venta (POS)',
-                        delay: 160,
-                        body: 'Ventas conectadas al motor de lotes: sugiere FEFO, reduce errores en mostrador y mantiene coherencia con el kardex.'
-                    })}
+            icon: 'fa-cash-register',
+            title: 'Punto de venta (POS)',
+            delay: 160,
+            body: 'Ventas conectadas al motor de lotes: sugiere FEFO, reduce errores en mostrador y mantiene coherencia con el kardex.'
+        })}
                     ${this.featureCard({
-                        icon: 'fa-calendar-check',
-                        title: 'Reservas de medicamentos',
-                        delay: 220,
-                        body: 'Los clientes pueden apartar productos; el sistema administra estados y liberación de stock cuando corresponde.'
-                    })}
+            icon: 'fa-calendar-check',
+            title: 'Reservas de medicamentos',
+            delay: 220,
+            body: 'Los clientes pueden apartar productos; el sistema administra estados y liberación de stock cuando corresponde.'
+        })}
                     ${this.featureCard({
-                        icon: 'fa-file-excel',
-                        title: 'Carga masiva y reportes',
-                        delay: 280,
-                        body: 'Importación de catálogos con plantillas Excel y exportación de información para inventarios críticos y farmacovigilancia.'
-                    })}
+            icon: 'fa-file-excel',
+            title: 'Carga masiva y reportes',
+            delay: 280,
+            body: 'Importación de catálogos con plantillas Excel y exportación de información para inventarios críticos y farmacovigilancia.'
+        })}
                     ${this.featureCard({
-                        icon: 'fa-shield-halved',
-                        title: 'Arquitectura multi-tenant',
-                        delay: 340,
-                        body: 'Modelo por clústeres de bases de datos para aislar farmacias, escalar por región y mantener buen rendimiento.'
-                    })}
+            icon: 'fa-shield-halved',
+            title: 'Arquitectura multi-tenant',
+            delay: 340,
+            body: 'Modelo por clústeres de bases de datos para aislar farmacias, escalar por región y mantener buen rendimiento.'
+        })}
                 </div>
             </div>
         </section>
@@ -302,9 +311,12 @@ const HomePage = {
                 <div class="home-cta-panel home-reveal text-center" data-delay="0">
                 <h2 class="home-cta-title mb-3">¿Listo para usar PharmaQuick?</h2>
                 <p class="home-cta-lead text-secondary mb-4 mx-auto">
-                    Accede con tu cuenta de farmacia para ver inventario, ventas y reservas en tiempo real.
+                    ${loggedIn
+                ? 'Accede con tu cuenta para ver inventario, ventas y reservas en tiempo real.'
+                : 'Regístrate como cliente y accede a compras y reservas de medicamentos de forma sencilla.'}
                 </p>
                 <button type="button" class="btn btn-primary btn-lg px-5 home-cta-btn" data-home-action="primary">${primaryLabel}</button>
+                ${!loggedIn ? '<a href="/register" class="btn btn-outline-primary btn-lg px-5 ms-2">Regístrate gratis</a>' : ''}
                 </div>
             </div>
         </section>

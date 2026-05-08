@@ -10,10 +10,14 @@ declare(strict_types=1);
  * @version 1.0.0
  */
 
-if (!defined('BASE_PATH')) define('BASE_PATH', dirname(__DIR__, 2));
-if (!defined('SRC_PATH')) define('SRC_PATH', BASE_PATH . DIRECTORY_SEPARATOR . 'src');
-if (!defined('PUBLIC_PATH')) define('PUBLIC_PATH', BASE_PATH . DIRECTORY_SEPARATOR . 'public');
-if (!defined('ROUTES_PATH')) define('ROUTES_PATH', SRC_PATH . DIRECTORY_SEPARATOR . 'API' . DIRECTORY_SEPARATOR . 'routes');
+if (!defined('BASE_PATH'))
+    define('BASE_PATH', dirname(__DIR__, 2));
+if (!defined('SRC_PATH'))
+    define('SRC_PATH', BASE_PATH . DIRECTORY_SEPARATOR . 'src');
+if (!defined('PUBLIC_PATH'))
+    define('PUBLIC_PATH', BASE_PATH . DIRECTORY_SEPARATOR . 'public');
+if (!defined('ROUTES_PATH'))
+    define('ROUTES_PATH', SRC_PATH . DIRECTORY_SEPARATOR . 'API' . DIRECTORY_SEPARATOR . 'routes');
 
 require_once SRC_PATH . '/Core/App.php';
 require_once SRC_PATH . '/Core/JsonResponse.php';
@@ -24,18 +28,20 @@ require_once SRC_PATH . '/Infrastructure/Services/JwtService.php';
 require_once SRC_PATH . '/Infrastructure/Services/AuthService.php';
 // Precarga de rutas públicas (auth sin middleware JWT)
 require_once ROUTES_PATH . '/auth.php';
-// Precarga de firmas de rutas para anÃƒÂ¡lisis estÃƒÂ¡tico (y para evitar require condicional en editores).
+// Precarga de firmas de rutas para anÃ¡lisis estÃ¡tico (y para evitar require condicional en editores).
 require_once ROUTES_PATH . '/lotes.php';
 require_once ROUTES_PATH . '/inventario.php';
 require_once ROUTES_PATH . '/ventas.php';
 require_once ROUTES_PATH . '/reservas.php';
 
-class PharmaRouter {
+class PharmaRouter
+{
     private string $method;
     private string $uri;
-    private array $publicRoutes = ['/api/auth/login'];
+    private array $publicRoutes = ['/api/auth/login', '/api/auth/register'];
 
-    public function __construct() {
+    public function __construct()
+    {
         App::bootstrap();
         $this->method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         $requestUri = $_SERVER['REQUEST_URI'] ?? '/';
@@ -44,14 +50,15 @@ class PharmaRouter {
         $this->uri = $normalizedPath !== '' ? $normalizedPath : '/';
     }
 
-    public function run(): void {
-        // Archivos estÃƒÂ¡ticos (HTML, CSS, JS)
+    public function run(): void
+    {
+        // Archivos estÃ¡ticos (HTML, CSS, JS)
         if ($this->method === 'GET' && !$this->isApiRequest($this->uri)) {
             $this->serveStaticFile();
             return;
         }
 
-        // Health check pÃƒÂºblico
+        // Health check pÃºblico
         if ($this->method === 'GET' && $this->uri === '/health') {
             header('Content-Type: application/json');
             echo json_encode(['service' => 'PharmaQuick API', 'status' => 'running']);
@@ -67,14 +74,20 @@ class PharmaRouter {
         JsonResponse::error('Recurso no encontrado', 404);
     }
 
-    private function isApiRequest(string $uri): bool {
+    private function isApiRequest(string $uri): bool
+    {
         return strpos($uri, '/api/') === 0;
     }
 
-    private function handleApi(): void {
-        // Verificar si es ruta pÃƒÂºblica (login)
+    private function handleApi(): void
+    {
+        // Verificar si es ruta pÃºblica (login/register)
         if (in_array($this->uri, $this->publicRoutes) && $this->method === 'POST') {
-            handleAuthLogin();
+            if ($this->uri === '/api/auth/login') {
+                handleAuthLogin();
+            } else if ($this->uri === '/api/auth/register') {
+                handleAuthRegister();
+            }
             return;
         }
 
@@ -97,16 +110,17 @@ class PharmaRouter {
         require_once SRC_PATH . '/API/Middleware/JwtMiddleware.php';
 
         $middleware = new JwtMiddleware();
-        
+
         if (!$middleware->handle()) {
-            return; // Ya respondiÃƒÂ³ con error
+            return; // Ya respondiÃ³ con error
         }
 
-        // Enrutar segÃƒÂºn URI
+        // Enrutar segÃºn URI
         $this->dispatchRoutes();
     }
 
-    private function handlePublicApi(): void {
+    private function handlePublicApi(): void
+    {
         require_once ROUTES_PATH . '/public.php';
 
         if ($this->uri === '/api/public/catalogo' && $this->method === 'GET') {
@@ -122,11 +136,12 @@ class PharmaRouter {
         JsonResponse::error('Recurso publico no encontrado', 404);
     }
 
-    private function dispatchRoutes(): void {
+    private function dispatchRoutes(): void
+    {
         // ===================
         // PRODUCTOS
         // ===================
-        
+
         // GET /api/productos - Listar productos por farmacia
         if ($this->uri === '/api/productos' && $this->method === 'GET') {
             require_once ROUTES_PATH . '/productos.php';
@@ -148,7 +163,7 @@ class PharmaRouter {
             return;
         }
 
-        // PUT/POST /api/productos/{id} - Actualizar producto (POST para soportar imÃƒÂ¡genes en FormData)
+        // PUT/POST /api/productos/{id} - Actualizar producto (POST para soportar imÃ¡genes en FormData)
         if (($this->method === 'PUT' || $this->method === 'POST') && preg_match('#^/api/productos/(\d+)$#', $this->uri, $matches)) {
             require_once ROUTES_PATH . '/productos.php';
             handlePutProductos((int) $matches[1]);
@@ -344,7 +359,7 @@ class PharmaRouter {
             handleGetVentas();
             return;
         }
-        
+
         if ($this->uri === '/api/ventas/crear' && $this->method === 'POST') {
             require_once ROUTES_PATH . '/ventas.php';
             handlePostVentasCrear();
@@ -356,7 +371,7 @@ class PharmaRouter {
             handleGetReservas();
             return;
         }
-        
+
         if ($this->uri === '/api/reservas' && $this->method === 'POST') {
             require_once ROUTES_PATH . '/reservas.php';
             handlePostReservas();
@@ -373,7 +388,8 @@ class PharmaRouter {
         JsonResponse::error('Recurso no encontrado', 404);
     }
 
-    private function serveStaticFile(): void {
+    private function serveStaticFile(): void
+    {
         $requestUri = $this->uri === '/' ? '/index.html' : $this->uri;
         $filePath = PUBLIC_PATH . $requestUri;
         $filePath = realpath($filePath);
@@ -416,4 +432,3 @@ class PharmaRouter {
 // Ejecutar router
 $router = new PharmaRouter();
 $router->run();
-

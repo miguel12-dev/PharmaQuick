@@ -38,9 +38,26 @@ const SiteHeader = {
                     navLinks.push('<a href="/reservas" class="pq-nav-link">Reservas</a>');
                 }
 
+                const session = JSON.parse(localStorage.getItem('pharmaSession') || '{}');
+                const userName = session.userName || session.email || 'Usuario';
+                const isCliente = session.rol === 'CLIENTE';
+
                 const authBtn = loggedIn
-                    ? '<a href="/dashboard" class="btn btn-primary btn-sm px-3 shadow-sm">Ir al panel</a>'
-                    : '<a href="/login" class="btn btn-outline-primary btn-sm px-3">Acceder</a>';
+                    ? `
+                    <div class="dropdown">
+                        <button class="btn btn-primary btn-sm px-3 shadow-sm dropdown-toggle d-flex align-items-center gap-2" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle"></i>
+                            <span class="d-none d-md-inline">${userName}</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2">
+                            ${!isCliente ? '<li><a class="dropdown-item py-2" href="/dashboard"><i class="fas fa-chart-line me-2 opacity-50"></i> Dashboard</a></li>' : ''}
+                            <li><a class="dropdown-item py-2" href="/perfil"><i class="fas fa-user-edit me-2 opacity-50"></i> Mi Perfil</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item py-2 text-danger" href="#" onclick="event.preventDefault(); window.Router.logout()"><i class="fas fa-power-off me-2 opacity-50"></i> Cerrar Sesión</a></li>
+                        </ul>
+                    </div>`
+                    : `<a href="/login" class="btn btn-outline-primary btn-sm px-3">Acceder</a>
+                       <a href="/register" class="btn btn-primary btn-sm px-3">Registrarse</a>`;
 
                 right = `
                     <nav class="d-flex align-items-center gap-3 me-2">

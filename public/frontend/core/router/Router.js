@@ -209,7 +209,7 @@ class Router {
      * Verificar si es ruta pública
      */
     static isPublicRoute(path) {
-        const publicRoutes = ['/', '/login', '/tienda', '/404', '/500', '/403'];
+        const publicRoutes = ['/', '/login', '/register', '/tienda', '/404', '/500', '/403'];
         return publicRoutes.includes(path);
     }
     
@@ -219,7 +219,9 @@ class Router {
     static isAuthenticated() {
         try {
             const session = JSON.parse(localStorage.getItem('pharmaSession') || '{}');
-            return !!(session.token && session.farmaciaId);
+            // Un usuario está autenticado si tiene un token válido
+            // farmaciaId puede ser null para clientes del sistema
+            return !!session.token;
         } catch (e) {
             return false;
         }

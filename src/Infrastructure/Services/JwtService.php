@@ -62,8 +62,10 @@ class JwtService {
     /**
      * Genera un JWT optimizado con datos del usuario
      * Este método es más eficiente que generate() cuando ya tienes los datos
+     * 
+     * @param int|null $farmaciaId Puede ser null para clientes globales (sin farmacia)
      */
-    public function generateUserToken(int $userId, string $email, int $farmaciaId): string {
+    public function generateUserToken(int $userId, string $email, ?int $farmaciaId = null): string {
         $time = time();
         $expiresAt = $time + $this->expirySeconds;
         

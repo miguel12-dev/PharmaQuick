@@ -13,6 +13,27 @@ class UsuarioRepository {
         $this->pdo = $pdo;
     }
 
+    /**
+     * Crea un nuevo usuario
+     */
+    public function create(array $data): int {
+        $stmt = $this->pdo->prepare("
+            INSERT INTO usuarios (farmacia_id, email, password_hash, nombre, rol, activo)
+            VALUES (:farmacia_id, :email, :password_hash, :nombre, :rol, :activo)
+        ");
+
+        $stmt->execute([
+            ':farmacia_id' => $data['farmacia_id'] ?? null,
+            ':email' => $data['email'],
+            ':password_hash' => $data['password_hash'],
+            ':nombre' => $data['nombre'] ?? null,
+            ':rol' => $data['rol'] ?? 'CLIENTE',
+            ':activo' => $data['activo'] ?? 1
+        ]);
+
+        return (int) $this->pdo->lastInsertId();
+    }
+
     public function authenticate(string $email, string $password): array {
         // Consulta optimizada - buscar solo campos necesarios
         $stmt = $this->pdo->prepare("SELECT id, farmacia_id, email, password_hash, rol FROM usuarios WHERE email = :email AND activo = 1 LIMIT 1");
@@ -30,7 +51,7 @@ class UsuarioRepository {
 
         return [
             'id' => (int) $user['id'],
-            'farmacia_id' => (int) $user['farmacia_id'],
+            'farmacia_id' => $user['farmacia_id'] !== null ? (int) $user['farmacia_id'] : null,
             'email' => $user['email'],
             'rol' => $user['rol'] ?? 'USUARIO',
         ];

@@ -49,3 +49,27 @@ function handleAuthLogin(): void {
         JsonResponse::error('Error: ' . $e->getMessage(), 500);
     }
 }
+
+function handleAuthRegister(): void {
+    global $authService;
+    
+    $postData = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+    
+    $email = $postData['email'] ?? '';
+    $password = $postData['password'] ?? '';
+    $nombre = $postData['nombre'] ?? null;
+
+    if (empty($email) || empty($password)) {
+        JsonResponse::error('Email y contrasena son requeridos', 400);
+        return;
+    }
+
+    try {
+        $result = $authService->register($email, $password, $nombre);
+        JsonResponse::success($result, 201, 'Registro exitoso. Ya puede iniciar sesion.');
+    } catch (AuthenticationException $e) {
+        JsonResponse::error($e->getMessage(), 400);
+    } catch (\Throwable $e) {
+        JsonResponse::error('Error: ' . $e->getMessage(), 500);
+    }
+}

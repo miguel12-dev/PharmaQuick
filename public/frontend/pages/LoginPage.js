@@ -61,6 +61,11 @@ const LoginPage = {
                                     </span>
                                 </button>
                             </form>
+
+                            <div class="text-center mt-4 pt-2 border-top">
+                                <p class="text-muted small mb-0">¿Eres nuevo en PharmaQuick?</p>
+                                <a href="/register" class="btn btn-link text-primary fw-bold text-decoration-none p-0" onclick="event.preventDefault(); Router.navigate('/register')">Regístrate aquí</a>
+                            </div>
                         </div>
                     </div>
 

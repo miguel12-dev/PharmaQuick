@@ -1,0 +1,24 @@
+# Exploración: Registro de Clientes y Flujo de Compra
+
+## Objetivo
+Implementar un sistema de registro para usuarios con rol "CLIENTE", permitirles iniciar sesión y gestionar sus reservas para completar compras en las secciones `/ventas` y `/reservas`.
+
+## Estado Actual
+- **Auth**: Existe un `AuthService` (PHP y JS) que maneja login basado en JWT. Solo hay una ruta de login `/api/auth/login`.
+- **Usuarios**: La tabla `usuarios` tiene un campo `rol`. Actualmente parece haber roles como `ADMINISTRADOR` y `USUARIO`.
+- **Reservas**: La tabla `reservas` ya contempla un `cliente_id`, pero no hay un flujo claro de cómo se asocia un usuario logueado con ese `cliente_id` si es un cliente externo.
+- **Ventas**: Existe un POS funcional para farmacias, pero no un flujo de "Carrito/Compra" para clientes finales.
+
+## Hallazgos
+1. **Registro**: Se necesita una nueva ruta `POST /api/auth/register` que cree un usuario en la tabla `usuarios` con `rol = 'CLIENTE'`.
+2. **Repositorio**: `UsuarioRepository` no tiene método `create`. Debe añadirse.
+3. **Filtro de Reservas**: `ReservaRepository` lista todas las reservas de la farmacia. Para clientes, debe filtrar por `cliente_id`.
+4. **Interfaz**: 
+   - Nueva `RegisterPage.js`.
+   - Modificar `LoginPage.js` para añadir link a registro.
+   - Modificar el layout para ocultar menús administrativos (Inventario, Proveedores, etc.) si el rol es `CLIENTE`.
+   - En `ReservationsPage`, añadir botón "Comprar" que cargue la reserva en el carrito de `SalesPage`.
+
+## Riesgos y Consideraciones
+- **Tenant (farmacia_id)**: Al registrarse, ¿a qué farmacia se asocian? El usuario dice "registro de usuarios en este caso 'clientes'". Si es una plataforma multi-farmacia, el registro podría ser global o por farmacia. Según `PublicStorePage`, se navega por catálogo de farmacia. Probablemente el registro deba asociarse a una farmacia por defecto o ser un campo en el registro.
+- **Seguridad**: Validar que un cliente no pueda ver reservas de otros.

@@ -38,7 +38,9 @@ class JwtMiddleware {
 
         // Obtener el ROL desde la base de datos (no desde JWT)
         // y verificar que el usuario esté activo
-        $userData = $this->obtenerRol($payload['sub'], (int)$payload['farmacia_id']);
+        // pharmacy_id puede ser null para clientes globales
+        $farmaciaId = isset($payload['farmacia_id']) ? (int)$payload['farmacia_id'] : null;
+        $userData = $this->obtenerRol($payload['sub'], $farmaciaId);
         
         // Si usuario no está activo o no existe, denegar acceso
         if (!$userData) {
@@ -47,10 +49,11 @@ class JwtMiddleware {
         }
         
         // Inyectar contexto de autenticación en $_REQUEST
+        // pharmacy_id puede ser null para clientes (rol CLIENTE)
         $_REQUEST['auth'] = [
             'sub' => $payload['sub'],
             'email' => $payload['email'],
-            'farmacia_id' => (int)$payload['farmacia_id'],
+            'farmacia_id' => $farmaciaId,
             'rol' => $userData['rol'], // Rol basado en BD y verificado activo
         ];
 
@@ -60,23 +63,31 @@ class JwtMiddleware {
     /**
      * Obtiene el rol del usuario desde la base de datos
      * Verifica que el usuario esté activo
+     * 
+     * @param int|null $farmaciaId Puede ser null para clientes globales
      */
-    private function obtenerRol(int $userId, int $farmaciaId): ?array {
+    private function obtenerRol(int $userId, ?int $farmaciaId = null): ?array {
         try {
-            // Usar cluster basado en farmacia_id
-            $cluster = (int) ceil($farmaciaId / 5);
-            if ($cluster < 1) $cluster = 1;
-            
+            // Siempre consultar Master para roles (source of truth)
             require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
             require_once SRC_PATH . '/Infrastructure/Persistence/UsuarioRepository.php';
             
-            $pdo = PDOFactory::getCluster($cluster);
+            $pdo = PDOFactory::getMaster();
             $repo = new UsuarioRepository($pdo);
             $user = $repo->findById($userId);
             
+            // Si no está en Master, probar en el cluster solo si tiene farmacia (no clientes)
+            if (!$user && $farmaciaId !== null && $farmaciaId > 0) {
+                $cluster = (int) ceil($farmaciaId / 5);
+                if ($cluster < 1) $cluster = 1;
+                $pdoCluster = PDOFactory::getCluster($cluster);
+                $repoCluster = new UsuarioRepository($pdoCluster);
+                $user = $repoCluster->findById($userId);
+            }
+            
             // Si usuario no existe o está inactivo, retornar null
             if (!$user || !isset($user['activo']) || !$user['activo']) {
-                return null; // Usuario inactivo o no existente
+                return null;
             }
             
             return [
@@ -84,7 +95,6 @@ class JwtMiddleware {
                 'activo' => (bool) $user['activo'],
             ];
         } catch (\Throwable $e) {
-            // En caso de error, denegar acceso
             return null;
         }
     }
@@ -129,10 +139,14 @@ class Auth {
 
     /**
      * Obtiene el ID de la farmacia (tenant)
+     * Retorna null para clientes globales sin farmacia
      */
     public static function farmaciaId(): ?int {
         $auth = self::user();
-        return $auth ? (int) $auth['farmacia_id'] : null;
+        if (!$auth || !isset($auth['farmacia_id']) || $auth['farmacia_id'] === null) {
+            return null;
+        }
+        return (int) $auth['farmacia_id'];
     }
 
     /**
