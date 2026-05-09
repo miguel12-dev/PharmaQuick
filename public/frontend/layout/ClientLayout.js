@@ -10,12 +10,12 @@ const ClientLayout = {
     render(container, activePage = 'tienda') {
         const session = JSON.parse(localStorage.getItem('pharmaSession') || '{}');
         let userName = session.userName || session.email || 'Cliente';
-        
+
         // Si userName es un email, extraer solo el nombre (antes del @)
         if (userName && userName.includes('@')) {
             userName = userName.split('@')[0];
         }
-        
+
         container.innerHTML = this.getHtml(userName, activePage);
         this.setupEventListeners(container);
     },
@@ -23,7 +23,7 @@ const ClientLayout = {
     getHtml(userName, activePage) {
         return `
 <div class="client-layout">
-    <!-- Header mejorado con más height y menú responsive -->
+    <!-- Header limpio - solo logo y usuario -->
     <header class="client-header bg-white shadow-sm border-bottom">
         <div class="container-fluid px-3 px-lg-4">
             <div class="row align-items-center py-2 py-md-3">
@@ -34,31 +34,11 @@ const ClientLayout = {
                     </a>
                 </div>
                 
-                <!-- Menú de navegación - Desktop -->
-                <div class="col d-none d-md-flex justify-content-center">
-                    <nav class="d-flex gap-1">
-                        <a href="/cliente" class="nav-link client-nav-link px-3 py-2 ${activePage === 'inicio' ? 'active' : ''}">
-                            <i class="fas fa-home me-1"></i> Inicio
-                        </a>
-                        <a href="/cliente/tienda" class="nav-link client-nav-link px-3 py-2 ${activePage === 'tienda' ? 'active' : ''}">
-                            <i class="fas fa-store me-1"></i> Tienda
-                        </a>
-                        <a href="/cliente/reservas" class="nav-link client-nav-link px-3 py-2 ${activePage === 'reservas' ? 'active' : ''}">
-                            <i class="fas fa-calendar-check me-1"></i> Mis Reservas
-                        </a>
-                        <a href="/cliente/compras" class="nav-link client-nav-link px-3 py-2 ${activePage === 'compras' ? 'active' : ''}">
-                            <i class="fas fa-shopping-bag me-1"></i> Mis Compras
-                        </a>
-                    </nav>
-                </div>
+                <!-- Espaciador vacío para mantener centrado -->
+                <div class="col d-none d-md-block"></div>
                 
-                <!-- Usuario y menú mobile -->
+                <!-- Usuario dropdown -->
                 <div class="col-auto d-flex align-items-center gap-2">
-                    <!-- Botón menú mobile -->
-                    <button class="btn btn-outline-secondary d-md-none p-2" type="button" data-bs-toggle="collapse" data-bs-target="#clientMobileMenu" aria-expanded="false">
-                        <i class="fas fa-bars fa-lg"></i>
-                    </button>
-                    
                     <!-- Usuario dropdown - Verde menta mejorado -->
                     <div class="dropdown">
                         <button class="btn-client-user dropdown-toggle d-flex align-items-center gap-2" data-bs-toggle="dropdown">
@@ -81,33 +61,11 @@ const ClientLayout = {
                     </div>
                 </div>
             </div>
-            
-            <!-- Menú colapsable mobile -->
-            <div class="collapse d-md-none" id="clientMobileMenu">
-                <nav class="mobile-nav py-3 border-top">
-                    <a href="/cliente" class="mobile-nav-link ${activePage === 'inicio' ? 'active' : ''}">
-                        <i class="fas fa-home me-2"></i> Inicio
-                    </a>
-                    <a href="/cliente/tienda" class="mobile-nav-link ${activePage === 'tienda' ? 'active' : ''}">
-                        <i class="fas fa-store me-2"></i> Tienda
-                    </a>
-                    <a href="/cliente/reservas" class="mobile-nav-link ${activePage === 'reservas' ? 'active' : ''}">
-                        <i class="fas fa-calendar-check me-2"></i> Mis Reservas
-                    </a>
-                    <a href="/cliente/compras" class="mobile-nav-link ${activePage === 'compras' ? 'active' : ''}">
-                        <i class="fas fa-shopping-bag me-2"></i> Mis Compras
-                    </a>
-                    <hr class="my-2">
-                    <a href="/cliente/perfil" class="mobile-nav-link">
-                        <i class="fas fa-user-edit me-2"></i> Mi Perfil
-                    </a>
-                </nav>
-            </div>
         </div>
     </header>
     
     <!-- Main Content -->
-    <main class="client-main py-4">
+    <main class="client-main py-4 pb-5">
         <div class="container-fluid px-3 px-lg-4">
             <div id="clientContent">
                 <!-- El contenido de la página se renderiza aquí -->
@@ -115,19 +73,29 @@ const ClientLayout = {
         </div>
     </main>
     
-    <!-- Footer -->
-    <footer class="client-footer py-3 border-top bg-light">
-        <div class="container-fluid px-3 px-lg-4">
-            <div class="row align-items-center">
-                <div class="col-md-6 text-center text-md-start text-muted small mb-2 mb-md-0">
-                    &copy; ${new Date().getFullYear()} PharmaQuick · Tu salud en línea
-                </div>
-                <div class="col-md-6 text-center text-md-end">
-                    <a href="/" class="text-muted small text-decoration-none">Volver al inicio</a>
-                </div>
+    <!-- Bottom Navigation - Fixed en la parte inferior -->
+    <nav class="bottom-nav fixed-bottom">
+        <div class="container-fluid px-2 px-lg-4">
+            <div class="bottom-nav-inner" style="margin-bottom: 16px;">
+                <a href="/cliente" class="bottom-nav-item ${activePage === 'inicio' ? 'active' : ''}">
+                    <i class="fas fa-home bottom-nav-icon"></i>
+                    <span class="bottom-nav-label">Inicio</span>
+                </a>
+                <a href="/cliente/tienda" class="bottom-nav-item ${activePage === 'tienda' ? 'active' : ''}">
+                    <i class="fas fa-store bottom-nav-icon"></i>
+                    <span class="bottom-nav-label">Tienda</span>
+                </a>
+                <a href="/cliente/reservas" class="bottom-nav-item ${activePage === 'reservas' ? 'active' : ''}">
+                    <i class="fas fa-calendar-check bottom-nav-icon"></i>
+                    <span class="bottom-nav-label">Reservas</span>
+                </a>
+                <a href="/cliente/compras" class="bottom-nav-item ${activePage === 'compras' ? 'active' : ''}">
+                    <i class="fas fa-shopping-bag bottom-nav-icon"></i>
+                    <span class="bottom-nav-label">Compras</span>
+                </a>
             </div>
         </div>
-    </footer>
+    </nav>
 </div>
 
 <style>
@@ -137,65 +105,20 @@ const ClientLayout = {
     flex-direction: column;
 }
 
-/* Header mejorado */
+/* Header limpio */
 .client-header {
-    min-height: 70px;
+    min-height: 50px;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
 }
 
 .client-logo {
-    height: 50px;
+    height: 40px;
     width: auto;
 }
 
 .client-brand-text {
     font-size: 1.25rem;
-}
-
-/* Navigation links */
-.client-nav-link {
-    color: #495057;
-    font-weight: 500;
-    border-radius: 0.5rem;
-    transition: all 0.2s ease;
-    text-decoration: none;
-}
-
-.client-nav-link:hover {
-    color: #0d6efd;
-    background-color: #f0f7ff;
-}
-
-.client-nav-link.active {
-    color: #0d6efd;
-    background-color: #e7f1ff;
-}
-
-/* Mobile menu */
-.mobile-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-.mobile-nav-link {
-    display: flex;
-    align-items: center;
-    padding: 0.75rem 1rem;
-    color: #495057;
-    text-decoration: none;
-    border-radius: 0.375rem;
-    transition: all 0.2s;
-}
-
-.mobile-nav-link:hover {
-    color: #0d6efd;
-    background-color: #f8f9fa;
-}
-
-.mobile-nav-link.active {
-    color: #0d6efd;
-    background-color: #e7f1ff;
-    font-weight: 500;
 }
 
 /* User dropdown mejorado */
@@ -269,19 +192,98 @@ const ClientLayout = {
 /* Main content */
 .client-main {
     flex: 1;
+    padding-bottom: 60px !important;
 }
 
-/* Footer */
-.client-footer {
-    margin-top: auto;
+/* Bottom Navigation - Fixed en la parte inferior */
+.bottom-nav {
+    background: transparent;
+    padding: 0.5rem 0;
+}
+
+.bottom-nav-inner {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 16px;
+    padding: 0.35rem 0.5rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    margin-bottom: 10px;
+}
+
+.bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.3rem 0.5rem;
+    color: #6c757d;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    min-width: 50px;
+}
+
+.bottom-nav-item:hover {
+    color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.15);
+}
+
+.bottom-nav-item.active {
+    color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.2);
+}
+
+.bottom-nav-item.active .bottom-nav-icon {
+    transform: scale(1.1);
+}
+
+.bottom-nav-icon {
+    font-size: 1rem;
+    margin-bottom: 1px;
+    transition: transform 0.2s ease;
+}
+
+.bottom-nav-label {
+    font-size: 0.6rem;
+    font-weight: 500;
 }
 
 /* Responsive adjustments */
+@media (min-width: 768px) {
+    .bottom-nav-inner {
+        max-width: 450px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .bottom-nav-item {
+        padding: 0.3rem 0.6rem;
+        min-width: 45px;
+    }
+    
+    .bottom-nav-icon {
+        font-size: 0.9rem;
+    }
+    
+    .bottom-nav-label {
+        font-size: 0.55rem;
+    }
+}
+
 @media (max-width: 767.98px) {
     .client-header {
         position: sticky;
         top: 0;
         z-index: 1000;
+    }
+    
+    .bottom-nav {
+        margin-left: 0;
+        margin-right: 0;
     }
 }
 </style>`;
@@ -294,7 +296,7 @@ const ClientLayout = {
                 document.querySelectorAll('.dropdown-menu.show').forEach(el => el.classList.remove('show'));
             }
         });
-        
+
         // Initialize Bootstrap dropdowns
         if (typeof bootstrap !== 'undefined') {
             const dropdowns = container.querySelectorAll('.dropdown-toggle');
