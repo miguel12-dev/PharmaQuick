@@ -26,6 +26,7 @@
         '/cliente': ClientDashboardPage,
         '/cliente/tienda': ClientStorePage,
         '/cliente/reservas': ClientReservationsPage,
+        '/cliente/perfil': ClientProfilePage,
         '/cliente/compras': ClientDashboardPage,  // Por ahora redirige al dashboard
         
         '/perfil': ProfilePage,
@@ -59,8 +60,8 @@
         
         // Si es cliente e intenta acceder a rutas de admin, redirigir
         if (rol === 'CLIENTE') {
-            if (path === '/dashboard' || path === '/ventas' || path === '/reservas' || 
-                path === '/productos' || path === '/inventario' || path.startsWith('/mi-cuenta')) {
+            if (path === '/dashboard' || path === '/ventas' || path === '/reservas' ||
+                path === '/productos' || path === '/inventario' || path === '/perfil') {
                 Router.navigate('/cliente');
                 return true;
             }

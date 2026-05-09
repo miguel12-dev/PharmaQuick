@@ -276,7 +276,7 @@ class PharmaRouter
         }
 
         // ===================
-        // PERFIL
+        // PERFIL (Admin)
         // ===================
         if ($this->uri === '/api/perfil' && $this->method === 'GET') {
             require_once ROUTES_PATH . '/perfil.php';
@@ -287,6 +287,21 @@ class PharmaRouter
         if ($this->uri === '/api/perfil/password' && $this->method === 'PUT') {
             require_once ROUTES_PATH . '/perfil.php';
             handlePutPerfilPassword();
+            return;
+        }
+
+        // ===================
+        // PERFIL CLIENTE
+        // ===================
+        if ($this->uri === '/api/cliente/perfil' && $this->method === 'GET') {
+            require_once ROUTES_PATH . '/perfil_cliente.php';
+            handleGetClientePerfil();
+            return;
+        }
+
+        if ($this->uri === '/api/cliente/perfil/password' && $this->method === 'PUT') {
+            require_once ROUTES_PATH . '/perfil_cliente.php';
+            handlePutClientePassword();
             return;
         }
 

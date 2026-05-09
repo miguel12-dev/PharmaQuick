@@ -51,7 +51,7 @@ const SiteHeader = {
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2">
                             ${!isCliente ? '<li><a class="dropdown-item py-2" href="/dashboard"><i class="fas fa-chart-line me-2 opacity-50"></i> Dashboard</a></li>' : ''}
-                            <li><a class="dropdown-item py-2" href="/perfil"><i class="fas fa-user-edit me-2 opacity-50"></i> Mi Perfil</a></li>
+                            ${isCliente ? '<li><a class="dropdown-item py-2" href="/cliente/perfil"><i class="fas fa-user-edit me-2 opacity-50"></i> Mi Perfil</a></li>' : '<li><a class="dropdown-item py-2" href="/perfil"><i class="fas fa-user-edit me-2 opacity-50"></i> Mi Perfil</a></li>'}
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item py-2 text-danger" href="#" onclick="event.preventDefault(); window.Router.logout()"><i class="fas fa-power-off me-2 opacity-50"></i> Cerrar Sesión</a></li>
                         </ul>

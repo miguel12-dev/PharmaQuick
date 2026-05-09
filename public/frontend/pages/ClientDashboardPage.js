@@ -96,7 +96,7 @@ const ClientDashboardPage = {
                 </div>
                 <h5 class="card-title">Mi Perfil</h5>
                 <p class="card-text text-muted small">Actualiza tus datos personales y contraseña</p>
-                <a href="/perfil" class="btn btn-outline-info">
+                <a href="/cliente/perfil" class="btn btn-outline-info">
                     <i class="fas fa-arrow-right me-2"></i> Editar Perfil
                 </a>
             </div>

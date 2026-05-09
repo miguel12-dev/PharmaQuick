@@ -2,14 +2,19 @@
 
 declare(strict_types=1);
 
-function handleGetPerfil(): void {
+/**
+ * PharmaQuick - Perfil Cliente
+ *
+ * Endpoint para perfil de clientes (sin farmacia_id obligatorio)
+ */
+
+function handleGetClientePerfil(): void {
     try {
         require_once SRC_PATH . '/API/Middleware/JwtMiddleware.php';
         require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
         require_once SRC_PATH . '/Infrastructure/Persistence/UsuarioRepository.php';
 
         $userId = Auth::userId();
-        $farmaciaId = Auth::farmaciaId();
         $rol = Auth::rol();
 
         if (!$userId) {
@@ -17,17 +22,8 @@ function handleGetPerfil(): void {
             return;
         }
 
-        // Para CLIENTE sin farmacia, usar Master; para otros roles con farmacia, usar cluster
-        if ($rol === 'CLIENTE' || $farmaciaId === null) {
-            // Clientes globales consultan en Master
-            $pdo = PDOFactory::getMaster();
-        } else {
-            // Usuarios con farmacia consultan en su cluster
-            $cluster = (int) ceil($farmaciaId / 5);
-            $cluster = $cluster < 1 ? 1 : $cluster;
-            $pdo = PDOFactory::getCluster($cluster);
-        }
-        
+        // Clientes siempre consultan en Master
+        $pdo = PDOFactory::getMaster();
         $repo = new UsuarioRepository($pdo);
         $user = $repo->findProfileById($userId);
 
@@ -36,7 +32,8 @@ function handleGetPerfil(): void {
             return;
         }
 
-        // Obtener nombre de farmacia si existe
+        // Nombre de farmacia según rol
+        $farmaciaId = Auth::farmaciaId();
         if ($farmaciaId !== null && isset($user['farmacia_id'])) {
             $farmaciaNombre = $repo->findFarmaciaNameById((int) $user['farmacia_id']);
             $user['farmacia_nombre'] = $farmaciaNombre ?? ('Farmacia #' . (int) $user['farmacia_id']);
@@ -50,7 +47,7 @@ function handleGetPerfil(): void {
     }
 }
 
-function handlePutPerfilPassword(): void {
+function handlePutClientePassword(): void {
     try {
         require_once SRC_PATH . '/API/Middleware/JwtMiddleware.php';
         require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
@@ -76,23 +73,13 @@ function handlePutPerfilPassword(): void {
         }
 
         $userId = Auth::userId();
-        $farmaciaId = Auth::farmaciaId();
-        $rol = Auth::rol();
-
         if (!$userId) {
             JsonResponse::error('Contexto de autenticación inválido', 401);
             return;
         }
 
-        // Para CLIENTE sin farmacia, usar Master; para otros roles con farmacia, usar cluster
-        if ($rol === 'CLIENTE' || $farmaciaId === null) {
-            $pdo = PDOFactory::getMaster();
-        } else {
-            $cluster = (int) ceil($farmaciaId / 5);
-            $cluster = $cluster < 1 ? 1 : $cluster;
-            $pdo = PDOFactory::getCluster($cluster);
-        }
-
+        // Clientes siempre usan Master
+        $pdo = PDOFactory::getMaster();
         $repo = new UsuarioRepository($pdo);
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
         $updated = $repo->updatePassword($userId, $passwordHash);

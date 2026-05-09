@@ -74,7 +74,7 @@ const ClientLayout = {
                                 <small class="text-muted">Cuenta de cliente</small>
                             </li>
                             <li><hr class="dropdown-divider my-1"></li>
-                            <li><a class="dropdown-item py-2" href="/perfil"><i class="fas fa-user-edit me-2 text-muted"></i> Mi Perfil</a></li>
+                            <li><a class="dropdown-item py-2" href="/cliente/perfil"><i class="fas fa-user-edit me-2 text-muted"></i> Mi Perfil</a></li>
                             <li><hr class="dropdown-divider my-1"></li>
                             <li><a class="dropdown-item py-2 text-danger" href="#" onclick="event.preventDefault(); window.Router.logout()"><i class="fas fa-power-off me-2"></i> Cerrar Sesión</a></li>
                         </ul>
@@ -98,7 +98,7 @@ const ClientLayout = {
                         <i class="fas fa-shopping-bag me-2"></i> Mis Compras
                     </a>
                     <hr class="my-2">
-                    <a href="/perfil" class="mobile-nav-link">
+                    <a href="/cliente/perfil" class="mobile-nav-link">
                         <i class="fas fa-user-edit me-2"></i> Mi Perfil
                     </a>
                 </nav>
