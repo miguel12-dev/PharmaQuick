@@ -9,7 +9,12 @@ const ClientLayout = {
      */
     render(container, activePage = 'tienda') {
         const session = JSON.parse(localStorage.getItem('pharmaSession') || '{}');
-        const userName = session.userName || session.email || 'Cliente';
+        let userName = session.userName || session.email || 'Cliente';
+        
+        // Si userName es un email, extraer solo el nombre (antes del @)
+        if (userName && userName.includes('@')) {
+            userName = userName.split('@')[0];
+        }
         
         container.innerHTML = this.getHtml(userName, activePage);
         this.setupEventListeners(container);
@@ -26,7 +31,6 @@ const ClientLayout = {
                 <div class="col-auto">
                     <a href="/cliente" class="d-flex align-items-center text-decoration-none">
                         <img src="/image/logo_pharmaQuick.png" alt="PharmaQuick" class="client-logo" height="50">
-                        <span class="client-brand-text d-none d-md-inline ms-2 fw-bold text-dark">PharmaQuick</span>
                     </a>
                 </div>
                 
@@ -55,15 +59,23 @@ const ClientLayout = {
                         <i class="fas fa-bars fa-lg"></i>
                     </button>
                     
-                    <!-- Usuario dropdown -->
+                    <!-- Usuario dropdown - Verde menta mejorado -->
                     <div class="dropdown">
-                        <button class="btn btn-primary dropdown-toggle d-flex align-items-center gap-2 shadow-sm" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle fa-lg"></i>
-                            <span class="d-none d-lg-inline">${userName}</span>
+                        <button class="btn-client-user dropdown-toggle d-flex align-items-center gap-2" data-bs-toggle="dropdown">
+                            <div class="user-avatar">
+                                <i class="fas fa-user-circle fa-lg"></i>
+                            </div>
+                            <span class="user-name d-none d-lg-inline">${userName}</span>
+                            <i class="fas fa-chevron-down small ms-1"></i>
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item py-2" href="/perfil"><i class="fas fa-user-edit me-2"></i> Mi Perfil</a></li>
-                            <li><hr class="dropdown-divider"></li>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3">
+                            <li class="px-3 py-2 bg-light rounded-top">
+                                <div class="fw-semibold text-dark">${userName}</div>
+                                <small class="text-muted">Cuenta de cliente</small>
+                            </li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li><a class="dropdown-item py-2" href="/perfil"><i class="fas fa-user-edit me-2 text-muted"></i> Mi Perfil</a></li>
+                            <li><hr class="dropdown-divider my-1"></li>
                             <li><a class="dropdown-item py-2 text-danger" href="#" onclick="event.preventDefault(); window.Router.logout()"><i class="fas fa-power-off me-2"></i> Cerrar Sesión</a></li>
                         </ul>
                     </div>
@@ -184,6 +196,74 @@ const ClientLayout = {
     color: #0d6efd;
     background-color: #e7f1ff;
     font-weight: 500;
+}
+
+/* User dropdown mejorado */
+.btn-client-user {
+    background: linear-gradient(135deg, #b8e4d4 0%, #98d8c8 100%);
+    border: 1px solid rgba(26, 92, 74, 0.2);
+    color: #1a5c4a;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(152, 216, 200, 0.3);
+}
+
+.btn-client-user:hover {
+    background: linear-gradient(135deg, #a8dbc5 0%, #88d0ba 100%);
+    border-color: rgba(26, 92, 74, 0.3);
+    box-shadow: 0 4px 12px rgba(152, 216, 200, 0.4);
+    transform: translateY(-1px);
+}
+
+.btn-client-user::after {
+    margin-left: 0.25rem;
+    vertical-align: middle;
+}
+
+.user-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1a5c4a;
+}
+
+.user-name {
+    font-weight: 600;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Dropdown menu estilizado */
+.btn-client-user + .dropdown-menu {
+    margin-top: 0.5rem;
+    border: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.btn-client-user + .dropdown-menu .dropdown-item {
+    padding: 0.75rem 1.25rem;
+    transition: all 0.2s ease;
+    border-radius: 0;
+}
+
+.btn-client-user + .dropdown-menu .dropdown-item:hover {
+    background-color: #f8f9fa;
+    color: #1a5c4a;
+}
+
+.btn-client-user + .dropdown-menu .dropdown-item:first-child {
+    background-color: #e8f5ef;
+}
+
+.btn-client-user + .dropdown-menu .dropdown-item.text-danger:hover {
+    background-color: #ffeaea;
+    color: #dc3545;
 }
 
 /* Main content */

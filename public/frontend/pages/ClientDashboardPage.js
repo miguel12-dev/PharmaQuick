@@ -21,6 +21,12 @@ const ClientDashboardPage = {
         const session = JSON.parse(localStorage.getItem('pharmaSession') || '{}');
         const content = document.getElementById('clientContent');
         
+        // Extraer nombre (antes del @ si es email)
+        let userName = session.userName || session.email || 'Cliente';
+        if (userName.includes('@')) {
+            userName = userName.split('@')[0];
+        }
+        
         // Cargar reservas y compras del cliente
         try {
             const [reservasData] = await Promise.all([
@@ -31,7 +37,7 @@ const ClientDashboardPage = {
             const reservasTotal = reservasData.length;
             
             content.innerHTML = this.getDashboardHtml({
-                userName: session.userName || session.email,
+                userName: userName,
                 reservasActivas,
                 reservasTotal
             });
@@ -40,7 +46,7 @@ const ClientDashboardPage = {
         } catch (error) {
             console.error('Error cargando dashboard:', error);
             content.innerHTML = this.getDashboardHtml({
-                userName: session.userName || session.email,
+                userName: userName,
                 reservasActivas: 0,
                 reservasTotal: 0
             });
@@ -50,9 +56,6 @@ const ClientDashboardPage = {
     getDashboardHtml(data) {
         return `
 <div class="row g-4">
-    <div class="col-12">
-        <h2 class="mb-4">Bienvenido, ${data.userName}</h2>
-    </div>
     
     <!-- Cards de acciones rápidas -->
     <div class="col-md-4">
