@@ -17,11 +17,18 @@ const HomePage = {
         this.setupEventListeners(container, loggedIn);
     },
 
-    setupEventListeners(container, loggedIn) {
+setupEventListeners(container, loggedIn) {
+        // Obtener rol del usuario
+        const session = JSON.parse(localStorage.getItem('pharmaSession') || '{}');
+        const isCliente = session.rol === 'CLIENTE';
+        
+        // Ruta según rol
+        const dashboardRoute = isCliente ? '/cliente' : '/dashboard';
+        
         container.querySelectorAll('[data-home-action="primary"]').forEach((btn) => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
-                Router.navigate(loggedIn ? '/dashboard' : '/login');
+                Router.navigate(loggedIn ? dashboardRoute : '/login');
             });
         });
 
@@ -36,28 +43,32 @@ const HomePage = {
                 }, 300);
             });
         }
-
-        // Action handlers (Buy/Reserve)
+        
+        // Action handlers (Buy/Reserve) - Redirigir según rol
         container.addEventListener('click', (e) => {
             const buyBtn = e.target.closest('.action-buy');
             const reserveBtn = e.target.closest('.action-reserve');
-
+            
+            // Rutas según rol del usuario
+            const buyRoute = isCliente ? '/cliente/tienda' : '/ventas';
+            const reserveRoute = isCliente ? '/cliente/reservas' : '/reservas';
+            
             if (buyBtn) {
                 const id = buyBtn.dataset.id;
                 if (loggedIn) {
-                    Router.navigate(`/ventas?producto=${id}`);
+                    Router.navigate(`${buyRoute}?producto=${id}`);
                 } else {
-                    const nextUrl = encodeURIComponent(`/ventas?producto=${id}`);
+                    const nextUrl = encodeURIComponent(`${buyRoute}?producto=${id}`);
                     Router.navigate(`/login?next=${nextUrl}`);
                 }
             }
-
+            
             if (reserveBtn) {
                 const id = reserveBtn.dataset.id;
                 if (loggedIn) {
-                    Router.navigate(`/reservas?producto=${id}`);
+                    Router.navigate(`${reserveRoute}?producto=${id}`);
                 } else {
-                    const nextUrl = encodeURIComponent(`/reservas?producto=${id}`);
+                    const nextUrl = encodeURIComponent(`${reserveRoute}?producto=${id}`);
                     Router.navigate(`/login?next=${nextUrl}`);
                 }
             }
@@ -150,7 +161,22 @@ const HomePage = {
     },
 
     getHtml(loggedIn) {
-        const primaryLabel = loggedIn ? 'Ir al panel' : 'Iniciar sesión';
+        // Determinar rol para textos correctos
+        let isCliente = false;
+        let dashboardRoute = '/dashboard';
+        let primaryLabel = 'Iniciar sesión';
+        
+        if (loggedIn) {
+            try {
+                const session = JSON.parse(localStorage.getItem('pharmaSession') || '{}');
+                isCliente = session.rol === 'CLIENTE';
+                dashboardRoute = isCliente ? '/cliente' : '/dashboard';
+                primaryLabel = isCliente ? 'Mi Cuenta' : 'Ir al panel';
+            } catch (e) {
+                primaryLabel = 'Ir al panel';
+            }
+        }
+        
         const registerBtn = loggedIn ? '' : `<a href="/register" class="btn btn-outline-primary btn-lg px-4 ms-2 home-reveal" data-delay="260">Regístrate</a>`;
         return `
 <div class="home-landing">

@@ -14,14 +14,72 @@
         '/login': LoginPage,
         '/register': RegisterPage,
         '/tienda': PublicStorePage,
+        
+        // Rutas administrativas (para ADMIN, FARMACEUTICO, AUXILIAR)
         '/dashboard': DashboardPage,
         '/productos': ProductsPage,
         '/inventario': InventoryPage,
         '/ventas': SalesPage,
         '/reservas': ReservationsPage,
+        
+        // Rutas de cliente (CLIENTE)
+        '/cliente': ClientDashboardPage,
+        '/cliente/tienda': ClientStorePage,
+        '/cliente/reservas': ClientReservationsPage,
+        '/cliente/compras': ClientDashboardPage,  // Por ahora redirige al dashboard
+        
         '/perfil': ProfilePage,
         '/404': NotFoundPage
     };
+    
+    /**
+     * Obtener el rol del usuario desde la sesión
+     */
+    function getUserRol() {
+        try {
+            const session = JSON.parse(localStorage.getItem('pharmaSession') || '{}');
+            return session.rol || 'USUARIO';
+        } catch (e) {
+            return 'USUARIO';
+        }
+    }
+    
+    /**
+     * Verificar si la ruta es para clientes
+     */
+    function isClientRoute(path) {
+        return path.startsWith('/cliente');
+    }
+    
+    /**
+     * Redirigir según el rol del usuario
+     */
+    function redirectByRole(path) {
+        const rol = getUserRol();
+        
+        // Si es cliente e intenta acceder a rutas de admin, redirigir
+        if (rol === 'CLIENTE') {
+            if (path === '/dashboard' || path === '/ventas' || path === '/reservas' || 
+                path === '/productos' || path === '/inventario' || path.startsWith('/mi-cuenta')) {
+                Router.navigate('/cliente');
+                return true;
+            }
+        }
+        
+        // Si es admin y accede a rutas de cliente, redirigir
+        if (rol !== 'CLIENTE' && isClientRoute(path)) {
+            Router.navigate('/dashboard');
+            return true;
+        }
+        
+        // Redirigir /mi-cuenta a /cliente para clientes
+        if (rol === 'CLIENTE' && path.startsWith('/mi-cuenta')) {
+            Router.navigate('/cliente');
+            return true;
+        }
+        
+        return false;
+    }
     
     /**
      * Inicializar aplicación
@@ -33,6 +91,23 @@
             console.error('App: Contenedor #app no encontrado');
             return;
         }
+        
+        // Sobrescribir método navigate para agregar verificación de rol
+        const originalNavigate = Router.navigate;
+        Router.navigate = function(path, pushState = true) {
+            if (redirectByRole(path)) {
+                return;
+            }
+            originalNavigate.call(Router, path, pushState);
+        };
+        
+        const originalNavigateTo = Router.navigateTo;
+        Router.navigateTo = function(path, pushState = true) {
+            if (redirectByRole(path)) {
+                return;
+            }
+            originalNavigateTo.call(Router, path, pushState);
+        };
         
         // Configurar y inicializar router
         Router.configure(routes);
