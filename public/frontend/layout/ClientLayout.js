@@ -85,10 +85,12 @@ const ClientLayout = {
                     <i class="fas fa-store bottom-nav-icon"></i>
                     <span class="bottom-nav-label">Tienda</span>
                 </a>
+                <!-- [DESHABILITADO] Link de Reservas - Deshabilitado por no utilizarse
                 <a href="/cliente/reservas" class="bottom-nav-item ${activePage === 'reservas' ? 'active' : ''}">
                     <i class="fas fa-calendar-check bottom-nav-icon"></i>
                     <span class="bottom-nav-label">Reservas</span>
                 </a>
+                -->
                 <a href="/cliente/compras" class="bottom-nav-item ${activePage === 'compras' ? 'active' : ''}">
                     <i class="fas fa-shopping-bag bottom-nav-icon"></i>
                     <span class="bottom-nav-label">Compras</span>

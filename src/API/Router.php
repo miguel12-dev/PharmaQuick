@@ -32,7 +32,7 @@ require_once ROUTES_PATH . '/auth.php';
 require_once ROUTES_PATH . '/lotes.php';
 require_once ROUTES_PATH . '/inventario.php';
 require_once ROUTES_PATH . '/ventas.php';
-require_once ROUTES_PATH . '/reservas.php';
+// [DESHABILITADO] require_once ROUTES_PATH . '/reservas.php'; // Reservas deshabilitadas
 
 class PharmaRouter
 {
@@ -381,24 +381,25 @@ class PharmaRouter
             return;
         }
 
-        if ($this->uri === '/api/reservas' && $this->method === 'GET') {
-            require_once ROUTES_PATH . '/reservas.php';
-            handleGetReservas();
-            return;
-        }
-
-        if ($this->uri === '/api/reservas' && $this->method === 'POST') {
-            require_once ROUTES_PATH . '/reservas.php';
-            handlePostReservas();
-            return;
-        }
-
-        // Endpoint Cronjob (Idealmente protegido o llamado interno)
-        if ($this->uri === '/api/reservas/cron' && $this->method === 'POST') {
-            require_once ROUTES_PATH . '/reservas.php';
-            handlePostReservasCron();
-            return;
-        }
+        // [DESHABILITADO] Rutas de reservas - Línea comentada por no utilizarse en la aplicación
+        // if ($this->uri === '/api/reservas' && $this->method === 'GET') {
+        //     require_once ROUTES_PATH . '/reservas.php';
+        //     handleGetReservas();
+        //     return;
+        // }
+        //
+        // if ($this->uri === '/api/reservas' && $this->method === 'POST') {
+        //     require_once ROUTES_PATH . '/reservas.php';
+        //     handlePostReservas();
+        //     return;
+        // }
+        //
+        // // Endpoint Cronjob (Idealmente protegido o llamado interno)
+        // if ($this->uri === '/api/reservas/cron' && $this->method === 'POST') {
+        //     require_once ROUTES_PATH . '/reservas.php';
+        //     handlePostReservasCron();
+        //     return;
+        // }
 
         JsonResponse::error('Recurso no encontrado', 404);
     }

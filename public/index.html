@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <base href="/">
     <title>PharmaQuick</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💊</text></svg>">
     <!-- Font Awesome 6 (Local) -->
@@ -127,10 +128,12 @@
                     <i class="fas fa-cash-register"></i>
                     <span class="nav-text">Ventas</span>
                 </a>
+                <!-- [DESHABILITADO] Reservas - Deshabilitado por no utilizarse
                 <a class="nav-link" href="/reservas" data-page="reservas">
                     <i class="fas fa-calendar-alt"></i>
                     <span class="nav-text">Reservas</span>
                 </a>
+                -->
                 <hr class="mx-3 my-2 text-white-50">
                 <a class="nav-link" href="/configuracion" data-page="configuracion">
                     <i class="fas fa-cog"></i>
@@ -419,7 +422,7 @@
         </div>
     </template>
 
-    <!-- Template: Reservas -->
+    <!-- [DESHABILITADO] Template: Reservas - Deshabilitado por no utilizarse
     <template id="template-reservas">
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-body p-4">
@@ -451,6 +454,7 @@
             </div>
         </div>
     </template>
+    -->
 
     <!-- Template: 404 Page -->
     <template id="template-404">
@@ -499,9 +503,11 @@
     <script src="frontend/modules/sales/SalesService.js"></script>
     <script src="frontend/modules/sales/SalesController.js"></script>
     <script src="frontend/modules/sales/SalesView.js"></script>
+    <!-- [DESHABILITADO] Scripts de reservas - Deshabilitado por no utilizarse
     <script src="frontend/modules/reservations/ReservationService.js"></script>
     <script src="frontend/modules/reservations/ReservationController.js"></script>
     <script src="frontend/modules/reservations/ReservationView.js"></script>
+    -->
     <script src="frontend/modules/public-store/PublicCatalogService.js?v=fix-v2"></script>
     <script src="frontend/modules/public-store/PublicStoreView.js"></script>
     
@@ -519,7 +525,7 @@
     <script src="frontend/pages/ProductsPage.js"></script>
     <script src="frontend/pages/InventoryPage.js"></script>
     <script src="frontend/pages/SalesPage.js"></script>
-    <script src="frontend/pages/ReservationsPage.js"></script>
+    <!-- [DESHABILITADO] <script src="frontend/pages/ReservationsPage.js"></script> -->
     <script src="frontend/pages/ProfilePage.js"></script>
     <script src="frontend/pages/NotFoundPage.js"></script>
     
@@ -527,7 +533,7 @@
     <script src="frontend/pages/ClientDashboardPage.js"></script>
     <script src="frontend/pages/ClientStorePage.js"></script>
     <script src="frontend/pages/ClientProfilePage.js"></script>
-    <script src="frontend/pages/ClientReservationsPage.js"></script>
+    <!-- [DESHABILITADO] <script src="frontend/pages/ClientReservationsPage.js"></script> -->
     
     <!-- App -->
     <script src="js/app.js?v=home-route"></script>

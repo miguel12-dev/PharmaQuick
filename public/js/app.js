@@ -20,12 +20,12 @@
         '/productos': ProductsPage,
         '/inventario': InventoryPage,
         '/ventas': SalesPage,
-        '/reservas': ReservationsPage,
+        // [DESHABILITADO] '/reservas': ReservationsPage,
         
         // Rutas de cliente (CLIENTE)
         '/cliente': ClientDashboardPage,
         '/cliente/tienda': ClientStorePage,
-        '/cliente/reservas': ClientReservationsPage,
+        // [DESHABILITADO] '/cliente/reservas': ClientReservationsPage,
         '/cliente/perfil': ClientProfilePage,
         '/cliente/compras': ClientDashboardPage,  // Por ahora redirige al dashboard
         
@@ -60,7 +60,7 @@
         
         // Si es cliente e intenta acceder a rutas de admin, redirigir
         if (rol === 'CLIENTE') {
-            if (path === '/dashboard' || path === '/ventas' || path === '/reservas' ||
+            if (path === '/dashboard' || path === '/ventas' || /* [DESHABILITADO] path === '/reservas' || */
                 path === '/productos' || path === '/inventario' || path === '/perfil') {
                 Router.navigate('/cliente');
                 return true;

@@ -47,11 +47,11 @@ setupEventListeners(container, loggedIn) {
         // Action handlers (Buy/Reserve) - Redirigir según rol
         container.addEventListener('click', (e) => {
             const buyBtn = e.target.closest('.action-buy');
-            const reserveBtn = e.target.closest('.action-reserve');
+            // [DESHABILITADO] const reserveBtn = e.target.closest('.action-reserve');
             
             // Rutas según rol del usuario
             const buyRoute = isCliente ? '/cliente/tienda' : '/ventas';
-            const reserveRoute = isCliente ? '/cliente/reservas' : '/reservas';
+            // [DESHABILITADO] const reserveRoute = isCliente ? '/cliente/reservas' : '/reservas';
             
             if (buyBtn) {
                 const id = buyBtn.dataset.id;
@@ -63,15 +63,16 @@ setupEventListeners(container, loggedIn) {
                 }
             }
             
-            if (reserveBtn) {
-                const id = reserveBtn.dataset.id;
-                if (loggedIn) {
-                    Router.navigate(`${reserveRoute}?producto=${id}`);
-                } else {
-                    const nextUrl = encodeURIComponent(`${reserveRoute}?producto=${id}`);
-                    Router.navigate(`/login?next=${nextUrl}`);
-                }
-            }
+            // [DESHABILITADO] Manejo de clicks en botón de reservas
+            // if (reserveBtn) {
+            //     const id = reserveBtn.dataset.id;
+            //     if (loggedIn) {
+            //         Router.navigate(`${reserveRoute}?producto=${id}`);
+            //     } else {
+            //         const nextUrl = encodeURIComponent(`${reserveRoute}?producto=${id}`);
+            //         Router.navigate(`/login?next=${nextUrl}`);
+            //     }
+            // }
         });
     },
 
@@ -140,9 +141,11 @@ setupEventListeners(container, loggedIn) {
                                 <button class="btn btn-primary btn-sm action-buy" data-id="${product.id}" ${!hasStock ? 'disabled' : ''}>
                                     <i class="fas fa-cart-plus me-1"></i> Comprar
                                 </button>
+                                <!-- [DESHABILITADO] Botón de Reservar - Deshabilitado por no utilizarse
                                 <button class="btn btn-outline-primary btn-sm action-reserve" data-id="${product.id}" ${!hasStock ? 'disabled' : ''}>
                                     <i class="fas fa-calendar-check me-1"></i> Reservar
                                 </button>
+                                -->
                             </div>
                         </div>
                     </div>
@@ -338,8 +341,8 @@ setupEventListeners(container, loggedIn) {
                 <h2 class="home-cta-title mb-3">¿Listo para usar PharmaQuick?</h2>
                 <p class="home-cta-lead text-secondary mb-4 mx-auto">
                     ${loggedIn
-                ? 'Accede con tu cuenta para ver inventario, ventas y reservas en tiempo real.'
-                : 'Regístrate como cliente y accede a compras y reservas de medicamentos de forma sencilla.'}
+                ? 'Accede con tu cuenta para ver inventario y ventas en tiempo real.'
+                : 'Regístrate como cliente y accede a compras de medicamentos de forma sencilla.'}
                 </p>
                 <button type="button" class="btn btn-primary btn-lg px-5 home-cta-btn" data-home-action="primary">${primaryLabel}</button>
                 ${!loggedIn ? '<a href="/register" class="btn btn-outline-primary btn-lg px-5 ms-2">Regístrate gratis</a>' : ''}

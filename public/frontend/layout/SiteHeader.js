@@ -33,9 +33,10 @@ const SiteHeader = {
                 navLinks.push('<a href="/tienda" class="pq-nav-link d-none d-sm-inline-block">Tienda</a>');
                 
                 if (loggedIn) {
-                    // Ventas y Reservas (Solo logueado)
+                    // Ventas (Solo logueado)
                     navLinks.push('<a href="/ventas" class="pq-nav-link">Ventas</a>');
-                    navLinks.push('<a href="/reservas" class="pq-nav-link">Reservas</a>');
+                    // [DESHABILITADO] Link de Reservas - Deshabilitado por no utilizarse
+                    // navLinks.push('<a href="/reservas" class="pq-nav-link">Reservas</a>');
                 }
 
                 const session = JSON.parse(localStorage.getItem('pharmaSession') || '{}');

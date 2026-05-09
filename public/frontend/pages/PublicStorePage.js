@@ -90,11 +90,12 @@ class PublicStorePage {
         window.Router.navigate(`/login?next=${nextUrl}`);
     }
 
-    static handleReserve(productId) {
-        // Redirigir al login con return a reservas
-        const nextUrl = encodeURIComponent(`/reservas?producto=${productId}`);
-        window.Router.navigate(`/login?next=${nextUrl}`);
-    }
+    // [DESHABILITADO] handleReserve - Deshabilitado por no utilizarse
+    // static handleReserve(productId) {
+    //     // Redirigir al login con return a reservas
+    //     const nextUrl = encodeURIComponent(`/reservas?producto=${productId}`);
+    //     window.Router.navigate(`/login?next=${nextUrl}`);
+    // }
 }
 
 window.PublicStorePage = PublicStorePage;

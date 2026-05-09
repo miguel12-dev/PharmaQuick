@@ -27,30 +27,39 @@ const ClientDashboardPage = {
             userName = userName.split('@')[0];
         }
         
-        // Cargar reservas y compras del cliente
-        try {
-            const [reservasData] = await Promise.all([
-                this.getMisReservas()
-            ]);
-            
-            const reservasActivas = reservasData.filter(r => r.estado === 'ACTIVA').length;
-            const reservasTotal = reservasData.length;
-            
-            content.innerHTML = this.getDashboardHtml({
-                userName: userName,
-                reservasActivas,
-                reservasTotal
-            });
-            
-            this.setupEventListeners();
-        } catch (error) {
-            console.error('Error cargando dashboard:', error);
-            content.innerHTML = this.getDashboardHtml({
-                userName: userName,
-                reservasActivas: 0,
-                reservasTotal: 0
-            });
-        }
+        // [DESHABILITADO] Cargar reservas - Deshabilitado por no utilizarse
+        // try {
+        //     const [reservasData] = await Promise.all([
+        //         this.getMisReservas()
+        //     ]);
+        //     
+        //     const reservasActivas = reservasData.filter(r => r.estado === 'ACTIVA').length;
+        //     const reservasTotal = reservasData.length;
+        //     
+        //     content.innerHTML = this.getDashboardHtml({
+        //         userName: userName,
+        //         reservasActivas,
+        //         reservasTotal
+        //     });
+        //     
+        //     this.setupEventListeners();
+        // } catch (error) {
+        //     console.error('Error cargando dashboard:', error);
+        //     content.innerHTML = this.getDashboardHtml({
+        //         userName: userName,
+        //         reservasActivas: 0,
+        //         reservasTotal: 0
+        //     });
+        // }
+        
+        // Render dashboard sin datos de reservas
+        content.innerHTML = this.getDashboardHtml({
+            userName: userName,
+            reservasActivas: 0,
+            reservasTotal: 0
+        });
+        
+        this.setupEventListeners();
     },
 
     getDashboardHtml(data) {
@@ -73,6 +82,7 @@ const ClientDashboardPage = {
         </div>
     </div>
     
+    <!-- [DESHABILITADO] Sección de Reservas - Deshabilitado por no utilizarse
     <div class="col-md-4">
         <div class="card h-100 border-0 shadow-sm">
             <div class="card-body text-center">
@@ -87,6 +97,7 @@ const ClientDashboardPage = {
             </div>
         </div>
     </div>
+    -->
     
     <div class="col-md-4">
         <div class="card h-100 border-0 shadow-sm">
@@ -177,20 +188,21 @@ const ClientDashboardPage = {
         }
     },
 
-    async getMisReservas() {
-        const session = JSON.parse(localStorage.getItem('pharmaSession') || '{}');
-        const httpClient = window.httpClient || window.HttpClient;
-        
-        if (!httpClient) return [];
-        
-        try {
-            const data = await httpClient.get('/reservas/mis-reservas');
-            return data.data || [];
-        } catch (error) {
-            console.error('Error fetching reservas:', error);
-            return [];
-        }
-    }
+    // [DESHABILITADO] Función getMisReservas - Deshabilitado por no utilizarse
+    // async getMisReservas() {
+    //     const session = JSON.parse(localStorage.getItem('pharmaSession') || '{}');
+    //     const httpClient = window.httpClient || window.HttpClient;
+    //     
+    //     if (!httpClient) return [];
+    //     
+    //     try {
+    //         const data = await httpClient.get('/reservas/mis-reservas');
+    //         return data.data || [];
+    //     } catch (error) {
+    //         console.error('Error fetching reservas:', error);
+    //         return [];
+    //     }
+    // }
 };
 
 window.ClientDashboardPage = ClientDashboardPage;
