@@ -2,12 +2,15 @@
 
 declare(strict_types=1);
 
+// Cargar EmailService
+require_once SRC_PATH . '/Infrastructure/Services/EmailService.php';
+
 /**
  * PharmaQuick - Rutas de Autenticación
  * 
  * Maneja el login y logout (rutas públicas, SIN middleware JWT)
  * OPTIMIZADO: Usa singleton de AuthService
- * @version 1.1.0
+ * @version 1.2.0
  */
 
 // Singleton de AuthService para reuse
@@ -66,7 +69,21 @@ function handleAuthRegister(): void {
 
     try {
         $result = $authService->register($email, $password, $nombre);
-        JsonResponse::success($result, 201, 'Registro exitoso. Ya puede iniciar sesion.');
+        
+        // Enviar correo de bienvenida con credenciales
+        $emailService = new EmailService();
+        $emailSent = $emailService->sendWelcomeEmail(
+            $email,
+            $nombre ?? '',
+            $password
+        );
+        
+        $responseMessage = 'Registro exitoso. Ya puede iniciar sesion.';
+        if ($emailSent) {
+            $responseMessage .= ' Te hemos enviado un correo con tus credenciales.';
+        }
+        
+        JsonResponse::success($result, $responseMessage, 201);
     } catch (AuthenticationException $e) {
         JsonResponse::error($e->getMessage(), 400);
     } catch (\Throwable $e) {

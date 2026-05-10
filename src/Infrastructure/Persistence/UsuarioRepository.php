@@ -22,16 +22,33 @@ class UsuarioRepository {
             VALUES (:farmacia_id, :email, :password_hash, :nombre, :rol, :activo)
         ");
 
-        $stmt->execute([
-            ':farmacia_id' => $data['farmacia_id'] ?? null,
-            ':email' => $data['email'],
-            ':password_hash' => $data['password_hash'],
-            ':nombre' => $data['nombre'] ?? null,
-            ':rol' => $data['rol'] ?? 'CLIENTE',
-            ':activo' => $data['activo'] ?? 1
-        ]);
+        try {
+            $stmt->execute([
+                ':farmacia_id' => $data['farmacia_id'] ?? null,
+                ':email' => $data['email'],
+                ':password_hash' => $data['password_hash'],
+                ':nombre' => $data['nombre'] ?? null,
+                ':rol' => $data['rol'] ?? 'CLIENTE',
+                ':activo' => $data['activo'] ?? 1
+            ]);
+        } catch (\PDOException $e) {
+            // Si es error de email duplicado, lanzar excepción amigable
+            if ($e->getCode() === '23000' && strpos($e->getMessage(), 'Duplicate entry') !== false) {
+                throw new AuthenticationException('El email ya esta registrado');
+            }
+            throw $e;
+        }
 
         return (int) $this->pdo->lastInsertId();
+    }
+
+    /**
+     * Verifica si un email ya existe en la base de datos
+     */
+    public function existsByEmail(string $email): bool {
+        $stmt = $this->pdo->prepare("SELECT 1 FROM usuarios WHERE email = :email LIMIT 1");
+        $stmt->execute([':email' => $email]);
+        return $stmt->fetchColumn() !== false;
     }
 
     public function authenticate(string $email, string $password): array {

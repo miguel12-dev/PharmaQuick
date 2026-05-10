@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-// Cargar PHPMailer
-require_once __DIR__ . '/../../vendor/autoload.php';
+// Cargar PHPMailer via autoload global
+require_once '/var/www/html/vendor/autoload.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
@@ -15,7 +15,7 @@ use PHPMailer\PHPMailer\Exception;
  * Servicio para envío de correos electrónicos usando PHPMailer con SMTP
  * Configuración tomada del .env
  * 
- * @version 2.0.0
+ * @version 2.1.0
  */
 
 class EmailService {
@@ -56,6 +56,193 @@ class EmailService {
     }
     
     /**
+     * Enviar correo de bienvenida con credenciales de registro
+     */
+    public function sendWelcomeEmail(
+        string $toEmail,
+        string $customerName,
+        string $password
+    ): bool {
+        if (!$this->isConfigured()) {
+            error_log("EmailService: SMTP no configurado");
+            return false;
+        }
+        
+        $subject = "Bienvenido a PharmaQuick - Tus credenciales de acceso";
+        
+        $body = $this->buildWelcomeEmailBody($customerName, $toEmail, $password);
+        
+        return $this->sendWithEmbeddedImage($toEmail, $subject, $body);
+    }
+    
+    /**
+     * Enviar correo con imagen embebida
+     */
+    private function sendWithEmbeddedImage(string $to, string $subject, string $body): bool {
+        $mail = new PHPMailer(true);
+        
+        try {
+            // Configuración del servidor SMTP
+            $mail->isSMTP();
+            $mail->Host       = $this->host;
+            $mail->SMTPAuth   = true;
+            $mail->Username   = $this->username;
+            $mail->Password   = $this->password;
+            $mail->SMTPSecure = $this->encryption === 'tls' ? PHPMailer::ENCRYPTION_STARTTLS : PHPMailer::ENCRYPTION_SMTPS;
+            $mail->Port       = $this->port;
+            
+            // Configuración del remitente
+            $mail->setFrom($this->fromAddress, $this->fromName);
+            $mail->addAddress($to);
+            $mail->addReplyTo($this->fromAddress, 'Soporte PharmaQuick');
+            
+            // Adjuntar logo como imagen embebida
+            $logoPath = '/var/www/html/public/image/logo_pharmaQuick.png';
+            if (file_exists($logoPath)) {
+                $mail->addEmbeddedImage($logoPath, 'logo_pharmaquick', 'logo_pharmaQuick.png', 'base64', 'image/png');
+            }
+            
+            // Contenido del correo
+            $mail->isHTML(true);
+            $mail->Subject = $subject;
+            $mail->Body    = $body;
+            $mail->AltBody = strip_tags($body);
+            
+            // Codificación
+            $mail->CharSet = 'UTF-8';
+            
+            // Enviar correo
+            $result = $mail->send();
+            
+            if ($result) {
+                error_log("EmailService: Correo enviado exitosamente a {$to}");
+            }
+            
+            return $result;
+            
+        } catch (Exception $e) {
+            error_log("EmailService Error: {$mail->ErrorInfo}");
+            return false;
+        }
+    }
+    
+    /**
+     * Construir el cuerpo del correo de bienvenida
+     */
+    private function buildWelcomeEmailBody(
+        string $customerName,
+        string $email,
+        string $password
+    ): string {
+        $loginUrl = $this->appUrl . '/#/login';
+        $greeting = !empty($customerName) ? $customerName : 'Cliente';
+        
+        return <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenido a PharmaQuick</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; background-color: #f5f7fa;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f5f7fa;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <!-- Contenedor principal -->
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width: 520px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);">
+                    <!-- Header con logo (fondo blanco para que se vea el logo) -->
+                    <tr>
+                        <td style="background: #ffffff; padding: 35px 30px 25px 30px; text-align: center;">
+                            <img src="cid:logo_pharmaquick" alt="PharmaQuick" style="width: 200px; height: auto; display: block; margin: 0 auto;" />
+                        </td>
+                    </tr>
+                    <!-- Barra decorativa con gradiente -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); padding: 0 30px; height: 8px;"></td>
+                    </tr>
+                    
+                    <!-- Contenido -->
+                    <tr>
+                        <td style="padding: 40px 35px;">
+                            <!-- Badge de bienvenida -->
+                            <div style="background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); border-radius: 30px; padding: 10px 20px; text-align: center; margin-bottom: 30px;">
+                                <span style="color: #ffffff; font-size: 14px; font-weight: 600; letter-spacing: 0.5px;">🎉 ¡BIENVENIDO!</span>
+                            </div>
+                            
+                            <!-- Saludo -->
+                            <h1 style="margin: 0 0 15px 0; color: #1a1a2e; font-size: 24px; font-weight: 700; text-align: center;">
+                                Hola, {$greeting}
+                            </h1>
+                            <p style="margin: 0 0 30px 0; color: #636e72; font-size: 15px; line-height: 1.6; text-align: center;">
+                                Tu cuenta ha sido creada exitosamente. Ahora puedes comprar tus medicamentos de forma rápida y segura.
+                            </p>
+                            
+                            <!-- Credenciales -->
+                            <div style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); border-radius: 12px; padding: 25px; margin-bottom: 30px; border: 1px solid #e8e8e8;">
+                                <h2 style="margin: 0 0 20px 0; color: #1a1a2e; font-size: 16px; font-weight: 600; text-align: center;">
+                                    🔐 Tus Credenciales
+                                </h2>
+                                
+                                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                    <tr>
+                                        <td style="padding: 12px 0; border-bottom: 1px solid #e8e8e8;">
+                                            <p style="margin: 0; color: #636e72; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Correo electrónico</p>
+                                            <p style="margin: 5px 0 0 0; color: #1a1a2e; font-size: 16px; font-weight: 600; word-break: break-all;">{$email}</p>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 12px 0;">
+                                            <p style="margin: 0; color: #636e72; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Contraseña</p>
+                                            <p style="margin: 5px 0 0 0; color: #1a1a2e; font-size: 16px; font-weight: 600;">{$password}</p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            
+                            <!-- Botón CTA -->
+                            <div style="text-align: center; margin-bottom: 30px;">
+                                <a href="{$loginUrl}" style="display: inline-block; background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); color: #ffffff; padding: 16px 45px; border-radius: 30px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(0, 184, 148, 0.4);">Iniciar Sesión</a>
+                            </div>
+                            
+                            <!-- Consejos de seguridad -->
+                            <div style="background: #fffbeb; border-radius: 12px; padding: 20px; border-left: 4px solid #f59e0b;">
+                                <h3 style="margin: 0 0 12px 0; color: #1a1a2e; font-size: 14px; font-weight: 600;">🛡️ Recomendaciones de seguridad</h3>
+                                <ul style="margin: 0; padding-left: 18px; color: #636e72; font-size: 13px; line-height: 1.8;">
+                                    <li>Te recomendamos cambiar tu contraseña después del primer inicio de sesión</li>
+                                    <li>No compartas tus credenciales con nadie</li>
+                                    <li>Mantén tu correo electrónico seguro</li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background: #f8f9fa; padding: 25px 35px; text-align: center; border-top: 1px solid #e8e8e8;">
+                            <p style="margin: 0 0 8px 0; color: #636e72; font-size: 14px;">
+                                💊 Gracias por confiar en <strong style="color: #00b894;">PharmaQuick</strong>
+                            </p>
+                            <p style="margin: 0; color: #b2bec3; font-size: 12px;">
+                                Este correo fue enviado a {$email}
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+                
+                <!-- Copyright -->
+                <p style="margin: 25px 0 0 0; color: #b2bec3; font-size: 12px; text-align: center;">
+                    © 2026 PharmaQuick. Todos los derechos reservados.
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+HTML;
+    }
+    
+    /**
      * Enviar correo de confirmación de compra
      */
     public function sendPurchaseConfirmation(
@@ -75,7 +262,6 @@ class EmailService {
         
         $subject = "Confirmación de tu pedido - PharmaQuick";
         
-        // Construir cuerpo del correo
         $body = $this->buildPurchaseEmailBody(
             $customerName,
             $orderCode,
@@ -90,7 +276,7 @@ class EmailService {
     }
     
     /**
-     * Construir el cuerpo del correo de confirmación
+     * Construir el cuerpo del correo de confirmación de compra
      */
     private function buildPurchaseEmailBody(
         string $customerName,
@@ -121,7 +307,6 @@ class EmailService {
         $paymentMethodLabel = $paymentMethod === 'NEQUI' ? 'Nequi' : 'Tarjeta Débito/Crédito';
         $deliveryMethodLabel = $deliveryMethod === 'RECOGER' ? 'Recoger en tienda' : 'Envío a domicilio';
         
-        // Iconos para métodos de pago y entrega
         $paymentIcon = $paymentMethod === 'NEQUI' ? '📱' : '💳';
         $deliveryIcon = $deliveryMethod === 'RECOGER' ? '🏪' : '🚚';
         
@@ -216,7 +401,6 @@ HTML;
         $mail = new PHPMailer(true);
         
         try {
-            // Configuración del servidor SMTP
             $mail->isSMTP();
             $mail->Host       = $this->host;
             $mail->SMTPAuth   = true;
@@ -225,21 +409,17 @@ HTML;
             $mail->SMTPSecure = $this->encryption === 'tls' ? PHPMailer::ENCRYPTION_STARTTLS : PHPMailer::ENCRYPTION_SMTPS;
             $mail->Port       = $this->port;
             
-            // Configuración del remitente
             $mail->setFrom($this->fromAddress, $this->fromName);
             $mail->addAddress($to);
             $mail->addReplyTo($this->fromAddress, 'Soporte PharmaQuick');
             
-            // Contenido del correo
             $mail->isHTML(true);
             $mail->Subject = $subject;
             $mail->Body    = $body;
-            $mail->AltBody = strip_tags($body); // Versión sin HTML para clientes de correo que no soporten HTML
+            $mail->AltBody = strip_tags($body);
             
-            // Codificación
             $mail->CharSet = 'UTF-8';
             
-            // Enviar correo
             $result = $mail->send();
             
             if ($result) {

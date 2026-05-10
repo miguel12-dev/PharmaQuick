@@ -83,18 +83,12 @@ class AuthService
         $masterPdo = PDOFactory::getMaster();
         $repo = new UsuarioRepository($masterPdo);
 
-        // Verificar si ya existe
-        try {
-            $existing = $repo->authenticate($email, 'dummy');
+        // Verificar si ya existe el email
+        if ($repo->existsByEmail($email)) {
             throw new AuthenticationException('El email ya esta registrado');
-        } catch (AuthenticationException $e) {
-            if ($e->getMessage() === 'El email ya esta registrado') {
-                throw $e;
-            }
-            // OK, no existe o password dummy falló (que es lo esperado)
-            // Pero authenticate lanza 'Credenciales invalidas' si no existe.
         }
 
+        // Crear hash de contraseña
         $passwordHash = password_hash($password, PASSWORD_BCRYPT);
 
         $userId = $repo->create([
