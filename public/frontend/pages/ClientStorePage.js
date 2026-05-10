@@ -21,10 +21,35 @@ const ClientStorePage = {
         const urlParams = new URLSearchParams(window.location.search);
         const activeTab = urlParams.get('tab') || 'comprar';
         
-        this.cart = JSON.parse(localStorage.getItem('clientCart') || '[]');
+        // Cargar carrito desde el backend
+        await this.loadCartFromBackend();
         
         await this.loadProducts();
         this.renderStore(activeTab);
+    },
+    
+    async loadCartFromBackend() {
+        try {
+            if (window.cartService) {
+                const cartData = await window.cartService.getCart();
+                // Convertir formato del backend al formato que usa la UI
+                this.cart = cartData.items.map(item => ({
+                    id: item.id,
+                    producto_id: item.producto_id,
+                    nombre: item.producto_nombre,
+                    precio: item.precio_unitario,
+                    cantidad: item.cantidad
+                }));
+                console.log('Carrito cargado desde backend:', this.cart.length, 'items');
+            } else {
+                // Si no hay servicio, carrito vacío
+                this.cart = [];
+            }
+        } catch (error) {
+            console.error('Error al cargar carrito desde backend:', error);
+            // En caso de error, carrito vacío
+            this.cart = [];
+        }
     },
 
     async loadProducts() {
@@ -149,34 +174,83 @@ const ClientStorePage = {
         `).join('');
     },
 
-    addToCart(productId) {
+    async addToCart(productId) {
         const product = this.products.find(p => p.id === productId);
         if (!product) return;
         
-        const existingItem = this.cart.find(item => item.producto_id === productId);
-        
-        if (existingItem) {
-            existingItem.cantidad += 1;
-        } else {
-            this.cart.push({
-                producto_id: product.id,
-                nombre: product.nombre,
-                precio: parseFloat(product.precio_activo || 0),
-                cantidad: 1,
-                imagen: product.imagen || null
-            });
+        try {
+            // Intentar guardar en el backend
+            if (window.cartService) {
+                await window.cartService.addItem({
+                    id: product.id,
+                    nombre: product.nombre,
+                    codigo_barras: product.codigo_barras || null,
+                    precio: parseFloat(product.precio_activo || 0),
+                    cantidad: 1
+                });
+                
+                // Recargar el carrito desde el backend
+                await this.loadCartFromBackend();
+            } else {
+                // Fallback a localStorage
+                const existingItem = this.cart.find(item => item.producto_id === productId);
+                if (existingItem) {
+                    existingItem.cantidad += 1;
+                } else {
+                    this.cart.push({
+                        producto_id: product.id,
+                        nombre: product.nombre,
+                        precio: parseFloat(product.precio_activo || 0),
+                        cantidad: 1,
+                        imagen: product.imagen || null
+                    });
+                }
+                this.saveCart();
+            }
+            
+            this.renderStore('comprar');
+            this.showToast('Producto añadido al carrito', 'success');
+        } catch (error) {
+            console.error('Error al añadir al carrito:', error);
+            // Fallback a localStorage si falla el backend
+            const existingItem = this.cart.find(item => item.producto_id === productId);
+            if (existingItem) {
+                existingItem.cantidad += 1;
+            } else {
+                this.cart.push({
+                    producto_id: product.id,
+                    nombre: product.nombre,
+                    precio: parseFloat(product.precio_activo || 0),
+                    cantidad: 1,
+                    imagen: product.imagen || null
+                });
+            }
+            this.saveCart();
+            this.renderStore('comprar');
+            this.showToast('Producto añadido (sin conexión al servidor)', 'success');
         }
-        
-        this.saveCart();
-        this.renderStore('comprar');
-        
-        // Mostrar toast
-        this.showToast('Producto añadido al carrito', 'success');
     },
 
-    removeFromCart(index) {
-        this.cart.splice(index, 1);
-        this.saveCart();
+    async removeFromCart(index) {
+        const item = this.cart[index];
+        if (!item) return;
+        
+        try {
+            // Intentar eliminar del backend
+            if (window.cartService && item.id) {
+                await window.cartService.removeItem(item.id);
+                await this.loadCartFromBackend();
+            } else {
+                // Fallback a localStorage
+                this.cart.splice(index, 1);
+                this.saveCart();
+            }
+        } catch (error) {
+            console.error('Error al eliminar del carrito:', error);
+            // Fallback
+            this.cart.splice(index, 1);
+            this.saveCart();
+        }
         this.renderStore('comprar');
     },
 
@@ -184,8 +258,9 @@ const ClientStorePage = {
         return this.cart.reduce((total, item) => total + (item.precio * item.cantidad), 0);
     },
 
+    // El carrito ahora se guarda en la base de datos, no en localStorage
     saveCart() {
-        localStorage.setItem('clientCart', JSON.stringify(this.cart));
+        console.log('Carrito guardado en memoria (el持久存储 está en el backend)');
     },
 
     switchTab(tab) {

@@ -19,16 +19,16 @@ const ClientShoppingPage = {
 
         ClientLayout.render(container, 'compras');
         
-        // Cargar carrito
-        this.cart = JSON.parse(localStorage.getItem('clientCart') || '[]');
+        // Cargar carrito desde el backend
+        await this.loadCartFromBackend();
         
         // Cargar historial desde el backend
         try {
             if (window.shoppingService) {
                 this.purchaseHistory = await window.shoppingService.getPurchases();
             } else {
-                // Fallback a localStorage si el servicio no está disponible
-                this.purchaseHistory = JSON.parse(localStorage.getItem('purchaseHistory') || '[]');
+                // Fallback a array vacío si el servicio no está disponible
+                this.purchaseHistory = [];
             }
         } catch (error) {
             console.error('Error loading purchases:', error);
@@ -38,12 +38,36 @@ const ClientShoppingPage = {
                 return; // Salir, el modal de sesión expirada ya está mostrando
             }
             
-            // Para otros errores, usar fallback local
-            this.purchaseHistory = JSON.parse(localStorage.getItem('purchaseHistory') || '[]');
+            // Para otros errores, usar array vacío
+            this.purchaseHistory = [];
         }
         
         // Determinar vista según estado
         this.renderShopping();
+    },
+    
+    async loadCartFromBackend() {
+        try {
+            if (window.cartService) {
+                const cartData = await window.cartService.getCart();
+                // Convertir formato del backend al formato que usa la UI
+                this.cart = cartData.items.map(item => ({
+                    id: item.id,
+                    producto_id: item.producto_id,
+                    nombre: item.producto_nombre,
+                    precio: item.precio_unitario,
+                    cantidad: item.cantidad
+                }));
+                console.log('Carrito cargado desde backend:', this.cart.length, 'items');
+            } else {
+                // Si no hay servicio, carrito vacío
+                this.cart = [];
+            }
+        } catch (error) {
+            console.error('Error al cargar carrito desde backend:', error);
+            // En caso de error, carrito vacío
+            this.cart = [];
+        }
     },
     
     renderShopping() {
@@ -550,8 +574,18 @@ const ClientShoppingPage = {
                 this.purchaseHistory.unshift(purchase);
             }
             
-            // Limpiar carrito
+            // Limpiar carrito - también en el backend
             this.cart = [];
+            
+            // Eliminar el carrito del backend después de una compra exitosa
+            try {
+                if (window.cartService && savedToBackend) {
+                    await window.cartService.clearCart();
+                }
+            } catch (clearError) {
+                console.error('Error al limpiar carrito del backend:', clearError);
+            }
+            
             this.saveCart();
             
             // Mostrar éxito

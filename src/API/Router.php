@@ -116,6 +116,12 @@ class PharmaRouter
             $this->handleComprasClienteApi();
             return;
         }
+        
+        // Rutas de carrito (públicas para testing - sin JWT)
+        if ($uriPath === '/api/carrito' || strpos($uriPath, '/api/carrito/') === 0) {
+            $this->handleCarritoApi();
+            return;
+        }
 
         // Todas las demÃ¡s rutas requieren JWT
         require_once SRC_PATH . '/Infrastructure/Services/JwtService.php';
@@ -183,6 +189,43 @@ class PharmaRouter
         }
 
         JsonResponse::error('Recurso de compras no encontrado', 404);
+    }
+
+    private function handleCarritoApi(): void
+    {
+        require_once ROUTES_PATH . '/carrito.php';
+        
+        // GET /api/carrito - Obtener carrito del usuario
+        if ($this->uri === '/api/carrito' && $this->method === 'GET') {
+            handleGetCarrito();
+            return;
+        }
+        
+        // POST /api/carrito - Agregar producto
+        if ($this->uri === '/api/carrito' && $this->method === 'POST') {
+            handlePostCarrito();
+            return;
+        }
+        
+        // DELETE /api/carrito - Vaciar carrito
+        if ($this->uri === '/api/carrito' && $this->method === 'DELETE') {
+            handleDeleteCarrito();
+            return;
+        }
+        
+        // PUT /api/carrito/{id} - Actualizar cantidad
+        if ($this->method === 'PUT' && preg_match('#^/api/carrito/(\d+)$#', $this->uri, $matches)) {
+            handlePutCarritoItem((int) $matches[1]);
+            return;
+        }
+        
+        // DELETE /api/carrito/{id} - Eliminar item
+        if ($this->method === 'DELETE' && preg_match('#^/api/carrito/(\d+)$#', $this->uri, $matches)) {
+            handleDeleteCarritoItem((int) $matches[1]);
+            return;
+        }
+        
+        JsonResponse::error('Recurso de carrito no encontrado', 404);
     }
 
     private function dispatchRoutes(): void

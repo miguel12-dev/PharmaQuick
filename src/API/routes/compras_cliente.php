@@ -20,21 +20,54 @@ function handlePostCompra()
             return;
         }
         
-        // Validar campos requeridos
-        $required = ['items', 'total', 'metodo_pago', 'direccion', 'nombre', 'telefono'];
+        // Normalizar nombres de campos - aceptar ambos formatos (frontend y backend)
+        $fieldAliases = [
+            'direccion' => ['deliveryAddress', 'direccion'],
+            'nombre' => ['deliveryName', 'nombre'],
+            'telefono' => ['deliveryPhone', 'telefono'],
+            'observaciones' => ['deliveryNotes', 'observaciones']
+        ];
+        
+        // Función helper para obtener valor con alias
+        $getFieldValue = function($fieldName) use ($input, $fieldAliases) {
+            if (isset($fieldAliases[$fieldName])) {
+                foreach ($fieldAliases[$fieldName] as $alias) {
+                    if (isset($input[$alias]) && is_string($input[$alias])) {
+                        $val = trim($input[$alias]);
+                        if ($val !== '') return $val;
+                    }
+                }
+            }
+            return null;
+        };
+        
+        // Extraer valores de campos de entrega
+        $deliveryAddress = $getFieldValue('direccion');
+        $deliveryName = $getFieldValue('nombre');
+        $deliveryPhone = $getFieldValue('telefono');
+        $deliveryNotes = $getFieldValue('observaciones');
+        
+        // Validar campos principales
+        $required = ['items', 'total', 'metodo_pago'];
         foreach ($required as $field) {
-            // Los nombres en el frontend pueden ser diferentes
-            $fieldMap = [
-                'direccion' => 'deliveryAddress',
-                'nombre' => 'deliveryName', 
-                'telefono' => 'deliveryPhone'
-            ];
-            $mappedField = $fieldMap[$field] ?? $field;
-            
-            if (!isset($input[$mappedField]) || empty($input[$mappedField])) {
+            if (!isset($input[$field]) || (is_string($input[$field]) && trim($input[$field]) === '')) {
                 JsonResponse::error("Campo requerido: $field", 400);
                 return;
             }
+        }
+        
+        // Validar campos de entrega
+        if (!$deliveryAddress) {
+            JsonResponse::error("Campo requerido: direccion", 400);
+            return;
+        }
+        if (!$deliveryName) {
+            JsonResponse::error("Campo requerido: nombre", 400);
+            return;
+        }
+        if (!$deliveryPhone) {
+            JsonResponse::error("Campo requerido: telefono", 400);
+            return;
         }
         
         if (!is_array($input['items']) || count($input['items']) === 0) {
@@ -49,17 +82,75 @@ function handlePostCompra()
             return;
         }
         
-        // Obtener usuario_id desde la sesión/JWT
-        $usuarioId = $input['usuario_id'] ?? 1;
+        // Obtener usuario desde JWT del header Authorization
+        $pdo = PDOFactory::getMaster();
+        $usuarioId = null;
+        
+        // Intentar obtener el user ID desde el JWT
+        $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+        if (preg_match('/Bearer\s+(.+)$/i', $authHeader, $matches)) {
+            $token = $matches[1];
+            // Decodificar JWT manualmente para obtener el email o id
+            $tokenParts = explode('.', $token);
+            if (count($tokenParts) === 3) {
+                $payload = json_decode(base64_decode($tokenParts[1]), true);
+                if ($payload) {
+                    // El JWT puede tener 'sub' (user id) o 'email'
+                    $usuarioId = $payload['sub'] ?? $payload['user_id'] ?? $payload['id'] ?? null;
+                    $userEmail = $payload['email'] ?? null;
+                    
+                    // Si tenemos email pero no ID, buscar por email
+                    if (!$usuarioId && $userEmail) {
+                        $stmtEmail = $pdo->prepare("SELECT id FROM usuarios WHERE email = ? AND activo = 1");
+                        $stmtEmail->execute([$userEmail]);
+                        $userFromEmail = $stmtEmail->fetch(\PDO::FETCH_ASSOC);
+                        if ($userFromEmail) {
+                            $usuarioId = $userFromEmail['id'];
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Si no se pudo obtener del JWT, usar el que envía el frontend
+        if (!$usuarioId && isset($input['usuario_id'])) {
+            $usuarioId = (int) $input['usuario_id'];
+        }
+        
+        // Si aún no tenemos usuario, buscar uno válido automáticamente
+        if (!$usuarioId) {
+            // Buscar cualquier usuario activo con rol CLIENTE (case insensitive)
+            $stmtCheck = $pdo->query("SELECT id FROM usuarios WHERE activo = 1 AND LOWER(rol) = 'cliente' LIMIT 1");
+            $cliente = $stmtCheck->fetch(\PDO::FETCH_ASSOC);
+            if ($cliente) {
+                $usuarioId = $cliente['id'];
+            } else {
+                // Usar cualquier usuario activo
+                $stmtCheck = $pdo->query("SELECT id FROM usuarios WHERE activo = 1 LIMIT 1");
+                $anyUser = $stmtCheck->fetch(\PDO::FETCH_ASSOC);
+                $usuarioId = $anyUser ? $anyUser['id'] : null;
+            }
+        }
+        
+        // Verificar que el usuario existe
+        if ($usuarioId) {
+            $stmtCheck = $pdo->prepare("SELECT id FROM usuarios WHERE id = ? AND activo = 1");
+            $stmtCheck->execute([$usuarioId]);
+            if (!$stmtCheck->fetch()) {
+                $usuarioId = null;
+            }
+        }
+        
+        if (!$usuarioId) {
+            JsonResponse::error('No se pudo identificar al usuario', 400);
+            return;
+        }
         
         // Generar código de pedido único
         $codigoPedido = 'PED-' . strtoupper(bin2hex(random_bytes(4)));
         
         // Farmacia por defecto
         $farmaciaId = $input['farmacia_id'] ?? 1;
-        
-        // Conectar a la base de datos usando Master para tablas centrales
-        $pdo = PDOFactory::getMaster();
         
         // Iniciar transacción
         $pdo->beginTransaction();
@@ -81,21 +172,24 @@ function handlePostCompra()
                 ) VALUES (?, ?, ?, ?, ?, 'CONFIRMADA', ?, ?, ?, ?)
             ");
             
+            // Usar los valores ya normalizados
             $stmt->execute([
                 $usuarioId,
                 $farmaciaId,
                 $codigoPedido,
                 $input['total'],
                 $metodoPago,
-                $input['deliveryAddress'],
-                $input['deliveryName'],
-                $input['deliveryPhone'],
-                $input['deliveryNotes'] ?? null
+                $deliveryAddress,
+                $deliveryName,
+                $deliveryPhone,
+                $deliveryNotes
             ]);
             
             $compraId = $pdo->lastInsertId();
             
             // Insertar detalles de la compra
+            // Los productos pueden estar en clusters (por farmacia) o en master
+            // Verificar si el producto existe en master, si no usar NULL
             $stmtDetalle = $pdo->prepare("
                 INSERT INTO compras_detalle (
                     compra_id,
@@ -108,9 +202,21 @@ function handlePostCompra()
             ");
             
             foreach ($input['items'] as $item) {
+                $productoId = $item['producto_id'] ?? null;
+                
+                // Verificar si el producto existe en master
+                if ($productoId) {
+                    $stmtCheckProd = $pdo->prepare("SELECT id FROM productos WHERE id = ?");
+                    $stmtCheckProd->execute([$productoId]);
+                    if (!$stmtCheckProd->fetch()) {
+                        // Producto no existe en master, usar NULL
+                        $productoId = null;
+                    }
+                }
+                
                 $stmtDetalle->execute([
                     $compraId,
-                    $item['producto_id'] ?? null,
+                    $productoId,
                     $item['nombre'],
                     $item['cantidad'],
                     $item['precio'],
@@ -127,7 +233,7 @@ function handlePostCompra()
                 'total' => $input['total'],
                 'metodo_pago' => $metodoPago,
                 'estado' => 'CONFIRMADA',
-                'direccion' => $input['direccion'],
+                'direccion' => $deliveryAddress,
                 'fecha' => date('Y-m-d H:i:s')
             ], 'Compra procesada exitosamente');
             

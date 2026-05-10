@@ -91,6 +91,7 @@ class AuthService {
             isAuthenticated: true,
             usuario: email,
             email: email,
+            userId: data.user_id || user.id || data.id || null,
             farmaciaId: data.farmacia_id !== undefined ? data.farmacia_id : (user.farmacia_id || null),
             nombre: nombre,
             userName: nombre,

@@ -19,11 +19,37 @@ const ClientCatalogPage = {
         }
 
         ClientLayout.render(container, 'catalogo');
-        this.cart = JSON.parse(localStorage.getItem('clientCart') || '[]');
+        
+        // Cargar carrito desde el backend (no desde localStorage)
+        await this.loadCartFromBackend();
         
         await this.loadProducts();
         this.renderCatalog();
         this.setupSearch();
+    },
+    
+    async loadCartFromBackend() {
+        try {
+            if (window.cartService) {
+                const cartData = await window.cartService.getCart();
+                // Convertir formato del backend al formato que usa la UI
+                this.cart = cartData.items.map(item => ({
+                    id: item.id,
+                    producto_id: item.producto_id,
+                    nombre: item.producto_nombre,
+                    precio: item.precio_unitario,
+                    cantidad: item.cantidad
+                }));
+                console.log('Carrito cargado desde backend:', this.cart.length, 'items');
+            } else {
+                // Si no hay servicio, usar array vacío
+                this.cart = [];
+            }
+            // NO usar localStorage - el carrito debe estar solo en la base de datos
+        } catch (error) {
+            console.error('Error al cargar carrito desde backend:', error);
+            this.cart = [];
+        }
     },
 
     async loadProducts() {
@@ -343,7 +369,10 @@ const ClientCatalogPage = {
         });
     },
 
-    addToCart(productId) {
+    async addToCart(productId) {
+        console.log('=== addToCart llamado ===');
+        console.log('window.cartService disponible?', typeof window.cartService);
+        
         const product = this.products.find(p => p.id === productId);
         if (!product) return;
         
@@ -363,32 +392,62 @@ const ClientCatalogPage = {
             return;
         }
         
-        const existingItem = this.cart.find(item => item.producto_id === productId);
-        
-        if (existingItem) {
-            const newCantidad = existingItem.cantidad + cantidad;
-            if (newCantidad > stock) {
-                this.showToast(`Stock máximo disponible: ${stock}. Ya tienes ${existingItem.cantidad} en el carrito.`, 'warning');
-                return;
+        try {
+            // Guardar en el backend (no en localStorage)
+            if (window.cartService) {
+                // Verificar cantidad actual en el carrito del backend
+                const existingItem = this.cart.find(item => item.producto_id === productId);
+                const currentQty = existingItem ? existingItem.cantidad : 0;
+                const newCantidad = currentQty + cantidad;
+                
+                if (newCantidad > stock) {
+                    this.showToast(`Stock máximo disponible: ${stock}. Ya tienes ${currentQty} en el carrito.`, 'warning');
+                    return;
+                }
+                
+                await window.cartService.addItem({
+                    id: product.id,
+                    nombre: product.nombre,
+                    codigo_barras: product.codigo_barras || null,
+                    precio: parseFloat(product.precio_activo || 0),
+                    cantidad: cantidad
+                });
+                
+                // Recargar el carrito desde el backend
+                await this.loadCartFromBackend();
+            } else {
+                // Fallback solo en memoria (sin localStorage)
+                const existingItem = this.cart.find(item => item.producto_id === productId);
+                if (existingItem) {
+                    const newCantidad = existingItem.cantidad + cantidad;
+                    if (newCantidad > stock) {
+                        this.showToast(`Stock máximo disponible: ${stock}. Ya tienes ${existingItem.cantidad} en el carrito.`, 'warning');
+                        return;
+                    }
+                    existingItem.cantidad = newCantidad;
+                } else {
+                    this.cart.push({
+                        producto_id: product.id,
+                        nombre: product.nombre,
+                        precio: parseFloat(product.precio_activo || 0),
+                        cantidad: cantidad,
+                        imagen: product.imagen || null
+                    });
+                }
             }
-            existingItem.cantidad = newCantidad;
-        } else {
-            this.cart.push({
-                producto_id: product.id,
-                nombre: product.nombre,
-                precio: parseFloat(product.precio_activo || 0),
-                cantidad: cantidad,
-                imagen: product.imagen || null
-            });
+            
+            this.updateCart();
+            
+            // Actualizar solo el card específico con animación
+            this.updateProductCardWithAnimation(productId, cantidad);
+            
+            this.showToast(`${cantidad} producto${cantidad > 1 ? 's' : ''} añadid${cantidad > 1 ? 'os' : 'o'} al carrito`, 'success');
+        } catch (error) {
+            console.error('Error al añadir al carrito:', error);
+            console.error('¿cartService existe?', typeof window.cartService);
+            console.error('¿Token existe?', window.cartService ? window.cartService.getToken() : 'N/A');
+            this.showToast('Error al añadir al carrito: ' + error.message, 'danger');
         }
-        
-        this.saveCart();
-        this.updateCart();
-        
-        // Actualizar solo el card específico con animación
-        this.updateProductCardWithAnimation(productId, cantidad);
-        
-        this.showToast(`${cantidad} producto${cantidad > 1 ? 's' : ''} añadid${cantidad > 1 ? 'os' : 'o'} al carrito`, 'success');
     },
     
     changeQuantity(productId, delta) {
@@ -755,8 +814,10 @@ removeFromCart(index) {
         return this.cart.reduce((total, item) => total + (item.precio * item.cantidad), 0);
     },
 
+    // El carrito ahora se guarda en la base de datos, no en localStorage
+    // Este método ya no es necesario - se mantiene por compatibilidad
     saveCart() {
-        localStorage.setItem('clientCart', JSON.stringify(this.cart));
+        console.log('Carrito guardado en memoria (el持久存储 está en el backend)');
     },
 
     async processPurchase() {
