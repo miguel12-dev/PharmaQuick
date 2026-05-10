@@ -8,6 +8,76 @@ require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
 require_once SRC_PATH . '/Core/JsonResponse.php';
 
 /**
+ * Obtiene el prefijo del cluster para una farmacia
+ */
+function getClusterPrefix($pdoMaster, $farmaciaId) {
+    $stmt = $pdoMaster->prepare("SELECT cluster_prefix FROM cluster_farmacias WHERE farmacia_id = ?");
+    $stmt->execute([$farmaciaId]);
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $result['cluster_prefix'] ?? null;
+}
+
+/**
+ * Obtiene la imagen de un producto desde su cluster
+ */
+function getProductImageFromCluster($pdoMaster, $productId, $farmaciaId, $productoNombre = null) {
+    try {
+        if (!$productId && !$productoNombre) {
+            return null;
+        }
+        
+        $clusterPrefix = getClusterPrefix($pdoMaster, $farmaciaId);
+        
+        if (!$clusterPrefix) {
+            return null;
+        }
+        
+        // Extraer el número del cluster del prefijo (ej: "db_cluster_1" -> 1)
+        preg_match('/(?:db_)?cluster_(\d+)/', $clusterPrefix, $matches);
+        $clusterNum = isset($matches[1]) ? (int)$matches[1] : null;
+        
+        if (!$clusterNum) {
+            return null;
+        }
+        
+        $pdoCluster = PDOFactory::getCluster($clusterNum);
+        
+        // Verificar si la columna imagen existe en el cluster
+        try {
+            $stmtCheckCol = $pdoCluster->query("SHOW COLUMNS FROM productos LIKE 'imagen'");
+            $hasImagen = $stmtCheckCol->rowCount() > 0;
+        } catch (\Exception $e) {
+            $hasImagen = false;
+        }
+        
+        if (!$hasImagen) {
+            return null;
+        }
+        
+        // Intentar primero por ID
+        $imagen = null;
+        if ($productId) {
+            $stmt = $pdoCluster->prepare("SELECT imagen FROM productos WHERE id = ?");
+            $stmt->execute([$productId]);
+            $product = $stmt->fetch(PDO::FETCH_ASSOC);
+            $imagen = $product['imagen'] ?? null;
+        }
+        
+        // Si no found, buscar por nombre
+        if (!$imagen && $productoNombre) {
+            $stmt = $pdoCluster->prepare("SELECT imagen FROM productos WHERE LOWER(nombre) = LOWER(?) LIMIT 1");
+            $stmt->execute([$productoNombre]);
+            $product = $stmt->fetch(PDO::FETCH_ASSOC);
+            $imagen = $product['imagen'] ?? null;
+        }
+        
+        return $imagen;
+    } catch (\Exception $e) {
+        return null;
+    }
+}
+
+/**
  * POST /api/compras - Crear una nueva compra simulada
  */
 function handlePostCompra()
@@ -204,13 +274,36 @@ function handlePostCompra()
             foreach ($input['items'] as $item) {
                 $productoId = $item['producto_id'] ?? null;
                 
-                // Verificar si el producto existe en master
+                // Verificar si el producto existe en master o en el cluster de la farmacia
                 if ($productoId) {
+                    // Primero verificar en master
                     $stmtCheckProd = $pdo->prepare("SELECT id FROM productos WHERE id = ?");
                     $stmtCheckProd->execute([$productoId]);
-                    if (!$stmtCheckProd->fetch()) {
-                        // Producto no existe en master, usar NULL
-                        $productoId = null;
+                    $existsInMaster = $stmtCheckProd->fetch();
+                    
+                    if (!$existsInMaster) {
+                        // Verificar en el cluster de la farmacia
+                        try {
+                            $clusterPrefix = getClusterPrefix($pdo, $farmaciaId);
+                            if ($clusterPrefix) {
+                                preg_match('/(?:db_)?cluster_(\d+)/', $clusterPrefix, $matches);
+                                $clusterNum = isset($matches[1]) ? (int)$matches[1] : null;
+                                if ($clusterNum) {
+                                    $pdoCluster = PDOFactory::getCluster($clusterNum);
+                                    $stmtCheckCluster = $pdoCluster->prepare("SELECT id FROM productos WHERE id = ?");
+                                    $stmtCheckCluster->execute([$productoId]);
+                                    if (!$stmtCheckCluster->fetch()) {
+                                        $productoId = null;
+                                    }
+                                } else {
+                                    $productoId = null;
+                                }
+                            } else {
+                                $productoId = null;
+                            }
+                        } catch (\Exception $e) {
+                            $productoId = null;
+                        }
                     }
                 }
                 
@@ -259,42 +352,58 @@ function handleGetCompras()
         
         $pdo = PDOFactory::getMaster();
         
-        // Obtener compras del usuario
+        // Obtener compras del usuario con nombre de farmacia
         $stmt = $pdo->prepare("
             SELECT 
-                id,
-                codigo_pedido,
-                total,
-                metodo_pago,
-                estado,
-                direccion_envio,
-                nombre_recibe,
-                telefono_contacto,
-                observaciones,
-                created_at
-            FROM compras_cliente
-            WHERE usuario_id = ?
-            ORDER BY created_at DESC
+                cc.id,
+                cc.codigo_pedido,
+                cc.total,
+                cc.metodo_pago,
+                cc.estado,
+                cc.direccion_envio,
+                cc.nombre_recibe,
+                cc.telefono_contacto,
+                cc.observaciones,
+                cc.created_at,
+                cc.farmacia_id,
+                f.nombre AS nombre_farmacia,
+                f.direccion AS direccion_farmacia,
+                f.telefono AS telefono_farmacia
+            FROM compras_cliente cc
+            LEFT JOIN farmacias f ON cc.farmacia_id = f.id
+            WHERE cc.usuario_id = ?
+            ORDER BY cc.created_at DESC
             LIMIT 50
         ");
         
         $stmt->execute([$usuarioId]);
         $compras = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         
-        // Obtener detalles de cada compra
+        // Obtener detalles de cada compra (incluyendo imagen del producto desde cluster)
         foreach ($compras as &$compra) {
             $stmtDetalle = $pdo->prepare("
                 SELECT 
-                    producto_nombre,
-                    cantidad,
-                    precio_unitario,
-                    subtotal
-                FROM compras_detalle
-                WHERE compra_id = ?
+                    cd.producto_id,
+                    cd.producto_nombre,
+                    cd.cantidad,
+                    cd.precio_unitario,
+                    cd.subtotal
+                FROM compras_detalle cd
+                WHERE cd.compra_id = ?
             ");
             
             $stmtDetalle->execute([$compra['id']]);
-            $compra['items'] = $stmtDetalle->fetchAll(\PDO::FETCH_ASSOC);
+            $items = $stmtDetalle->fetchAll(\PDO::FETCH_ASSOC);
+            
+            // Obtener imágenes desde el cluster de la farmacia
+            $farmaciaId = $compra['farmacia_id'] ?? 1;
+            foreach ($items as &$item) {
+                $productoId = $item['producto_id'] ?? null;
+                $productoNombre = $item['producto_nombre'] ?? null;
+                $item['producto_imagen'] = getProductImageFromCluster($pdo, $productoId, $farmaciaId, $productoNombre);
+            }
+            
+            $compra['items'] = $items;
             $compra['fecha'] = $compra['created_at'];
             unset($compra['created_at']);
         }
@@ -319,18 +428,23 @@ function handleGetCompraByCodigo($codigo)
         
         $stmt = $pdo->prepare("
             SELECT 
-                id,
-                codigo_pedido,
-                total,
-                metodo_pago,
-                estado,
-                direccion_envio,
-                nombre_recibe,
-                telefono_contacto,
-                observaciones,
-                created_at
-            FROM compras_cliente
-            WHERE codigo_pedido = ? AND usuario_id = ?
+                cc.id,
+                cc.codigo_pedido,
+                cc.total,
+                cc.metodo_pago,
+                cc.estado,
+                cc.direccion_envio,
+                cc.nombre_recibe,
+                cc.telefono_contacto,
+                cc.observaciones,
+                cc.created_at,
+                cc.farmacia_id,
+                f.nombre AS nombre_farmacia,
+                f.direccion AS direccion_farmacia,
+                f.telefono AS telefono_farmacia
+            FROM compras_cliente cc
+            LEFT JOIN farmacias f ON cc.farmacia_id = f.id
+            WHERE cc.codigo_pedido = ? AND cc.usuario_id = ?
         ");
         
         $stmt->execute([$codigo, $usuarioId]);
@@ -341,20 +455,30 @@ function handleGetCompraByCodigo($codigo)
             return;
         }
         
-        // Obtener detalles
+        // Obtener detalles y buscar imágenes en el cluster de la farmacia
         $stmtDetalle = $pdo->prepare("
             SELECT 
-                producto_id,
-                producto_nombre,
-                cantidad,
-                precio_unitario,
-                subtotal
-            FROM compras_detalle
-            WHERE compra_id = ?
+                cd.producto_id,
+                cd.producto_nombre,
+                cd.cantidad,
+                cd.precio_unitario,
+                cd.subtotal
+            FROM compras_detalle cd
+            WHERE cd.compra_id = ?
         ");
         
         $stmtDetalle->execute([$compra['id']]);
-        $compra['items'] = $stmtDetalle->fetchAll(\PDO::FETCH_ASSOC);
+        $items = $stmtDetalle->fetchAll(\PDO::FETCH_ASSOC);
+        
+        // Obtener imágenes desde el cluster de la farmacia
+        $farmaciaId = $compra['farmacia_id'] ?? 1;
+        foreach ($items as &$item) {
+            $productoId = $item['producto_id'] ?? null;
+            $productoNombre = $item['producto_nombre'] ?? null;
+            $item['producto_imagen'] = getProductImageFromCluster($pdo, $productoId, $farmaciaId, $productoNombre);
+        }
+        
+        $compra['items'] = $items;
         $compra['fecha'] = $compra['created_at'];
         unset($compra['created_at']);
         

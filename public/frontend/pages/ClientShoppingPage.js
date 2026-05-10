@@ -30,18 +30,24 @@ const ClientShoppingPage = {
                     // El servicio puede devolver data.data (formato original) o data (formato corregido)
                     const purchasesArray = (response.data || response) || [];
                     
-                    // Mapear formato del backend al formato que usa la UI
+                    // Mapear formato del backend al formato que usa la UI (incluyendo farmacia e imágenes)
                     this.purchaseHistory = purchasesArray.map(p => ({
                         id: p.codigo_pedido || p.id,  // Usar codigo_pedido como ID visible
                         rawId: p.id,                  // Guardar ID de BD para posibles referencias
                         fecha: p.fecha || p.created_at,
+                        nombreFarmacia: p.nombre_farmacia || 'PharmaQuick',
+                        direccionFarmacia: p.direccion_farmacia || '',
+                        telefonoFarmacia: p.telefono_farmacia || '',
                         items: (p.items || []).map(item => ({
+                            id: item.producto_id,
                             nombre: item.producto_nombre || item.nombre,
                             precio: item.precio_unitario || item.precio,
-                            cantidad: item.cantidad
+                            cantidad: item.cantidad,
+                            imagen: item.producto_imagen || null
                         })),
                         total: p.total,
                         paymentMethod: (p.metodo_pago || '').toLowerCase() === 'tarjeta' ? 'card' : 'nequi',
+                        metodoPago: p.metodo_pago || 'TARJETA',
                         status: p.estado,
                         delivery: {
                             address: p.direccion_envio || '',
@@ -549,13 +555,26 @@ const ClientShoppingPage = {
                     // console.log('Backend response:', result);
                     
                     if (result.success) {
+                        // Capturar también los items con sus imágenes desde la respuesta del backend
+                        const itemsWithImages = result.data.items ? result.data.items.map(item => ({
+                            id: item.producto_id,
+                            nombre: item.producto_nombre,
+                            precio: item.precio_unitario,
+                            cantidad: item.cantidad,
+                            imagen: item.producto_imagen || null
+                        })) : purchaseData.items;
+                        
                         purchase = {
-                            id: result.data.codigo_pedido,  // Usar codigo_pedido como ID
+                            id: result.data.codigo_pedido || result.data.id,  // Usar codigo_pedido como ID
                             fecha: result.data.fecha || new Date().toISOString(),
-                            items: purchaseData.items,
+                            nombreFarmacia: result.data.nombre_farmacia || 'PharmaQuick',
+                            direccionFarmacia: result.data.direccion_farmacia || '',
+                            telefonoFarmacia: result.data.telefono_farmacia || '',
+                            items: itemsWithImages,
                             total: result.data.total,
                             paymentMethod: (result.data.metodo_pago || 'TARJETA').toLowerCase() === 'tarjeta' ? 'card' : 'nequi',
-                            status: result.data.estado,
+                            metodoPago: result.data.metodo_pago || 'TARJETA',
+                            status: result.data.estado || 'CONFIRMADA',
                             delivery: {
                                 address: deliveryAddress,
                                 name: deliveryName,
@@ -577,12 +596,25 @@ const ClientShoppingPage = {
             
             // Si no se guardó en backend, usar método local
             if (!purchase) {
+                // Mapear los items del carrito para incluir la imagen
+                const itemsWithImages = this.cart.map(item => ({
+                    id: item.producto_id,
+                    nombre: item.nombre,
+                    precio: item.precio,
+                    cantidad: item.cantidad,
+                    imagen: item.imagen || null
+                }));
+                
                 purchase = {
                     id: 'PED-' + Date.now().toString(36).toUpperCase(),
                     fecha: new Date().toISOString(),
-                    items: this.cart,
+                    nombreFarmacia: 'PharmaQuick',
+                    direccionFarmacia: '',
+                    telefonoFarmacia: '',
+                    items: itemsWithImages,
                     total: this.getCartTotal(),
-                    paymentMethod: paymentMethod === 'card' ? 'TARJETA' : 'NEQUI',
+                    paymentMethod: paymentMethod === 'card' ? 'card' : 'nequi',
+                    metodoPago: paymentMethod === 'card' ? 'TARJETA' : 'NEQUI',
                     status: 'CONFIRMADA',
                     delivery: {
                         address: deliveryAddress,
@@ -698,23 +730,32 @@ const ClientShoppingPage = {
     
     renderPurchaseHistory(content) {
         content.innerHTML = `
-            <div class="shopping-container">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4 class="mb-0 fw-bold"><i class="fas fa-receipt me-2"></i>Mis Compras</h4>
-                    <button class="btn btn-primary btn-sm" onclick="window.ClientShoppingPage.renderShopping()">
-                        <i class="fas fa-plus me-1"></i> Nueva Compra
-                    </button>
+            <div class="shopping-page">
+                <div class="shopping-container">
+                    <!-- Header -->
+                    <div class="shopping-header">
+                        <h4><i class="fas fa-shopping-bag"></i> Mis Compras</h4>
+                        <button class="btn-shop-primary" onclick="window.ClientShoppingPage.renderShopping()">
+                            <i class="fas fa-plus"></i> Nueva Compra
+                        </button>
+                    </div>
+                    
+                    ${this.purchaseHistory.length === 0 
+                        ? `<div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="fas fa-shopping-basket"></i>
+                            </div>
+                            <h5>No tienes compras realizadas</h5>
+                            <p>Explora nuestro catálogo y realiza tu primera compra</p>
+                            <a href="/cliente/catalogo" class="btn-shop-primary">
+                                <i class="fas fa-store"></i> Ver Catálogo
+                            </a>
+                        </div>`
+                        : `<div class="purchases-grid">
+                            ${this.purchaseHistory.map(p => this.renderPurchaseCard(p)).join('')}
+                        </div>`
+                    }
                 </div>
-                
-                ${this.purchaseHistory.length === 0 
-                    ? `<div class="text-center py-5 text-muted">
-                        <i class="fas fa-shopping-bag mb-3" style="font-size: 2.5rem;"></i>
-                        <p>No tienes compras realizadas</p>
-                    </div>`
-                    : `<div class="purchase-list">
-                        ${this.purchaseHistory.map(p => this.renderPurchaseCard(p)).join('')}
-                    </div>`
-                }
             </div>
         `;
     },
@@ -722,29 +763,80 @@ const ClientShoppingPage = {
     renderPurchaseCard(purchase) {
         const items = purchase.items || [];
         const date = new Date(purchase.fecha).toLocaleDateString('es-CO', {
-            year: 'numeric', month: 'short', day: 'numeric'
+            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
         });
         
+        const statusClass = (purchase.status || 'confirmada').toLowerCase();
+        
+        // Icono del método de pago
+        const paymentIcon = purchase.paymentMethod === 'card' ? 'fa-credit-card' : 'fa-mobile-alt';
+        const paymentLabel = purchase.metodoPago === 'TARJETA' ? 'Tarjeta' : 'Nequi';
+        
         return `
-            <div class="card border-0 shadow-sm mb-3 purchase-card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div>
-                            <h6 class="mb-1 fw-bold">${purchase.id}</h6>
-                            <small class="text-muted">${date}</small>
-                        </div>
-                        <span class="badge bg-success">${purchase.status}</span>
+            <div class="purchase-card" id="card-${purchase.id}">
+                <!-- Header -->
+                <div class="purchase-card-header">
+                    <div class="purchase-id">
+                        <i class="fas fa-receipt"></i>
+                        ${purchase.id}
                     </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <small class="text-muted">${items.length} producto(s)</small>
+                    <div class="purchase-date">${date}</div>
+                    <span class="purchase-status ${statusClass}">${purchase.status}</span>
+                </div>
+                
+                <!-- Body -->
+                <div class="purchase-card-body">
+                    <!-- Información de Farmacia -->
+                    ${purchase.nombreFarmacia ? `
+                    <div class="purchase-farmacia">
+                        <div class="purchase-farmacia-icon">
+                            <i class="fas fa-store"></i>
                         </div>
-                        <div class="text-end">
-                            <strong>$${purchase.total.toLocaleString()}</strong>
+                        <div class="purchase-farmacia-info">
+                            <div class="purchase-farmacia-label">Comprado en</div>
+                            <div class="purchase-farmacia-nombre">${purchase.nombreFarmacia}</div>
                         </div>
                     </div>
-                    <button class="btn btn-sm btn-link text-primary mt-2 p-0" onclick="window.ClientShoppingPage.showPurchaseDetail('${purchase.id}')">
-                        Ver detalles <i class="fas fa-chevron-right ms-1"></i>
+                    ` : ''}
+                    
+                    <!-- Lista de productos (resumida) -->
+                    <div class="purchase-products">
+                        ${items.slice(0, 2).map(item => `
+                            <div class="purchase-product-item">
+                                <div class="purchase-product-image">
+                                    ${item.imagen 
+                                        ? `<img src="${item.imagen}" alt="${item.nombre}" onerror="this.parentElement.innerHTML='<i class=\\'fas fa-pills\\'></i>'">`
+                                        : `<i class="fas fa-pills"></i>`
+                                    }
+                                </div>
+                                <div class="purchase-product-details">
+                                    <div class="purchase-product-name">${item.nombre}</div>
+                                    <div class="purchase-product-meta">$${item.precio.toLocaleString()} x ${item.cantidad}</div>
+                                </div>
+                                <div class="purchase-product-price">
+                                    <div class="purchase-product-subtotal">$${(item.precio * item.cantidad).toLocaleString()}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                        ${items.length > 2 ? `<div class="text-center text-muted small py-2">+ ${items.length - 2} producto(s) más</div>` : ''}
+                    </div>
+                    
+                    <!-- Resumen -->
+                    <div class="purchase-summary">
+                        <div>
+                            <span class="purchase-summary-label">Total</span>
+                            <div class="purchase-method ${purchase.paymentMethod}">
+                                <i class="fas ${paymentIcon}"></i> ${paymentLabel}
+                            </div>
+                        </div>
+                        <div class="purchase-summary-total">$${purchase.total.toLocaleString()}</div>
+                    </div>
+                </div>
+                
+                <!-- Footer con botón -->
+                <div class="purchase-card-footer">
+                    <button class="purchase-detail-btn" onclick="window.ClientShoppingPage.showPurchaseDetail('${purchase.id}')">
+                        <i class="fas fa-chevron-down"></i> Ver detalles completos
                     </button>
                 </div>
             </div>
@@ -763,70 +855,152 @@ const ClientShoppingPage = {
         const content = document.getElementById('clientContent');
         const items = purchase.items || [];
         
+        const statusClass = (purchase.status || 'confirmada').toLowerCase();
+        
+        // Icono y color del método de pago
+        const paymentIcon = purchase.paymentMethod === 'card' ? 'fa-credit-card' : 'fa-mobile-alt';
+        const paymentLabel = purchase.metodoPago === 'TARJETA' ? 'Tarjeta de Crédito/Débito' : 'Nequi';
+        
+        // Formatear fecha
+        const formattedDate = new Date(purchase.fecha).toLocaleDateString('es-CO', { 
+            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        
         content.innerHTML = `
-            <div class="shopping-container">
-                <button class="btn btn-link mb-3 ps-0" onclick="window.ClientShoppingPage.showAllPurchases()">
-                    <i class="fas fa-arrow-left me-1"></i> Volver a Mis Compras
-                </button>
-                
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 fw-bold">${purchase.id}</h5>
-                        <span class="badge bg-success">${purchase.status}</span>
+            <div class="shopping-page">
+                <div class="shopping-container">
+                    <!-- Back Button -->
+                    <div class="purchase-detail-header">
+                        <a href="#" class="purchase-detail-back" onclick="window.ClientShoppingPage.showAllPurchases(); return false;">
+                            <i class="fas fa-arrow-left"></i> Volver
+                        </a>
+                        <div class="purchase-detail-title">
+                            <i class="fas fa-receipt text-primary"></i> ${purchase.id}
+                        </div>
+                        <span class="purchase-status ${statusClass}">${purchase.status}</span>
                     </div>
-                    <div class="card-body">
-                        <div class="row mb-3">
-                            <div class="col-6 text-muted">Fecha:</div>
-                            <div class="col-6">${new Date(purchase.fecha).toLocaleDateString('es-CO', { 
-                                year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                            })}</div>
+                    
+                    <!-- Información de la Compra -->
+                    <div class="purchase-section">
+                        <div class="purchase-section-header">
+                            <i class="fas fa-info-circle"></i>
+                            <h5>Detalles del Pedido</h5>
                         </div>
-                        <div class="row mb-3">
-                            <div class="col-6 text-muted">Método de pago:</div>
-                            <div class="col-6">${purchase.paymentMethod === 'card' ? 'Tarjeta' : 'Nequi'}</div>
+                        <div class="purchase-section-body">
+                            <div class="info-row">
+                                <span class="info-label">Fecha de compra</span>
+                                <span class="info-value">${formattedDate}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Estado</span>
+                                <span class="info-value"><span class="purchase-status ${statusClass}">${purchase.status}</span></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Método de pago</span>
+                                <span class="info-value">
+                                    <span class="payment-badge ${purchase.paymentMethod}">
+                                        <i class="fas ${paymentIcon}"></i> ${paymentLabel}
+                                    </span>
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <h6 class="fw-bold mb-3">Productos</h6>
-                ${items.map(item => `
-                    <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded mb-2">
-                        <div>
-                            <strong>${item.nombre}</strong>
-                            <small class="d-block text-muted">$${item.precio.toLocaleString()} x ${item.cantidad}</small>
+                    
+                    <!-- Información de la Farmacia -->
+                    ${purchase.nombreFarmacia ? `
+                    <div class="purchase-section">
+                        <div class="purchase-section-header">
+                            <i class="fas fa-store"></i>
+                            <h5>Farmacia</h5>
                         </div>
-                        <strong>$${(item.precio * item.cantidad).toLocaleString()}</strong>
+                        <div class="purchase-section-body">
+                            <div class="info-row">
+                                <span class="info-label">Nombre</span>
+                                <span class="info-value fw-bold">${purchase.nombreFarmacia}</span>
+                            </div>
+                            ${purchase.direccionFarmacia ? `
+                            <div class="info-row">
+                                <span class="info-label">Dirección</span>
+                                <span class="info-value">${purchase.direccionFarmacia}</span>
+                            </div>
+                            ` : ''}
+                            ${purchase.telefonoFarmacia ? `
+                            <div class="info-row">
+                                <span class="info-label">Teléfono</span>
+                                <span class="info-value">${purchase.telefonoFarmacia}</span>
+                            </div>
+                            ` : ''}
+                        </div>
                     </div>
-                `).join('')}
-                
-                <div class="card border-0 shadow-sm mt-4">
-                    <div class="card-header bg-white">
-                        <h6 class="mb-0 fw-bold">Información de Entrega</h6>
+                    ` : ''}
+                    
+                    <!-- Productos -->
+                    <div class="purchase-section">
+                        <div class="purchase-section-header">
+                            <i class="fas fa-pills"></i>
+                            <h5>Productos (${items.length})</h5>
+                        </div>
+                        <div class="purchase-section-body">
+                            <div class="purchase-detail-products">
+                                ${items.map((item, index) => `
+                                    <div class="purchase-detail-product" style="animation-delay: ${index * 0.1}s">
+                                        <div class="purchase-detail-image">
+                                            ${item.imagen 
+                                                ? `<img src="${item.imagen}" alt="${item.nombre}" onerror="this.outerHTML='<div class=\\'purchase-detail-image-placeholder\\'><i class=\\'fas fa-pills\\'></i></div>'">`
+                                                : `<div class="purchase-detail-image-placeholder">
+                                                    <i class="fas fa-pills"></i>
+                                                </div>`
+                                            }
+                                        </div>
+                                        <div class="purchase-detail-info">
+                                            <div class="purchase-detail-name">${item.nombre}</div>
+                                            <div class="purchase-detail-qty">
+                                                <span class="text-muted">Precio:</span> $${item.precio.toLocaleString()} 
+                                                <span class="mx-1">•</span> 
+                                                <span class="text-muted">Cantidad:</span> ${item.cantidad}
+                                            </div>
+                                        </div>
+                                        <div class="purchase-detail-pricing">
+                                            <div class="purchase-detail-price">$${(item.precio * item.cantidad).toLocaleString()}</div>
+                                            <div class="purchase-detail-unit">$${item.precio.toLocaleString()} c/u</div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            
+                            <!-- Total -->
+                            <div class="purchase-total-section">
+                                <span class="purchase-total-label">Total Pagado</span>
+                                <span class="purchase-total-amount">$${purchase.total.toLocaleString()}</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <div class="row mb-2">
-                            <div class="col-4 text-muted">Dirección:</div>
-                            <div class="col-8">${purchase.delivery.address}</div>
+                    
+                    <!-- Información de Entrega -->
+                    <div class="purchase-section">
+                        <div class="purchase-section-header">
+                            <i class="fas fa-shipping-fast"></i>
+                            <h5>Información de Entrega</h5>
                         </div>
-                        <div class="row mb-2">
-                            <div class="col-4 text-muted">Recibe:</div>
-                            <div class="col-8">${purchase.delivery.name}</div>
-                        </div>
-                        <div class="row">
-                            <div class="col-4 text-muted">Teléfono:</div>
-                            <div class="col-8">${purchase.delivery.phone}</div>
-                        </div>
-                        ${purchase.delivery.notes ? `
-                        <div class="row mt-2">
-                            <div class="col-4 text-muted">Notas:</div>
-                            <div class="col-8">${purchase.delivery.notes}</div>
-                        </div>
-                        ` : ''}
-                    </div>
-                    <div class="card-footer bg-light">
-                        <div class="d-flex justify-content-between">
-                            <strong>Total:</strong>
-                            <strong class="text-primary fs-5">$${purchase.total.toLocaleString()}</strong>
+                        <div class="purchase-section-body">
+                            <div class="info-row">
+                                <span class="info-label">Dirección de entrega</span>
+                                <span class="info-value">${purchase.delivery.address}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Nombre de quien recibe</span>
+                                <span class="info-value">${purchase.delivery.name}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Teléfono de contacto</span>
+                                <span class="info-value">${purchase.delivery.phone}</span>
+                            </div>
+                            ${purchase.delivery.notes ? `
+                            <div class="info-row">
+                                <span class="info-label">Observaciones</span>
+                                <span class="info-value">${purchase.delivery.notes}</span>
+                            </div>
+                            ` : ''}
                         </div>
                     </div>
                 </div>
