@@ -58,7 +58,7 @@ const ClientShoppingPage = {
                     precio: item.precio_unitario,
                     cantidad: item.cantidad
                 }));
-                console.log('Carrito cargado desde backend:', this.cart.length, 'items');
+                // console.log('Carrito cargado desde backend:', this.cart.length, 'items');
             } else {
                 // Si no hay servicio, carrito vacío
                 this.cart = [];
@@ -415,17 +415,18 @@ const ClientShoppingPage = {
     },
     
     removeItem(index) {
+        const item = this.cart[index];
+        if (item && window.cartService && item.id) {
+            window.cartService.removeItem(item.id).catch(err => {
+                console.error('Error al eliminar del backend:', err);
+            });
+        }
         this.cart.splice(index, 1);
-        this.saveCart();
         this.renderShopping();
     },
     
     getCartTotal() {
         return this.cart.reduce((total, item) => total + (item.precio * item.cantidad), 0);
-    },
-    
-    saveCart() {
-        localStorage.setItem('clientCart', JSON.stringify(this.cart));
     },
     
     async processPayment() {
@@ -518,7 +519,7 @@ const ClientShoppingPage = {
             if (window.shoppingService) {
                 try {
                     const result = await window.shoppingService.createPurchase(purchaseData);
-                    console.log('Backend response:', result);
+                    // console.log('Backend response:', result);
                     
                     if (result.success) {
                         purchase = {

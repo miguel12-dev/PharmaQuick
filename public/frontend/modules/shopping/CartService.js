@@ -50,18 +50,18 @@ class CartService {
      * Obtener el carrito del usuario desde el backend
      */
     async getCart() {
-        console.log('CartService: Obteniendo carrito del backend...');
-        console.log('CartService: Token:', this.getToken() ? 'PRESENTE' : 'NO HAY TOKEN');
+        // console.log('CartService: Obteniendo...');
+        // console.log('CartService: Token:', this.getToken() ? 'PRESENTE' : 'NO HAY TOKEN');
         
         const response = await fetch(`${this.baseUrl}/carrito`, {
             method: 'GET',
             headers: this.getHeaders()
         });
 
-        console.log('CartService: GET Response status:', response.status);
+        // console.log('CartService: GET Response status:', response.status);
 
         const data = await response.json();
-        console.log('CartService: GET Response data:', data);
+        // console.log('CartService: GET Response data:', data);
 
         if (!response.ok) {
             throw new Error(data.message || 'Error al obtener el carrito');
@@ -84,9 +84,9 @@ class CartService {
             usuario_id: this.getUserId() // Incluir el ID del usuario
         };
 
-        console.log('CartService: Intentando agregar al carrito:', payload);
-        console.log('CartService: Token:', this.getToken() ? 'PRESENTE' : 'NO HAY TOKEN');
-        console.log('CartService: Headers:', this.getHeaders());
+        // console.log('CartService: Intentando agregar al carrito:', payload);
+        // console.log('CartService: Token:', this.getToken() ? 'PRESENTE' : 'NO HAY TOKEN');
+        // console.log('CartService: Headers:', this.getHeaders());
 
         const response = await fetch(`${this.baseUrl}/carrito`, {
             method: 'POST',
@@ -94,10 +94,10 @@ class CartService {
             body: JSON.stringify(payload)
         });
 
-        console.log('CartService: Respuesta status:', response.status);
+        // console.log('CartService: Respuesta status:', response.status);
 
         const data = await response.json();
-        console.log('CartService: Respuesta data:', data);
+        // console.log('CartService: Respuesta data:', data);
 
         if (!response.ok) {
             throw new Error(data.message || 'Error al agregar al carrito');

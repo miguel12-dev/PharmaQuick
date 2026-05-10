@@ -40,7 +40,7 @@ const ClientCatalogPage = {
                     precio: item.precio_unitario,
                     cantidad: item.cantidad
                 }));
-                console.log('Carrito cargado desde backend:', this.cart.length, 'items');
+                // console.log('Carrito cargado desde backend:', this.cart.length, 'items');
             } else {
                 // Si no hay servicio, usar array vacío
                 this.cart = [];
@@ -370,8 +370,8 @@ const ClientCatalogPage = {
     },
 
     async addToCart(productId) {
-        console.log('=== addToCart llamado ===');
-        console.log('window.cartService disponible?', typeof window.cartService);
+        // console.log('=== addToCart llamado ===');
+        // console.log('window.cartService disponible?', typeof window.cartService);
         
         const product = this.products.find(p => p.id === productId);
         if (!product) return;
@@ -546,16 +546,27 @@ const ClientCatalogPage = {
     },
 
 removeFromCart(index) {
+        const item = this.cart[index];
+        if (item && window.cartService && item.id) {
+            window.cartService.removeItem(item.id).catch(err => {
+                console.error('Error al eliminar del backend:', err);
+            });
+        }
         this.cart.splice(index, 1);
-        this.saveCart();
         this.updateCart();
     },
     
     removeFromCartByProductId(productId) {
         const index = this.cart.findIndex(item => item.producto_id === productId);
         if (index !== -1) {
+            const item = this.cart[index];
+            // Eliminar del backend
+            if (window.cartService && item.id) {
+                window.cartService.removeItem(item.id).catch(err => {
+                    console.error('Error al eliminar del backend:', err);
+                });
+            }
             this.cart.splice(index, 1);
-            this.saveCart();
             this.updateCart();
             
             // Actualizar el card con animación
@@ -574,8 +585,14 @@ removeFromCart(index) {
         // Primero removemos del array del carrito
         const index = this.cart.findIndex(item => item.producto_id === productId);
         if (index !== -1) {
+            const item = this.cart[index];
+            // Eliminar del backend
+            if (window.cartService && item.id) {
+                window.cartService.removeItem(item.id).catch(err => {
+                    console.error('Error al eliminar del backend:', err);
+                });
+            }
             this.cart.splice(index, 1);
-            this.saveCart();
             this.updateCart();
         }
         
@@ -639,7 +656,13 @@ removeFromCart(index) {
         const item = this.cart.find(item => item.producto_id === productId);
         if (item) {
             item.cantidad = cantidad;
-            this.saveCart();
+            // Sincronizar con el backend
+            if (window.cartService && item.id) {
+                window.cartService.updateQuantity(item.id, cantidad).catch(err => {
+                    console.error('Error al actualizar cantidad en backend:', err);
+                    this.showToast('Error al actualizar cantidad', 'danger');
+                });
+            }
             this.updateCart();
         }
     },
@@ -814,12 +837,6 @@ removeFromCart(index) {
         return this.cart.reduce((total, item) => total + (item.precio * item.cantidad), 0);
     },
 
-    // El carrito ahora se guarda en la base de datos, no en localStorage
-    // Este método ya no es necesario - se mantiene por compatibilidad
-    saveCart() {
-        console.log('Carrito guardado en memoria (el持久存储 está en el backend)');
-    },
-
     async processPurchase() {
         if (this.cart.length === 0) return;
         
@@ -839,8 +856,17 @@ removeFromCart(index) {
             const data = await httpClient.post('/ventas/create', formData);
             
             if (data.success) {
+                // Limpiar el carrito local
                 this.cart = [];
-                this.saveCart();
+                this.updateCart();
+                // Limpiar el carrito del backend
+                if (window.cartService) {
+                    try {
+                        await window.cartService.clearCart();
+                    } catch (clearError) {
+                        console.error('Error al limpiar carrito del backend:', clearError);
+                    }
+                }
                 this.showToast('Compra realizada exitosamente', 'success');
                 Router.navigate('/cliente/compras');
             }

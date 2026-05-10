@@ -82,7 +82,7 @@ async function initApp() {
             await loadScript(file);
         }
         
-        console.log('PharmaQuick Frontend initialized');
+        // console.log('PharmaQuick Frontend initialized');
         
     } catch (error) {
         console.error('Error initializing app:', error);
