@@ -25,9 +25,36 @@ const ClientShoppingPage = {
         // Cargar historial desde el backend
         try {
             if (window.shoppingService) {
-                this.purchaseHistory = await window.shoppingService.getPurchases();
+                try {
+                    const response = await window.shoppingService.getPurchases();
+                    // El servicio puede devolver data.data (formato original) o data (formato corregido)
+                    const purchasesArray = (response.data || response) || [];
+                    
+                    // Mapear formato del backend al formato que usa la UI
+                    this.purchaseHistory = purchasesArray.map(p => ({
+                        id: p.codigo_pedido || p.id,  // Usar codigo_pedido como ID visible
+                        rawId: p.id,                  // Guardar ID de BD para posibles referencias
+                        fecha: p.fecha || p.created_at,
+                        items: (p.items || []).map(item => ({
+                            nombre: item.producto_nombre || item.nombre,
+                            precio: item.precio_unitario || item.precio,
+                            cantidad: item.cantidad
+                        })),
+                        total: p.total,
+                        paymentMethod: (p.metodo_pago || '').toLowerCase() === 'tarjeta' ? 'card' : 'nequi',
+                        status: p.estado,
+                        delivery: {
+                            address: p.direccion_envio || '',
+                            name: p.nombre_recibe || '',
+                            phone: p.telefono_contacto || '',
+                            notes: p.observaciones || ''
+                        }
+                    }));
+                } catch (backendError) {
+                    console.error('Error al cargar historial:', backendError);
+                    this.purchaseHistory = [];
+                }
             } else {
-                // Fallback a array vacío si el servicio no está disponible
                 this.purchaseHistory = [];
             }
         } catch (error) {
@@ -523,12 +550,11 @@ const ClientShoppingPage = {
                     
                     if (result.success) {
                         purchase = {
-                            id: result.data.id,
-                            codigo_pedido: result.data.codigo_pedido,
-                            fecha: result.data.fecha,
+                            id: result.data.codigo_pedido,  // Usar codigo_pedido como ID
+                            fecha: result.data.fecha || new Date().toISOString(),
                             items: purchaseData.items,
                             total: result.data.total,
-                            paymentMethod: result.data.metodo_pago,
+                            paymentMethod: (result.data.metodo_pago || 'TARJETA').toLowerCase() === 'tarjeta' ? 'card' : 'nequi',
                             status: result.data.estado,
                             delivery: {
                                 address: deliveryAddress,
@@ -586,8 +612,6 @@ const ClientShoppingPage = {
             } catch (clearError) {
                 console.error('Error al limpiar carrito del backend:', clearError);
             }
-            
-            this.saveCart();
             
             // Mostrar éxito
             this.isProcessing = false;
@@ -696,6 +720,7 @@ const ClientShoppingPage = {
     },
     
     renderPurchaseCard(purchase) {
+        const items = purchase.items || [];
         const date = new Date(purchase.fecha).toLocaleDateString('es-CO', {
             year: 'numeric', month: 'short', day: 'numeric'
         });
@@ -712,7 +737,7 @@ const ClientShoppingPage = {
                     </div>
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <small class="text-muted">${purchase.items.length} producto(s)</small>
+                            <small class="text-muted">${items.length} producto(s)</small>
                         </div>
                         <div class="text-end">
                             <strong>$${purchase.total.toLocaleString()}</strong>
@@ -736,6 +761,7 @@ const ClientShoppingPage = {
         if (!purchase) return;
         
         const content = document.getElementById('clientContent');
+        const items = purchase.items || [];
         
         content.innerHTML = `
             <div class="shopping-container">
@@ -763,7 +789,7 @@ const ClientShoppingPage = {
                 </div>
                 
                 <h6 class="fw-bold mb-3">Productos</h6>
-                ${purchase.items.map(item => `
+                ${items.map(item => `
                     <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded mb-2">
                         <div>
                             <strong>${item.nombre}</strong>

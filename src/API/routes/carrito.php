@@ -7,34 +7,13 @@
 require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
 require_once SRC_PATH . '/Core/JsonResponse.php';
 
-// Debug: Registrar entrada a las funciones
-error_log("=== Carrito API chamada ===");
-error_log("Method: " . ($_SERVER['REQUEST_METHOD'] ?? 'unknown'));
-error_log("URI: " . ($_SERVER['REQUEST_URI'] ?? 'unknown'));
-error_log("Authorization: " . ($_SERVER['HTTP_AUTHORIZATION'] ?? 'NO HEADER'));
-
 /**
  * GET /api/carrito - Obtener el carrito del usuario
  */
 function handleGetCarrito() {
     try {
-        // Intentar obtener desde JWT primero, luego desde query param
-        $usuarioId = obtenerUsuarioIdDesdeJWT();
-        
-        // Si no hay JWT, usar el usuario_id del query param (para testing)
-        if (!$usuarioId && isset($_GET['usuario_id'])) {
-            $usuarioId = (int) $_GET['usuario_id'];
-        }
-        
-        // Si aún no hay usuario, usar el primero disponible (fallback para testing)
-        if (!$usuarioId) {
-            $pdo = PDOFactory::getMaster();
-            $stmtUser = $pdo->query("SELECT id FROM usuarios WHERE activo = 1 LIMIT 1");
-            $user = $stmtUser->fetch(\PDO::FETCH_ASSOC);
-            if ($user) {
-                $usuarioId = $user['id'];
-            }
-        }
+        // Usar helper con fallback
+        $usuarioId = obtenerUsuarioIdConFallback();
         
         if (!$usuarioId) {
             JsonResponse::error('Usuario no identificado', 400);
@@ -90,30 +69,13 @@ function handlePostCarrito() {
             return;
         }
         
-        // Intentar obtener desde JWT primero, luego desde input
-        $usuarioId = obtenerUsuarioIdDesdeJWT();
-        
-        // Si no hay JWT, usar el usuario_id del input directamente (para testing)
-        if (!$usuarioId && isset($input['usuario_id'])) {
-            $usuarioId = (int) $input['usuario_id'];
-        }
-        
-        // Si aún no hay usuario, intentar con el primero disponible (fallback para testing)
-        if (!$usuarioId) {
-            $pdo = PDOFactory::getMaster();
-            $stmtUser = $pdo->query("SELECT id FROM usuarios WHERE activo = 1 LIMIT 1");
-            $user = $stmtUser->fetch(\PDO::FETCH_ASSOC);
-            if ($user) {
-                $usuarioId = $user['id'];
-            }
-        }
+        // Usar helper con fallback
+        $usuarioId = obtenerUsuarioIdConFallback();
         
         if (!$usuarioId) {
             JsonResponse::error('Usuario no identificado', 400);
             return;
         }
-        
-        error_log("handlePostCarrito: usuarioId = " . $usuarioId);
         
         // Validar campos requeridos
         if (!isset($input['producto_id']) || !isset($input['producto_nombre']) || 
@@ -256,10 +218,10 @@ function handlePutCarritoItem($itemId) {
  */
 function handleDeleteCarritoItem($itemId) {
     try {
-        $usuarioId = obtenerUsuarioIdDesdeJWT();
+        $usuarioId = obtenerUsuarioIdConFallback();
         
         if (!$usuarioId) {
-            JsonResponse::error('Usuario no autenticado', 401);
+            JsonResponse::error('Usuario no identificado', 400);
             return;
         }
         
@@ -285,10 +247,10 @@ function handleDeleteCarritoItem($itemId) {
  */
 function handleDeleteCarrito() {
     try {
-        $usuarioId = obtenerUsuarioIdDesdeJWT();
+        $usuarioId = obtenerUsuarioIdConFallback();
         
         if (!$usuarioId) {
-            JsonResponse::error('Usuario no autenticado', 401);
+            JsonResponse::error('Usuario no identificado', 400);
             return;
         }
         
@@ -309,36 +271,39 @@ function handleDeleteCarrito() {
  */
 function obtenerUsuarioIdDesdeJWT() {
     $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-    error_log("obtenerUsuarioIdDesdeJWT: Auth header: " . substr($authHeader, 0, 50));
     
     if (!preg_match('/Bearer\s+(.+)$/i', $authHeader, $matches)) {
-        error_log("obtenerUsuarioIdDesdeJWT: No hay Bearer token, buscando en input");
-        // Si no hay JWT, intentar desde el input
-        $input = json_decode(file_get_contents('php://input'), true);
-        $userId = $input['usuario_id'] ?? null;
-        error_log("obtenerUsuarioIdDesdeJWT: usuario_id desde input: " . var_export($userId, true));
-        return $userId;
+        return null;
     }
     
     $token = $matches[1];
-    error_log("obtenerUsuarioIdDesdeJWT: Token: " . substr($token, 0, 30) . "...");
-    
     $tokenParts = explode('.', $token);
     
     if (count($tokenParts) !== 3) {
-        error_log("obtenerUsuarioIdDesdeJWT: Token no tiene 3 partes");
         return null;
     }
     
     $payload = json_decode(base64_decode($tokenParts[1]), true);
-    error_log("obtenerUsuarioIdDesdeJWT: Payload: " . json_encode($payload));
     
     if (!$payload) {
         return null;
     }
     
     // Retornar el ID del usuario desde el JWT
-    $userId = $payload['sub'] ?? $payload['user_id'] ?? $payload['id'] ?? null;
-    error_log("obtenerUsuarioIdDesdeJWT: Usuario ID encontrado: " . var_export($userId, true));
-    return $userId;
+    return $payload['sub'] ?? $payload['user_id'] ?? $payload['id'] ?? null;
+}
+
+/**
+ * Función helper para obtener el usuario con fallback a query param
+ */
+function obtenerUsuarioIdConFallback() {
+    // Primero intentar desde JWT
+    $usuarioId = obtenerUsuarioIdDesdeJWT();
+    
+    // Si no hay JWT, intentar desde query param
+    if (!$usuarioId && isset($_GET['usuario_id'])) {
+        $usuarioId = (int) $_GET['usuario_id'];
+    }
+    
+    return $usuarioId;
 }

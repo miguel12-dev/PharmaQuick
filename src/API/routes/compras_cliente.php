@@ -299,7 +299,7 @@ function handleGetCompras()
             unset($compra['created_at']);
         }
         
-        JsonResponse::success(['data' => $compras]);
+        JsonResponse::success($compras);
         
     } catch (\Throwable $e) {
         JsonResponse::error('Error al obtener compras: ' . $e->getMessage(), 500);
