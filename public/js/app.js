@@ -28,7 +28,7 @@
         '/cliente/catalogo': ClientCatalogPage, // Nueva ruta de catálogo
         // [DESHABILITADO] '/cliente/reservas': ClientReservationsPage,
         '/cliente/perfil': ClientProfilePage,
-        '/cliente/compras': ClientDashboardPage,  // Por ahora redirige al dashboard
+        '/cliente/compras': ClientShoppingPage,  // Página de compras con checkout
         
         '/perfil': ProfilePage,
         '/404': NotFoundPage

@@ -377,7 +377,8 @@ const ClientCatalogPage = {
                 producto_id: product.id,
                 nombre: product.nombre,
                 precio: parseFloat(product.precio_activo || 0),
-                cantidad: cantidad
+                cantidad: cantidad,
+                imagen: product.imagen || null
             });
         }
         

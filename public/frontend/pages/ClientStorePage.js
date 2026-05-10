@@ -162,7 +162,8 @@ const ClientStorePage = {
                 producto_id: product.id,
                 nombre: product.nombre,
                 precio: parseFloat(product.precio_activo || 0),
-                cantidad: 1
+                cantidad: 1,
+                imagen: product.imagen || null
             });
         }
         
