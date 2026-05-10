@@ -7,7 +7,7 @@ const ClientLayout = {
     /**
      * Renderiza un layout tipo e-commerce para clientes
      */
-    render(container, activePage = 'tienda') {
+    render(container, activePage = 'catalogo') {
         const session = JSON.parse(localStorage.getItem('pharmaSession') || '{}');
         let userName = session.userName || session.email || 'Cliente';
 
@@ -81,9 +81,9 @@ const ClientLayout = {
                     <i class="fas fa-home bottom-nav-icon"></i>
                     <span class="bottom-nav-label">Inicio</span>
                 </a>
-                <a href="/cliente/tienda" class="bottom-nav-item ${activePage === 'tienda' ? 'active' : ''}">
-                    <i class="fas fa-store bottom-nav-icon"></i>
-                    <span class="bottom-nav-label">Tienda</span>
+                <a href="/cliente/catalogo" class="bottom-nav-item ${activePage === 'catalogo' ? 'active' : ''}">
+                    <i class="fas fa-tags bottom-nav-icon"></i>
+                    <span class="bottom-nav-label">Catálogo</span>
                 </a>
                 <!-- [DESHABILITADO] Link de Reservas - Deshabilitado por no utilizarse
                 <a href="/cliente/reservas" class="bottom-nav-item ${activePage === 'reservas' ? 'active' : ''}">

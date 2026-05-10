@@ -40,6 +40,21 @@ function handleGetPublicCatalogo()
 
         // Return minimal fields for storefront
         $data = array_map(function ($p) {
+            // Build full image URL if exists
+            $imagenUrl = null;
+            if (!empty($p['imagen'])) {
+                $imagenPath = $p['imagen'];
+                // If it's already a full path starting with /uploads, use as-is
+                if (strpos($imagenPath, '/uploads/') === 0) {
+                    $imagenUrl = $imagenPath;
+                } elseif (strpos($imagenPath, 'http') === 0) {
+                    $imagenUrl = $imagenPath;
+                } else {
+                    // Assume it's a relative path, prepend /uploads/
+                    $imagenUrl = '/uploads/' . ltrim($imagenPath, '/');
+                }
+            }
+            
             return [
                 'id' => $p['id'],
                 'nombre' => $p['nombre'],
@@ -47,7 +62,7 @@ function handleGetPublicCatalogo()
                 'categoria' => $p['categoria'] ?? null,
                 'precio_activo' => $p['precio_activo'] ?? null,
                 'stock_total' => $p['stock_total'] ?? 0,
-                'imagen' => $p['imagen'] ?? null,
+                'imagen' => $imagenUrl,
             ];
         }, $products);
         JsonResponse::success(['data' => $data]);

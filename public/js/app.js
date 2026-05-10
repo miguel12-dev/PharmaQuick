@@ -24,7 +24,8 @@
         
         // Rutas de cliente (CLIENTE)
         '/cliente': ClientDashboardPage,
-        '/cliente/tienda': ClientStorePage,
+        '/cliente/tienda': ClientCatalogPage, // Antigua tienda ahora es catálogo
+        '/cliente/catalogo': ClientCatalogPage, // Nueva ruta de catálogo
         // [DESHABILITADO] '/cliente/reservas': ClientReservationsPage,
         '/cliente/perfil': ClientProfilePage,
         '/cliente/compras': ClientDashboardPage,  // Por ahora redirige al dashboard
