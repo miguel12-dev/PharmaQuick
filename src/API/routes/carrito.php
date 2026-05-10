@@ -529,22 +529,20 @@ function handlePostCarritoCompra() {
             // Confirmar transacción
             $pdo->commit();
             
-            // Enviar correo de confirmación si el método de pago es NEQUI
-            if ($metodoPago === 'NEQUI') {
-                $userEmail = obtenerEmailUsuario($usuarioId, $pdo);
-                if ($userEmail) {
-                    $emailService = new EmailService();
-                    $emailService->sendPurchaseConfirmation(
-                        $userEmail,
-                        $deliveryName,
-                        $codigoPedido,
-                        $total,
-                        $metodoPago,
-                        $metodoEntrega,
-                        ($metodoEntrega === 'ENVIO') ? $deliveryAddress : null,
-                        $items
-                    );
-                }
+            // Enviar correo de confirmación de compra (siempre, sin importar método de pago)
+            $userEmail = obtenerEmailUsuario($usuarioId, $pdo);
+            if ($userEmail) {
+                $emailService = new EmailService();
+                $emailService->sendPurchaseConfirmation(
+                    $userEmail,
+                    $deliveryName,
+                    $codigoPedido,
+                    $total,
+                    $metodoPago,
+                    $metodoEntrega,
+                    ($metodoEntrega === 'ENVIO') ? $deliveryAddress : null,
+                    $items
+                );
             }
             
             JsonResponse::success([
