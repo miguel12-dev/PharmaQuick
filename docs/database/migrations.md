@@ -1,156 +1,154 @@
-# Migraciones de Base de Datos - PharmaQuick
+# Documentación de Migraciones - Compras de Cliente
 
-Este archivo documenta los cambios realizados a la estructura de la base de datos.
+## Resumen
 
----
+Se implementó un sistema de compras simuladas para clientes que guarda los datos en la base de datos real, haciendo el proceso más realista y sostenible.
 
-## Migración: Registro de Clientes Global
-
-**Fecha:** Mayo 2026
-**Objetivo:** Permitir registro de clientes globales (sin farmacia asignada)
-
-### Cambios en `pharma_master.usuarios`
-
-#### Problema Inicial
-Los clientes necesitan poder registrarse en el sistema sin estar asociados a una farmacia específica. La tabla `usuarios` tenía:
-- `farmacia_id` como NOT NULL (requería una farmacia)
-- Restricción FK que impedía valores nulos
-- Rol solo tenía: `'USUARIO', 'ADMINISTRADOR'`
-
-#### Error Común (#3780)
-Al intentar:
-```sql
-ALTER TABLE usuarios MODIFY COLUMN farmacia_id INT NULL;
-```
-MySQL devuelve: `Referencing column 'farmacia_id' and referenced column 'id' in foreign key constraint are incompatible`
-
-**Solución:** Primero eliminar la FK, luego modificar la columna.
-
-#### Scripts de Migración
-
-```sql
--- 1. Verificar nombre de la FK actual
--- Ejecutar en phpMyAdmin o MySQL:
-SHOW CREATE TABLE usuarios;
-
--- 2. Eliminar la FK (reemplazar 'usuarios_ibfk_X' por el nombre real)
-ALTER TABLE usuarios DROP FOREIGN KEY usuarios_ibfk_1;
-
--- 3. Modificar columna a NULL
-ALTER TABLE usuarios MODIFY COLUMN farmacia_id INT UNSIGNED NULL;
-
--- 4. Actualizar rol ENUM (añadir CLIENTE)
-ALTER TABLE usuarios MODIFY COLUMN rol ENUM('ADMIN', 'FARMACEUTICO', 'AUXILIAR', 'CLIENTE') NOT NULL DEFAULT 'CLIENTE';
-
--- 5. Hacer email único global (antes era único por farmacia)
--- Primero eliminar el índice único anterior (si existe)
-ALTER TABLE usuarios DROP INDEX farmacia_id;  -- o el nombre del índice
--- Luego crear nuevo índice único global
-ALTER TABLE usuarios ADD UNIQUE (email);
-```
-
-#### Estructura Final de la Tabla
-
-```sql
-CREATE TABLE usuarios (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    farmacia_id INT UNSIGNED NULL,  -- Nullable para clientes globales
-    email VARCHAR(150) NOT NULL,
-    password_hash VARCHAR(255),
-    rol ENUM('ADMIN', 'FARMACEUTICO', 'AUXILIAR', 'CLIENTE') NOT NULL DEFAULT 'CLIENTE',
-    activo BOOLEAN DEFAULT TRUE,
-    nombre VARCHAR(100),
-    
-    -- Índice único global por email
-    UNIQUE (email),
-
-    -- FK solo aplica cuando farmacia_id no es NULL
-    FOREIGN KEY (farmacia_id) REFERENCES farmacias(id)
-) ENGINE=InnoDB;
-```
-
----
-
-## Cómo encontrar el nombre de la FK
-
-Si `usuarios_ibfk_1` no existe, ejecutar:
-
-```sql
--- Ver todas las restricciones de la tabla
-SHOW CREATE TABLE usuarios;
-
--- O listar todas las FK
-SELECT 
-    CONSTRAINT_NAME,
-    TABLE_NAME,
-    COLUMN_NAME,
-    REFERENCED_TABLE_NAME,
-    REFERENCED_COLUMN_NAME
-FROM information_schema.KEY_COLUMN_USAGE
-WHERE TABLE_SCHEMA = 'pharma_master'
-  AND TABLE_NAME = 'usuarios'
-  AND REFERENCED_TABLE_NAME IS NOT NULL;
-```
-
-El nombre típico de la FK puede ser:
-- `usuarios_ibfk_1` (auto-generado por MySQL)
-- `usuarios_ibfk_2`
-- `usuarios_fk_farmacia`
-- `usuarios_farmacia_id_foreign`
-
----
-
-## Verificación Post-Migración
-
-```sql
--- Verificar estructura
-DESCRIBE usuarios;
-
--- Verificar que clientes pueden tener NULL
-SELECT id, email, rol, farmacia_id FROM usuarios WHERE rol = 'CLIENTE';
-
--- Verificar índice único
-SHOW INDEX FROM usuarios WHERE Non_unique = 0;
-```
-
----
-
-## Rutas para Clientes (Frontend)
-
-**Fecha:** Mayo 2026
-**Objetivo:** Crear experiencia tipo e-commerce para clientes sin acceso al panel administrativo
-
-### Nuevas Rutas
-
-| Ruta | Página | Descripción |
-|------|--------|-------------|
-| `/mi-cuenta` | `ClientDashboardPage.js` | Dashboard simplificado del cliente |
-| `/mi-cuenta/tienda` | `ClientStorePage.js` | Catálogo para comprar/reservar |
-| `/mi-cuenta/reservas` | `ClientReservationsPage.js` | Mis reservas simplificado |
-| `/mi-cuenta/compras` | (pendiente) | Historial de compras |
-
-### Archivos Creados
+## Estructura de Archivos
 
 ```
+src/
+├── Database/
+│   └── migrations/
+│       └── 001_compras_cliente.sql    # Script de migración
+├── API/
+│   ├── routes/
+│   │   └── compras_cliente.php       # Rutas API
+│   └── Router.php                     # Actualizado con nuevas rutas
+└── ...
+
 public/frontend/
-├── layout/
-│   └── ClientLayout.js       # Layout tipo e-commerce (sin sidebar admin)
-├── pages/
-│   ├── ClientDashboardPage.js
-│   ├── ClientStorePage.js
-│   └── ClientReservationsPage.js
+├── modules/
+│   └── shopping/
+│       └── ShoppingService.js         # Servicio frontend
+└── pages/
+    └── ClientShoppingPage.js          # Actualizado para usar backend
 ```
 
-### Flujo de Redirección
+## Tablas Creadas
 
-1. **Cliente logueado hace click en "Comprar"** → `/mi-cuenta/tienda?producto=X`
-2. **Cliente logueado hace click en "Reservar"** → `/mi-cuenta/reservas?producto=X`
-3. **Cliente intenta acceder a /dashboard** → Redirigido a `/mi-cuenta`
-4. **Admin intenta acceder a /mi-cuenta/** → Redirigido a `/dashboard`
+### 1. `compras_cliente`
+Almacena las compras realizadas por los clientes.
 
-### Modificaciones en Archivos Existentes
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | BIGINT UNSIGNED | ID único(auto-increment) |
+| usuario_id | BIGINT UNSIGNED | FK al usuario cliente |
+| farmacia_id | INT UNSIGNED | FK a la farmacia |
+| codigo_pedido | VARCHAR(20) | Código único del pedido |
+| total | DECIMAL(12,2) | Total de la compra |
+| metodo_pago | ENUM('TARJETA','NEQUI') | Método de pago usado |
+| estado | ENUM('PENDIENTE','CONFIRMADA','CANCELADA','ENTREGADA') | Estado de la compra |
+| direccion_envio | VARCHAR(255) | Dirección de entrega |
+| nombre_recibe | VARCHAR(100) | Nombre de quien recibe |
+| telefono_contacto | VARCHAR(20) | Teléfono de contacto |
+| observaciones | TEXT | Notas adicionales |
+| created_at | TIMESTAMP | Fecha de creación |
+| updated_at | TIMESTAMP | Fecha de actualización |
 
-- `public/js/app.js` - Añadido sistema de redirección por rol
-- `public/frontend/pages/HomePage.js` - Redirecciones según rol
-- `public/index.html` - Carga de scripts de cliente
+### 2. `compras_detalle`
+Detalle de los productos en cada compra.
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | BIGINT UNSIGNED | ID único |
+| compra_id | BIGINT UNSIGNED | FK a compras_cliente |
+| producto_id | BIGINT UNSIGNED | FK al producto |
+| producto_nombre | VARCHAR(150) | Nombre del producto (desnormalizado) |
+| cantidad | INT UNSIGNED | Cantidad comprada |
+| precio_unitario | DECIMAL(12,2) | Precio por unidad |
+| subtotal | DECIMAL(12,2) | Cantidad × precio |
+| created_at | TIMESTAMP | Fecha de creación |
+
+### 3. `metodos_pago_cliente` (opcional)
+Métodos de pago guardados por el cliente para checkout rápido.
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | BIGINT UNSIGNED | ID único |
+| usuario_id | BIGINT UNSIGNED | FK al usuario |
+| tipo | ENUM('TARJETA','NEQUI') | Tipo de método |
+| ultimo_digito | VARCHAR(4) | Últimos 4 dígitos (tarjeta) |
+| tipo_tarjeta | VARCHAR(20) | Visa, Mastercard, etc. |
+| telefono | VARCHAR(20) | Teléfono Nequi |
+| activo | BOOLEAN | Si está activo |
+| created_at | TIMESTAMP | Fecha de creación |
+
+## Rutas API
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/api/compras` | Crear nueva compra |
+| GET | `/api/compras` | Listar compras del cliente |
+| GET | `/api/compras/{codigo}` | Obtener compra específica |
+| POST | `/api/compras/metodo-pago` | Guardar método de pago |
+| GET | `/api/compras/metodos-pago` | Listar métodos de pago |
+
+## Cómo Aplicar la Migración
+
+### Opción 1: Ejecutar directamente en MySQL
+
+```bash
+mysql -u usuario -p pharmaquick < src/Database/migrations/001_compras_cliente.sql
 ```
+
+### Opción 2: Desde PHPMyAdmin o Adminer
+
+1. Abrir la herramienta de administración de base de datos
+2. Seleccionar la base de datos `pharmaquick`
+3. Importar el archivo `001_compras_cliente.sql`
+
+### Opción 3: Desde código PHP
+
+```php
+$migrationFile = __DIR__ . '/src/Database/migrations/001_compras_cliente.sql';
+$pdo = PDOFactory::getCluster(1);
+$sql = file_get_contents($migrationFile);
+$pdo->exec($sql);
+```
+
+## Integración con Frontend
+
+El `ClientShoppingPage.js` ahora:
+
+1. **Carga compras desde el backend** usando `ShoppingService`
+2. **Guarda compras en la base de datos** al procesar el pago
+3. **Mantiene fallback local** si el backend no está disponible
+
+### Flujo de datos:
+
+```
+1. Usuario completa el checkout
+       ↓
+2. ClientShoppingPage.processPayment()
+       ↓
+3. ShoppingService.createPurchase() → POST /api/compras
+       ↓
+4. Backend: compras_cliente + compras_detalle
+       ↓
+5. Respuesta exitosa → Mostrar confirmación
+```
+
+## Notas Importantes
+
+- Las rutas API están actualmente **públicas** (sin JWT) para facilitar testing
+- En producción, agregar validación JWT en el Router
+- El código de pedido se genera automáticamente con formato `PED-XXXXXXXX`
+- Los productos se guardan con información desnormalizada (nombre) para evitar dependencias
+
+## Verificación
+
+Para verificar que la migración se aplicó correctamente:
+
+```sql
+SHOW TABLES LIKE 'compras%';
+-- Debe mostrar: compras_cliente, compras_detalle, metodos_pago_cliente
+
+DESCRIBE compras_cliente;
+-- Debe mostrar todas las columnas definidas
+```
+
+---
+
+**Fecha de creación:** 2026-05-09
+**Versión:** 1.0.0
