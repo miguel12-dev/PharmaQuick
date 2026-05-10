@@ -530,19 +530,25 @@ function handlePostCarritoCompra() {
             $pdo->commit();
             
             // Enviar correo de confirmación de compra (siempre, sin importar método de pago)
-            $userEmail = obtenerEmailUsuario($usuarioId, $pdo);
-            if ($userEmail) {
-                $emailService = new EmailService();
-                $emailService->sendPurchaseConfirmation(
-                    $userEmail,
-                    $deliveryName,
-                    $codigoPedido,
-                    $total,
-                    $metodoPago,
-                    $metodoEntrega,
-                    ($metodoEntrega === 'ENVIO') ? $deliveryAddress : null,
-                    $items
-                );
+            // Envuelto en try-catch para que un fallo en el email no afecte la compra ya confirmada
+            try {
+                $userEmail = obtenerEmailUsuario($usuarioId, $pdo);
+                if ($userEmail) {
+                    $emailService = new EmailService();
+                    $emailService->sendPurchaseConfirmation(
+                        $userEmail,
+                        $deliveryName,
+                        $codigoPedido,
+                        $total,
+                        $metodoPago,
+                        $metodoEntrega,
+                        ($metodoEntrega === 'ENVIO') ? $deliveryAddress : null,
+                        $items
+                    );
+                }
+            } catch (\Throwable $e) {
+                error_log("Error al enviar correo de confirmación de compra {$codigoPedido}: " . $e->getMessage());
+                // No se relanza: la compra ya fue confirmada en BD, el correo es notificación secundaria
             }
             
             JsonResponse::success([

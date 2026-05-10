@@ -390,7 +390,7 @@ HTML;
             $items
         );
         
-        return $this->send($toEmail, $subject, $body);
+        return $this->sendWithEmbeddedImage($toEmail, $subject, $body);
     }
     
     /**
@@ -405,29 +405,28 @@ HTML;
         ?string $deliveryAddress,
         array $items
     ): string {
-        $logoUrl = $this->appUrl . '/image/logo_pharmaQuick.png';
-        
         $itemsHtml = '';
         foreach ($items as $item) {
-            $subtotal = $item['cantidad'] * $item['precio_unitario'];
+            $precioUnitario = (float) $item['precio_unitario'];
+            $cantidad = (int) $item['cantidad'];
+            $subtotal = $cantidad * $precioUnitario;
             $itemsHtml .= "<tr>
                 <td style='padding: 10px 8px; border: 1px solid #e0e0e0;'>{$item['producto_nombre']}</td>
-                <td style='padding: 10px 8px; border: 1px solid #e0e0e0; text-align: center;'>{$item['cantidad']}</td>
-                <td style='padding: 10px 8px; border: 1px solid #e0e0e0; text-align: right;'>$" . number_format($item['precio_unitario'], 0, ',', '.') . "</td>
+                <td style='padding: 10px 8px; border: 1px solid #e0e0e0; text-align: center;'>{$cantidad}</td>
+                <td style='padding: 10px 8px; border: 1px solid #e0e0e0; text-align: right;'>$" . number_format($precioUnitario, 0, ',', '.') . "</td>
                 <td style='padding: 10px 8px; border: 1px solid #e0e0e0; text-align: right;'>$" . number_format($subtotal, 0, ',', '.') . "</td>
             </tr>";
         }
-        
-        $deliveryInfo = $deliveryMethod === 'RECOGER' 
+
+        $deliveryInfo = $deliveryMethod === 'RECOGER'
             ? '<p style="margin: 5px 0;"><strong>Tipo de entrega:</strong> Recoger en tienda (Apartado)</p>'
-            : "<p style=\"margin: 5px 0;\"><strong>Dirección de entrega:</strong> {$deliveryAddress}</p>";
-        
-        $paymentMethodLabel = $paymentMethod === 'NEQUI' ? 'Nequi' : 'Tarjeta Débito/Crédito';
-        $deliveryMethodLabel = $deliveryMethod === 'RECOGER' ? 'Recoger en tienda' : 'Envío a domicilio';
-        
-        $paymentIcon = $paymentMethod === 'NEQUI' ? '📱' : '💳';
-        $deliveryIcon = $deliveryMethod === 'RECOGER' ? '🏪' : '🚚';
-        
+            : "<p style=\"margin: 5px 0;\"><strong>Direcci&oacute;n de entrega:</strong> {$deliveryAddress}</p>";
+
+        $paymentMethodLabel = $paymentMethod === 'NEQUI' ? 'Nequi' : 'Tarjeta D&eacute;bito/Cr&eacute;dito';
+        $deliveryMethodLabel = $deliveryMethod === 'RECOGER' ? 'Recoger en tienda' : 'Env&iacute;o a domicilio';
+
+        $totalFormatted = number_format($total, 0, ',', '.');
+
         return <<<HTML
 <!DOCTYPE html>
 <html>
@@ -438,14 +437,14 @@ HTML;
 <body style='font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f0f4f8;'>
     <!-- Header con logo -->
     <div style='background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;'>
-        <img src='{$logoUrl}' alt='PharmaQuick' style='max-width: 180px; height: auto; display: inline-block;' />
+        <img src='cid:logo_pharmaquick' alt='PharmaQuick' style='max-width: 180px; height: auto; display: inline-block;' />
     </div>
     
     <!-- Cuerpo principal -->
     <div style='background: white; border-radius: 0 0 10px 10px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);'>
         <!-- Badge de confirmación -->
         <div style='background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); border-radius: 50px; padding: 12px 25px; text-align: center; margin-bottom: 25px; display: inline-block; width: 100%; box-sizing: border-box;'>
-            <span style='color: white; font-size: 18px; font-weight: bold;'>✅ Pedido Confirmado</span>
+            <span style='color: white; font-size: 18px; font-weight: bold;'>Pedido Confirmado</span>
         </div>
         
         <div style='text-align: center; margin-bottom: 25px;'>
@@ -456,12 +455,12 @@ HTML;
         <!-- Saludo -->
         <div style='margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #00b894;'>
             <p style='margin: 0; color: #2d3436; font-size: 16px;'>Hola <strong style='color: #00b894;'>{$customerName}</strong>,</p>
-            <p style='margin: 10px 0 0 0; color: #636e72; font-size: 14px;'>¡Tu pedido ha sido procesado exitosamente! 🎉</p>
+            <p style='margin: 10px 0 0 0; color: #636e72; font-size: 14px;'>Tu pedido ha sido procesado exitosamente!</p>
         </div>
         
         <!-- Tabla de productos -->
         <div style='margin-bottom: 25px;'>
-            <h3 style='color: #2d3436; font-size: 16px; margin-bottom: 15px; border-bottom: 2px solid #00b894; padding-bottom: 10px;'>📦 Detalles del Pedido</h3>
+            <h3 style='color: #2d3436; font-size: 16px; margin-bottom: 15px; border-bottom: 2px solid #00b894; padding-bottom: 10px;'>Detalles del Pedido</h3>
             <table style='width: 100%; border-collapse: collapse; margin-bottom: 10px;'>
                 <thead>
                     <tr style='background: #f0f4f8;'>
@@ -480,32 +479,32 @@ HTML;
         <!-- Información de pago y entrega -->
         <div style='display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap;'>
             <div style='flex: 1; min-width: 200px; background: #f8f9fa; border-radius: 10px; padding: 20px;'>
-                <p style='margin: 0 0 10px 0; color: #636e72; font-size: 12px; text-transform: uppercase;'>💳 Método de Pago</p>
-                <p style='margin: 0; color: #2d3436; font-size: 16px; font-weight: bold;'>{$paymentIcon} {$paymentMethodLabel}</p>
+                <p style='margin: 0 0 10px 0; color: #636e72; font-size: 12px; text-transform: uppercase;'>Metodo de Pago</p>
+                <p style='margin: 0; color: #2d3436; font-size: 16px; font-weight: bold;'>{$paymentMethodLabel}</p>
             </div>
             <div style='flex: 1; min-width: 200px; background: #f8f9fa; border-radius: 10px; padding: 20px;'>
-                <p style='margin: 0 0 10px 0; color: #636e72; font-size: 12px; text-transform: uppercase;'>🚚 Método de Entrega</p>
-                <p style='margin: 0; color: #2d3436; font-size: 16px; font-weight: bold;'>{$deliveryIcon} {$deliveryMethodLabel}</p>
+                <p style='margin: 0 0 10px 0; color: #636e72; font-size: 12px; text-transform: uppercase;'>Metodo de Entrega</p>
+                <p style='margin: 0; color: #2d3436; font-size: 16px; font-weight: bold;'>{$deliveryMethodLabel}</p>
                 {$deliveryInfo}
             </div>
         </div>
         
         <!-- Total -->
         <div style='background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); border-radius: 10px; padding: 25px; text-align: center; margin-bottom: 25px;'>
-            <span style='color: rgba(255,255,255,0.9); font-size: 14px;'>💰 Total Pagado</span>
-            <div style='color: white; font-size: 32px; font-weight: bold; margin-top: 5px;'>$ {number_format($total, 0, ',', '.')}</div>
+            <span style='color: rgba(255,255,255,0.9); font-size: 14px;'>Total Pagado</span>
+            <div style='color: white; font-size: 32px; font-weight: bold; margin-top: 5px;'>$ {$totalFormatted}</div>
         </div>
         
         <!-- Footer -->
         <div style='text-align: center; color: #636e72; font-size: 13px; border-top: 1px solid #e0e0e0; padding-top: 20px;'>
-            <p style='margin: 0 0 10px 0;'>💊 Gracias por confiar en <strong>PharmaQuick</strong> para tus necesidades de salud</p>
+            <p style='margin: 0 0 10px 0;'>Gracias por confiar en <strong>PharmaQuick</strong> para tus necesidades de salud</p>
             <p style='margin: 0; color: #b2bec3; font-size: 11px;'>Este correo fue enviado a {$this->fromAddress}</p>
         </div>
     </div>
     
     <!-- Barra inferior -->
     <div style='text-align: center; padding: 20px; color: #636e72; font-size: 12px;'>
-        <p style='margin: 0;'>📞 ¿Tienes dudas? Contáctanos en nuestra app o visita nuestra tienda</p>
+        <p style='margin: 0;'>¿Tienes dudas? Contáctanos en nuestra app o visita nuestra tienda</p>
     </div>
 </body>
 </html>
