@@ -284,3 +284,61 @@ window.Confirm = Confirm;
 
 // Alias
 Modal.confirm = Confirm;
+
+/**
+ * Mostrar modal de sesión expirada
+ * Llamar cuando el token JWT expire (401 Unauthorized)
+ */
+Modal.showSessionExpired = function() {
+    // Si ya hay un modal de sesión expirada abierto, no mostrar otro
+    if (document.getElementById('sessionExpiredModal')) {
+        return;
+    }
+    
+    const modalHtml = `
+        <div id="sessionExpiredModal" class="modal-overlay" style="z-index: 10000;">
+            <div class="modal-container modal-sm">
+                <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
+                    <div class="text-center w-100 pt-3">
+                        <i class="fas fa-clock text-warning" style="font-size: 3rem;"></i>
+                    </div>
+                </div>
+                <div class="modal-body text-center">
+                    <h5 class="mb-3">Sesión Expirada</h5>
+                    <p class="text-muted mb-0">
+                        Tu sesión ha expirado por seguridad. 
+                        Por favor, inicia sesión nuevamente para continuar.
+                    </p>
+                </div>
+                <div class="modal-footer" style="border-top: none; justify-content: center;">
+                    <button type="button" class="btn btn-primary btn-lg w-100" id="btnSessionExpiredLogin">
+                        <i class="fas fa-sign-in-alt me-2"></i> Iniciar Sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Crear y agregar el modal
+    const modalContainer = document.createElement('div');
+    modalContainer.innerHTML = modalHtml;
+    const modalElement = modalContainer.firstElementChild;
+    document.body.appendChild(modalElement);
+    
+    // Evento del botón
+    document.getElementById('btnSessionExpiredLogin').addEventListener('click', function() {
+        localStorage.removeItem('pharmaSession');
+        window.location.href = '/login?expired=1';
+    });
+    
+    // Prevent cerrar con escape o backdrop
+    modalElement.addEventListener('click', function(e) {
+        if (e.target === modalElement) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    });
+};
+
+// Exponer globalmente
+window.showSessionExpiredModal = Modal.showSessionExpired;

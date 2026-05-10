@@ -32,6 +32,13 @@ const ClientShoppingPage = {
             }
         } catch (error) {
             console.error('Error loading purchases:', error);
+            
+            // Si el error es de sesión expirada, NO continuar - el modal ya se mostrará
+            if (error.message === 'Sesión expirada') {
+                return; // Salir, el modal de sesión expirada ya está mostrando
+            }
+            
+            // Para otros errores, usar fallback local
             this.purchaseHistory = JSON.parse(localStorage.getItem('purchaseHistory') || '[]');
         }
         
