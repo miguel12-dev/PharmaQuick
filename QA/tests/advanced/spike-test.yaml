@@ -1,0 +1,180 @@
+# PharmaQuick - Test de Spike (Picos Repentinos)
+# Simula picos de tráfico inesperados:
+# - Promociones flash
+# - Situaciones de emergencia
+# - Eventos de marketing
+# El sistema debe manejar estos picos sin caer
+
+config:
+  target: "http://localhost:8080"
+  phases:
+    # Estado base - actividad normal
+    - name: "Base Normal"
+      duration: 60
+      arrivalRate: 50
+      rampTo: 100
+
+    # Primer spike - aumento rápido
+    - name: "Spike 1 - Promoción Flash"
+      duration: 30
+      arrivalRate: 100
+      rampTo: 2000
+
+    # Mantener pico
+    - name: "Sostener Pico 1"
+      duration: 60
+      arrivalRate: 2000
+
+    # Caída rápida
+    - name: "Caída Post-Spike"
+      duration: 30
+      arrivalRate: 2000
+      rampTo: 100
+
+    # Estabilización
+    - name: "Estabilización"
+      duration: 60
+      arrivalRate: 100
+      rampTo: 200
+
+    # Segundo spike - más grande
+    - name: "Spike 2 - Evento Marketing"
+      duration: 30
+      arrivalRate: 200
+      rampTo: 3500
+
+    # Mantener pico mayor
+    - name: "Sostener Pico 2"
+      duration: 90
+      arrivalRate: 3500
+
+    # Caída
+    - name: "Caída Final"
+      duration: 60
+      arrivalRate: 3500
+      rampTo: 50
+
+  payload:
+    path: "data/usuarios.csv"
+    fields:
+      - "email"
+      - "password"
+      - "nombre"
+      - "rol"
+    order: "random"
+    skipHeader: true
+
+  ensure:
+    thresholds:
+      - http.response_time.p95: 2000
+      - http.response_time.p99: 4000
+      - http.codes.500: "< 10%"
+      - http.codes.503: "< 5%"
+    conditions:
+      - expression: "http.codes.200 > 0"
+        strict: false
+
+  timeout: 30
+
+scenarios:
+  # Escenario 1: Acceso rápido a productos durante spike (60%)
+  - name: "Acceso Rápido Productos (Spike)"
+    weight: 60
+    flow:
+      # Login rápido
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Ver productos
+      - get:
+          url: "/api/productos"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Ver categorías
+      - get:
+          url: "/api/productos/categorias"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+  # Escenario 2: Usuario autenticado durante spike (25%)
+  - name: "Usuario Logueado Durante Spike"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      - get:
+          url: "/api/productos"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 2
+
+      - get:
+          url: "/api/inventario/resumen"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+  # Escenario 3: Admin verificando sistema durante spike (15%)
+  - name: "Admin Verificando Sistema"
+    weight: 15
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "admin@pharmaquick.com"
+            password: "password"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      - get:
+          url: "/api/inventario/alertas"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 2
+
+      - get:
+          url: "/api/ventas"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200

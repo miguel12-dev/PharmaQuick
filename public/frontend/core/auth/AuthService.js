@@ -23,7 +23,8 @@ class AuthService {
      */
     static isAuthenticated() {
         const session = this.getSession();
-        return session && session.token && session.farmaciaId;
+        // farmaciaId puede ser null para clientes
+        return !!(session && session.token);
     }
     
     /**
@@ -80,20 +81,21 @@ class AuthService {
      * Guardar sesión
      */
     static setSession(data) {
-        const usuario = data?.usuario;
-        const usuarioValue = typeof usuario === 'string'
-            ? usuario
-            : (usuario?.email || usuario?.usuario || '');
-        const nombreValue = data?.nombre
-            || usuario?.nombre
-            || usuario?.usuario
-            || usuarioValue;
+        // Adaptar estructura de respuesta del backend v1.x a v2.x
+        const user = data.user || data.usuario || {};
+        const email = typeof user === 'string' ? user : (user.email || data.usuario || '');
+        const nombre = data.nombre || user.nombre || email;
+        const rol = data.rol || user.rol || 'USUARIO';
 
         const session = {
             isAuthenticated: true,
-            usuario: usuarioValue,
-            farmaciaId: data.farmacia_id,
-            nombre: nombreValue,
+            usuario: email,
+            email: email,
+            userId: data.user_id || user.id || data.id || null,
+            farmaciaId: data.farmacia_id !== undefined ? data.farmacia_id : (user.farmacia_id || null),
+            nombre: nombre,
+            userName: nombre,
+            rol: rol,
             token: data.token
         };
         localStorage.setItem(this.SESSION_KEY, JSON.stringify(session));

@@ -7,8 +7,12 @@ declare(strict_types=1);
  */
 
 class JsonResponse {
-    public static function success($data, int $statusCode = 200): void {
-        self::send(['success' => true, 'data' => $data], $statusCode);
+    public static function success($data, $message = null, int $statusCode = 200): void {
+        $response = ['success' => true, 'data' => $data];
+        if ($message !== null) {
+            $response['message'] = $message;
+        }
+        self::send($response, $statusCode);
     }
 
     public static function error(string $message, int $statusCode = 400): void {

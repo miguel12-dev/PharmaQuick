@@ -1,0 +1,203 @@
+# PharmaQuick - Test de Estrés 1000 Usuarios (5 minutos)
+# Test optimizado para encontrar el punto de ruptura con carga moderada
+
+config:
+  target: "http://localhost:8080"
+  phases:
+    # Fase 1: Warm-up rápido (30 seg) - 10 a 50 usuarios
+    - name: "Warm-up"
+      duration: 30
+      arrivalRate: 10
+      rampTo: 50
+
+    # Fase 2: Carga media (1 min) - 50 a 200 usuarios
+    - name: "Carga Media"
+      duration: 60
+      arrivalRate: 50
+      rampTo: 200
+
+    # Fase 3: Pico (1 min) - 200 a 600 usuarios
+    - name: "Pico"
+      duration: 60
+      arrivalRate: 200
+      rampTo: 600
+
+    # Fase 4: Sostención (1.5 min) - Mantener ~800 usuarios
+    - name: "Carga Sostenida"
+      duration: 90
+      arrivalRate: 600
+      rampTo: 800
+
+    # Fase 5: Enfriamiento (30 seg)
+    - name: "Enfriamiento"
+      duration: 30
+      arrivalRate: 800
+      rampTo: 50
+
+  # Datos de usuarios
+  payload:
+    path: "data/usuarios.csv"
+    fields:
+      - "email"
+      - "password"
+      - "nombre"
+      - "rol"
+    order: "random"
+    skipHeader: true
+
+  ensure:
+    thresholds:
+      - http.response_time.p95: 2000
+      - http.response_time.p99: 4000
+      - http.codes.500: "< 5%"
+    conditions:
+      - expression: "http.codes.200 > 50"
+        strict: false
+      - expression: "http.response_time.p99 < 8000"
+        strict: false
+
+  # Configuración de engine
+  http2: false
+  timeout: 30
+
+scenarios:
+  # Escenario 1: Usuario autenticado - CRUD completo (40%)
+  - name: "Usuario Autenticado - CRUD"
+    weight: 40
+    flow:
+      # Login
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Obtener perfil
+      - get:
+          url: "/api/perfil"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Listar productos
+      - get:
+          url: "/api/productos"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+  # Escenario 2: Inventario (30%)
+  - name: "Operaciones de Inventario"
+    weight: 30
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Ver resumen inventario
+      - get:
+          url: "/api/inventario/resumen"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Ver alertas
+      - get:
+          url: "/api/inventario/alertas"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+  # Escenario 3: Búsqueda (20%)
+  - name: "Búsqueda de Productos"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Buscar productos
+      - get:
+          url: "/api/productos/search?q=para"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Ver categorías
+      - get:
+          url: "/api/productos/categorias"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+  # Escenario 4: Ventas y reservas (10%)
+  - name: "Ventas y Reservas"
+    weight: 10
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Ver ventas
+      - get:
+          url: "/api/ventas"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Ver reservas
+      - get:
+          url: "/api/reservas"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200

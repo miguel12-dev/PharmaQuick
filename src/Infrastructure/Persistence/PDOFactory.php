@@ -5,9 +5,14 @@ declare(strict_types=1);
 /**
  * PharmaQuick - PDOFactory
  */
+namespace PharmaQuick\Infrastructure\Persistence;
+
+use PDO;
 
 class PDOFactory {
     private static $connections = [];
+    public const CLUSTER_PREFIX = 'db_cluster_';
+    public const MAX_PHARMACIES_PER_CLUSTER = 5;
 
     const DB_MASTER = [
         'host' => 'mysql',
@@ -49,4 +54,9 @@ class PDOFactory {
             throw new \Exception("Error connecting to $name: " . $e->getMessage());
         }
     }
+}
+
+// Compatibilidad retroactiva para código legacy sin namespace.
+if (!class_exists('PDOFactory', false)) {
+    class_alias(PDOFactory::class, 'PDOFactory');
 }

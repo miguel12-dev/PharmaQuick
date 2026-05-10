@@ -69,6 +69,12 @@ class Router {
      */
     static navigateTo(path, pushState = true) {
         path = this.normalizePath(path);
+
+        // Misma regla que navigate(): rutas protegidas sin sesión → login
+        if (!this.isPublicRoute(path) && !this.isAuthenticated()) {
+            this.redirectToLogin();
+            return;
+        }
         
         // Buscar route coincidente
         const route = this.findRoute(path);
@@ -191,6 +197,10 @@ class Router {
     static normalizePath(path) {
         if (!path || path === '') return '/';
         if (path === '/index.html' || path === 'index.html') return '/';
+        // Rutas relativas desde enlaces (ej. "login") → absolutas
+        if (!path.startsWith('/')) {
+            path = '/' + path;
+        }
         if (path.endsWith('/') && path !== '/') return path.slice(0, -1);
         return path;
     }
@@ -199,7 +209,7 @@ class Router {
      * Verificar si es ruta pública
      */
     static isPublicRoute(path) {
-        const publicRoutes = ['/login', '/404', '/500', '/403'];
+        const publicRoutes = ['/', '/login', '/register', '/tienda', '/404', '/500', '/403'];
         return publicRoutes.includes(path);
     }
     
@@ -209,7 +219,9 @@ class Router {
     static isAuthenticated() {
         try {
             const session = JSON.parse(localStorage.getItem('pharmaSession') || '{}');
-            return !!(session.token && session.farmaciaId);
+            // Un usuario está autenticado si tiene un token válido
+            // farmaciaId puede ser null para clientes del sistema
+            return !!session.token;
         } catch (e) {
             return false;
         }

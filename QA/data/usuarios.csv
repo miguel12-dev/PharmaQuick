@@ -1,0 +1,5 @@
+email,password,nombre
+admin@pharmaquick.com,password,Administrador
+qa-tester@pharmaquick.com,password123,Tester QA
+ventas@pharmaquick.com,password,Usuario Ventas
+inventario@pharmaquick.com,password,Usuario Inventario

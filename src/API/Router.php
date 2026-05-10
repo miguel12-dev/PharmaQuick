@@ -10,24 +10,38 @@ declare(strict_types=1);
  * @version 1.0.0
  */
 
-if (!defined('BASE_PATH')) define('BASE_PATH', dirname(__DIR__, 2));
-if (!defined('SRC_PATH')) define('SRC_PATH', BASE_PATH . DIRECTORY_SEPARATOR . 'src');
-if (!defined('PUBLIC_PATH')) define('PUBLIC_PATH', BASE_PATH . DIRECTORY_SEPARATOR . 'public');
-if (!defined('ROUTES_PATH')) define('ROUTES_PATH', SRC_PATH . DIRECTORY_SEPARATOR . 'API' . DIRECTORY_SEPARATOR . 'routes');
+if (!defined('BASE_PATH'))
+    define('BASE_PATH', dirname(__DIR__, 2));
+if (!defined('SRC_PATH'))
+    define('SRC_PATH', BASE_PATH . DIRECTORY_SEPARATOR . 'src');
+if (!defined('PUBLIC_PATH'))
+    define('PUBLIC_PATH', BASE_PATH . DIRECTORY_SEPARATOR . 'public');
+if (!defined('ROUTES_PATH'))
+    define('ROUTES_PATH', SRC_PATH . DIRECTORY_SEPARATOR . 'API' . DIRECTORY_SEPARATOR . 'routes');
 
 require_once SRC_PATH . '/Core/App.php';
 require_once SRC_PATH . '/Core/JsonResponse.php';
 require_once SRC_PATH . '/Core/Exceptions.php';
-// Precarga de firmas de rutas para anÃƒÂ¡lisis estÃƒÂ¡tico (y para evitar require condicional en editores).
+require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
+require_once SRC_PATH . '/Infrastructure/Persistence/UsuarioRepository.php';
+require_once SRC_PATH . '/Infrastructure/Services/JwtService.php';
+require_once SRC_PATH . '/Infrastructure/Services/AuthService.php';
+// Precarga de rutas públicas (auth sin middleware JWT)
+require_once ROUTES_PATH . '/auth.php';
+// Precarga de firmas de rutas para anÃ¡lisis estÃ¡tico (y para evitar require condicional en editores).
 require_once ROUTES_PATH . '/lotes.php';
 require_once ROUTES_PATH . '/inventario.php';
+require_once ROUTES_PATH . '/ventas.php';
+// [DESHABILITADO] require_once ROUTES_PATH . '/reservas.php'; // Reservas deshabilitadas
 
-class PharmaRouter {
+class PharmaRouter
+{
     private string $method;
     private string $uri;
-    private array $publicRoutes = ['/api/auth/login'];
+    private array $publicRoutes = ['/api/auth/login', '/api/auth/register'];
 
-    public function __construct() {
+    public function __construct()
+    {
         App::bootstrap();
         $this->method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         $requestUri = $_SERVER['REQUEST_URI'] ?? '/';
@@ -36,14 +50,15 @@ class PharmaRouter {
         $this->uri = $normalizedPath !== '' ? $normalizedPath : '/';
     }
 
-    public function run(): void {
-        // Archivos estÃƒÂ¡ticos (HTML, CSS, JS)
+    public function run(): void
+    {
+        // Archivos estÃ¡ticos (HTML, CSS, JS)
         if ($this->method === 'GET' && !$this->isApiRequest($this->uri)) {
             $this->serveStaticFile();
             return;
         }
 
-        // Health check pÃƒÂºblico
+        // Health check pÃºblico
         if ($this->method === 'GET' && $this->uri === '/health') {
             header('Content-Type: application/json');
             echo json_encode(['service' => 'PharmaQuick API', 'status' => 'running']);
@@ -57,48 +72,168 @@ class PharmaRouter {
         }
 
         JsonResponse::error('Recurso no encontrado', 404);
+        return;
     }
 
-    private function isApiRequest(string $uri): bool {
+    private function isApiRequest(string $uri): bool
+    {
         return strpos($uri, '/api/') === 0;
     }
 
-    private function handleApi(): void {
-        // Verificar si es ruta pÃƒÂºblica (login)
+    private function handleApi(): void
+    {
+        // DEBUG: Log de la uri y método
+        error_log("handleApi called: uri=" . $this->uri . " method=" . $this->method);
+        
+        // Verificar si es ruta pÃºblica (login/register)
         if (in_array($this->uri, $this->publicRoutes) && $this->method === 'POST') {
-            require_once ROUTES_PATH . '/auth.php';
-            handleAuthLogin();
+            if ($this->uri === '/api/auth/login') {
+                handleAuthLogin();
+            } else if ($this->uri === '/api/auth/register') {
+                handleAuthRegister();
+            }
             return;
         }
 
         // Verificar si es login GET para testing
         if ($this->method === 'GET' && $this->uri === '/api/auth/login') {
-            require_once ROUTES_PATH . '/auth.php';
             $email = $_GET['email'] ?? 'admin@pharmaquick.com';
             $password = $_GET['password'] ?? 'password';
             handleAuthLogin();
             return;
         }
 
-        // Todas las demÃƒÂ¡s rutas requieren JWT
+        // Rutas pÃºblicas sin JWT (vitrina e-commerce)
+        if (strpos($this->uri, '/api/public/') === 0) {
+            $this->handlePublicApi();
+            return;
+        }
+
+        // Rutas de compras de cliente (públicas para testing - sin JWT)
+        $uriPath = parse_url($this->uri, PHP_URL_PATH);
+        error_log("DEBUG: Checking compras route, full uri=" . $this->uri . ", path=" . $uriPath);
+        if ($uriPath === '/api/compras' || strpos($uriPath, '/api/compras/') === 0) {
+            $this->handleComprasClienteApi();
+            return;
+        }
+        
+        // Rutas de carrito (públicas para testing - sin JWT)
+        if ($uriPath === '/api/carrito' || strpos($uriPath, '/api/carrito/') === 0) {
+            $this->handleCarritoApi();
+            return;
+        }
+
+        // Todas las demÃ¡s rutas requieren JWT
         require_once SRC_PATH . '/Infrastructure/Services/JwtService.php';
         require_once SRC_PATH . '/API/Middleware/JwtMiddleware.php';
 
         $middleware = new JwtMiddleware();
-        
+
         if (!$middleware->handle()) {
-            return; // Ya respondiÃƒÂ³ con error
+            return; // Ya respondiÃ³ con error
         }
 
-        // Enrutar segÃƒÂºn URI
+        // Enrutar segÃºn URI
         $this->dispatchRoutes();
     }
 
-    private function dispatchRoutes(): void {
+    private function handlePublicApi(): void
+    {
+        require_once ROUTES_PATH . '/public.php';
+
+        if ($this->uri === '/api/public/catalogo' && $this->method === 'GET') {
+            handleGetPublicCatalogo();
+            return;
+        }
+
+        if ($this->uri === '/api/public/productos-top' && $this->method === 'GET') {
+            handleGetPublicProductosTop();
+            return;
+        }
+
+        JsonResponse::error('Recurso publico no encontrado', 404);
+    }
+
+    private function handleComprasClienteApi(): void
+    {
+        require_once ROUTES_PATH . '/compras_cliente.php';
+
+        // POST /api/compras - Crear compra
+        if ($this->uri === '/api/compras' && $this->method === 'POST') {
+            handlePostCompra();
+            return;
+        }
+
+        // GET /api/compras - Listar compras
+        if ($this->uri === '/api/compras' && $this->method === 'GET') {
+            handleGetCompras();
+            return;
+        }
+
+        // GET /api/compras/{codigo} - Obtener compra específica
+        if ($this->method === 'GET' && preg_match('#^/api/compras/([A-Z0-9-]+)$#', $this->uri, $matches)) {
+            handleGetCompraByCodigo($matches[1]);
+            return;
+        }
+
+        // POST /api/compras/metodo-pago - Guardar método de pago
+        if ($this->uri === '/api/compras/metodo-pago' && $this->method === 'POST') {
+            handlePostMetodoPago();
+            return;
+        }
+
+        // GET /api/compras/metodos-pago - Listar métodos de pago
+        if ($this->uri === '/api/compras/metodos-pago' && $this->method === 'GET') {
+            handleGetMetodosPago();
+            return;
+        }
+
+        JsonResponse::error('Recurso de compras no encontrado', 404);
+    }
+
+    private function handleCarritoApi(): void
+    {
+        require_once ROUTES_PATH . '/carrito.php';
+        
+        // GET /api/carrito - Obtener carrito del usuario
+        if ($this->uri === '/api/carrito' && $this->method === 'GET') {
+            handleGetCarrito();
+            return;
+        }
+        
+        // POST /api/carrito - Agregar producto
+        if ($this->uri === '/api/carrito' && $this->method === 'POST') {
+            handlePostCarrito();
+            return;
+        }
+        
+        // DELETE /api/carrito - Vaciar carrito
+        if ($this->uri === '/api/carrito' && $this->method === 'DELETE') {
+            handleDeleteCarrito();
+            return;
+        }
+        
+        // PUT /api/carrito/{id} - Actualizar cantidad
+        if ($this->method === 'PUT' && preg_match('#^/api/carrito/(\d+)$#', $this->uri, $matches)) {
+            handlePutCarritoItem((int) $matches[1]);
+            return;
+        }
+        
+        // DELETE /api/carrito/{id} - Eliminar item
+        if ($this->method === 'DELETE' && preg_match('#^/api/carrito/(\d+)$#', $this->uri, $matches)) {
+            handleDeleteCarritoItem((int) $matches[1]);
+            return;
+        }
+        
+        JsonResponse::error('Recurso de carrito no encontrado', 404);
+    }
+
+    private function dispatchRoutes(): void
+    {
         // ===================
         // PRODUCTOS
         // ===================
-        
+
         // GET /api/productos - Listar productos por farmacia
         if ($this->uri === '/api/productos' && $this->method === 'GET') {
             require_once ROUTES_PATH . '/productos.php';
@@ -120,7 +255,7 @@ class PharmaRouter {
             return;
         }
 
-        // PUT/POST /api/productos/{id} - Actualizar producto (POST para soportar imÃƒÂ¡genes en FormData)
+        // PUT/POST /api/productos/{id} - Actualizar producto (POST para soportar imÃ¡genes en FormData)
         if (($this->method === 'PUT' || $this->method === 'POST') && preg_match('#^/api/productos/(\d+)$#', $this->uri, $matches)) {
             require_once ROUTES_PATH . '/productos.php';
             handlePutProductos((int) $matches[1]);
@@ -233,7 +368,7 @@ class PharmaRouter {
         }
 
         // ===================
-        // PERFIL
+        // PERFIL (Admin)
         // ===================
         if ($this->uri === '/api/perfil' && $this->method === 'GET') {
             require_once ROUTES_PATH . '/perfil.php';
@@ -244,6 +379,21 @@ class PharmaRouter {
         if ($this->uri === '/api/perfil/password' && $this->method === 'PUT') {
             require_once ROUTES_PATH . '/perfil.php';
             handlePutPerfilPassword();
+            return;
+        }
+
+        // ===================
+        // PERFIL CLIENTE
+        // ===================
+        if ($this->uri === '/api/cliente/perfil' && $this->method === 'GET') {
+            require_once ROUTES_PATH . '/perfil_cliente.php';
+            handleGetClientePerfil();
+            return;
+        }
+
+        if ($this->uri === '/api/cliente/perfil/password' && $this->method === 'PUT') {
+            require_once ROUTES_PATH . '/perfil_cliente.php';
+            handlePutClientePassword();
             return;
         }
 
@@ -302,10 +452,52 @@ class PharmaRouter {
             return;
         }
 
+        // ===================
+        // VENTAS Y RESERVAS
+        // ===================
+        if ($this->uri === '/api/ventas/top-productos' && $this->method === 'GET') {
+            require_once ROUTES_PATH . '/public.php';
+            handleGetTopProductosAuth();
+            return;
+        }
+
+        if ($this->uri === '/api/ventas' && $this->method === 'GET') {
+            require_once ROUTES_PATH . '/ventas.php';
+            handleGetVentas();
+            return;
+        }
+
+        if ($this->uri === '/api/ventas/crear' && $this->method === 'POST') {
+            require_once ROUTES_PATH . '/ventas.php';
+            handlePostVentasCrear();
+            return;
+        }
+
+        // [DESHABILITADO] Rutas de reservas - Línea comentada por no utilizarse en la aplicación
+        // if ($this->uri === '/api/reservas' && $this->method === 'GET') {
+        //     require_once ROUTES_PATH . '/reservas.php';
+        //     handleGetReservas();
+        //     return;
+        // }
+        //
+        // if ($this->uri === '/api/reservas' && $this->method === 'POST') {
+        //     require_once ROUTES_PATH . '/reservas.php';
+        //     handlePostReservas();
+        //     return;
+        // }
+        //
+        // // Endpoint Cronjob (Idealmente protegido o llamado interno)
+        // if ($this->uri === '/api/reservas/cron' && $this->method === 'POST') {
+        //     require_once ROUTES_PATH . '/reservas.php';
+        //     handlePostReservasCron();
+        //     return;
+        // }
+
         JsonResponse::error('Recurso no encontrado', 404);
     }
 
-    private function serveStaticFile(): void {
+    private function serveStaticFile(): void
+    {
         $requestUri = $this->uri === '/' ? '/index.html' : $this->uri;
         $filePath = PUBLIC_PATH . $requestUri;
         $filePath = realpath($filePath);
@@ -348,4 +540,3 @@ class PharmaRouter {
 // Ejecutar router
 $router = new PharmaRouter();
 $router->run();
-

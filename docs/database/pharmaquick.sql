@@ -14,14 +14,16 @@ CREATE TABLE farmacias (
 
 CREATE TABLE usuarios (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    farmacia_id INT UNSIGNED NOT NULL,
+    farmacia_id INT UNSIGNED NULL,
     email VARCHAR(150) NOT NULL,
     password_hash VARCHAR(255),
-    rol ENUM('USUARIO','ADMINISTRADOR') DEFAULT 'USUARIO',
+    rol ENUM('ADMIN', 'FARMACEUTICO', 'AUXILIAR', 'CLIENTE') NOT NULL DEFAULT 'CLIENTE',
     activo BOOLEAN DEFAULT TRUE,
 
-    UNIQUE (farmacia_id, email),
+    -- Índice único global por email (para clientes globales)
+    UNIQUE (email),
 
+    -- FK solo aplica cuando farmacia_id no es NULL
     FOREIGN KEY (farmacia_id) REFERENCES farmacias(id)
 ) ENGINE=InnoDB;
 

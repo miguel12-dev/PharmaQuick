@@ -10,15 +10,24 @@ function handleGetPerfil(): void {
 
         $userId = Auth::userId();
         $farmaciaId = Auth::farmaciaId();
+        $rol = Auth::rol();
 
-        if (!$userId || !$farmaciaId) {
+        if (!$userId) {
             JsonResponse::error('Contexto de autenticación inválido', 401);
             return;
         }
 
-        $cluster = (int) ceil($farmaciaId / 5);
-        $cluster = $cluster < 1 ? 1 : $cluster;
-        $pdo = PDOFactory::getCluster($cluster);
+        // Para CLIENTE sin farmacia, usar Master; para otros roles con farmacia, usar cluster
+        if ($rol === 'CLIENTE' || $farmaciaId === null) {
+            // Clientes globales consultan en Master
+            $pdo = PDOFactory::getMaster();
+        } else {
+            // Usuarios con farmacia consultan en su cluster
+            $cluster = (int) ceil($farmaciaId / 5);
+            $cluster = $cluster < 1 ? 1 : $cluster;
+            $pdo = PDOFactory::getCluster($cluster);
+        }
+        
         $repo = new UsuarioRepository($pdo);
         $user = $repo->findProfileById($userId);
 
@@ -27,8 +36,13 @@ function handleGetPerfil(): void {
             return;
         }
 
-        $farmaciaNombre = $repo->findFarmaciaNameById((int) $user['farmacia_id']);
-        $user['farmacia_nombre'] = $farmaciaNombre ?? ('Farmacia #' . (int) $user['farmacia_id']);
+        // Obtener nombre de farmacia si existe
+        if ($farmaciaId !== null && isset($user['farmacia_id'])) {
+            $farmaciaNombre = $repo->findFarmaciaNameById((int) $user['farmacia_id']);
+            $user['farmacia_nombre'] = $farmaciaNombre ?? ('Farmacia #' . (int) $user['farmacia_id']);
+        } else {
+            $user['farmacia_nombre'] = 'Cliente del Sistema';
+        }
 
         JsonResponse::success(['perfil' => $user], 200);
     } catch (\Throwable $e) {
@@ -63,14 +77,22 @@ function handlePutPerfilPassword(): void {
 
         $userId = Auth::userId();
         $farmaciaId = Auth::farmaciaId();
-        if (!$userId || !$farmaciaId) {
+        $rol = Auth::rol();
+
+        if (!$userId) {
             JsonResponse::error('Contexto de autenticación inválido', 401);
             return;
         }
 
-        $cluster = (int) ceil($farmaciaId / 5);
-        $cluster = $cluster < 1 ? 1 : $cluster;
-        $pdo = PDOFactory::getCluster($cluster);
+        // Para CLIENTE sin farmacia, usar Master; para otros roles con farmacia, usar cluster
+        if ($rol === 'CLIENTE' || $farmaciaId === null) {
+            $pdo = PDOFactory::getMaster();
+        } else {
+            $cluster = (int) ceil($farmaciaId / 5);
+            $cluster = $cluster < 1 ? 1 : $cluster;
+            $pdo = PDOFactory::getCluster($cluster);
+        }
+
         $repo = new UsuarioRepository($pdo);
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
         $updated = $repo->updatePassword($userId, $passwordHash);

@@ -18,7 +18,8 @@ const InventoryPage = {
     renderLayout(container) {
         const template = document.getElementById('template-layout');
         if (template) {
-            container.innerHTML = template.innerHTML;
+            container.innerHTML = '';
+            container.appendChild(template.content.cloneNode(true));
         }
 
         const pageContent = container.querySelector('.page-content');
@@ -151,10 +152,13 @@ const InventoryPage = {
         // Logout
         const logoutBtns = container.querySelectorAll('#logoutBtn, #logoutBtnDropdown');
         logoutBtns.forEach(btn => {
-            btn.addEventListener('click', (event) => {
+            btn.addEventListener('click', async (event) => {
                 event.preventDefault();
-                if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
-                    Router.logout();
+                event.stopPropagation();
+                const confirmed = await Confirm('¿Estás seguro que deseas cerrar sesión?');
+                if (confirmed) {
+                    localStorage.removeItem('pharmaSession');
+                    window.location.href = '/login';
                 }
             });
         });

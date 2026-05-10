@@ -30,7 +30,9 @@ const moduleFiles = [
     '/frontend/modules/products/ProductView.js',
     '/frontend/modules/prices/PriceService.js',
     '/frontend/modules/prices/PriceController.js',
-    '/frontend/modules/prices/PriceView.js'
+    '/frontend/modules/prices/PriceView.js',
+    '/frontend/modules/shopping/ShoppingService.js',
+    '/frontend/modules/shopping/CartService.js'
 ];
 
 const pageFiles = [

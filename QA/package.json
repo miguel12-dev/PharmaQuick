@@ -1,0 +1,41 @@
+{
+  "name": "pharmaquick-qa",
+  "version": "1.0.0",
+  "description": "Load Testing con Artillery para PharmaQuick",
+  "main": "index.js",
+  "scripts": {
+    "test:basic": "artillery run tests/basic/basico.yaml --output resultados/basico.json",
+    "test:auth": "artillery run tests/basic/jwt-auth.yaml --output resultados/jwt-auth.json",
+    "test:api": "artillery run tests/basic/api-rest.yaml --output resultados/api-rest.json",
+    "test:all": "npm run test:basic && npm run test:auth && npm run test:api",
+    "test:stress": "artillery run tests/advanced/stress-test.yaml --output resultados/stress-test.json",
+    "test:realistic": "artillery run tests/advanced/realistic-scenario.yaml --output resultados/realistic-test.json",
+    "test:spike": "artillery run tests/advanced/spike-test.yaml --output resultados/spike-test.json",
+    "test:stress:1000": "artillery run tests/advanced/stress-1000.yaml --output resultados/stress-1000.json",
+    "test:stress:1000:ps1": "powershell -ExecutionPolicy Bypass -File tests/advanced/scripts/run-stress-1000.ps1",
+    "test:load:1000": "artillery run tests/advanced/load-1000.yaml --output resultados/load-1000.json",
+    "test:load:1000:ps1": "powershell -ExecutionPolicy Bypass -File tests/advanced/scripts/run-load-1000.ps1",
+    "test:safe": "artillery run tests/advanced/safe-load.yaml --output resultados/safe-load.json",
+    "test:safe:ps1": "powershell -ExecutionPolicy Bypass -File tests/advanced/scripts/run-safe-load.ps1",
+    "test:simple": "artillery run tests/advanced/test-simple.yaml --output resultados/test-simple.json",
+    "test:simple:ps1": "powershell -ExecutionPolicy Bypass -File tests/advanced/scripts/run-test-simple.ps1",
+    "test:load:5000": "artillery run tests/advanced/load-5000.yaml --output resultados/load-5000.json",
+    "test:load:5000:ps1": "powershell -ExecutionPolicy Bypass -File tests/advanced/scripts/run-load-5000.ps1",
+    "test:advanced:all": "powershell -ExecutionPolicy Bypass -File tests/advanced/scripts/run-all-advanced-tests.ps1",
+    "test:stress:ps1": "powershell -ExecutionPolicy Bypass -File tests/advanced/scripts/run-stress-test.ps1",
+    "test:realistic:ps1": "powershell -ExecutionPolicy Bypass -File tests/advanced/scripts/run-realistic-test.ps1",
+    "test:spike:ps1": "powershell -ExecutionPolicy Bypass -File tests/advanced/scripts/run-spike-test.ps1"
+  },
+  "keywords": [
+    "artillery",
+    "load-testing",
+    "performance",
+    "qa",
+    "pharmaquick"
+  ],
+  "author": "PharmaQuick QA Team",
+  "license": "MIT",
+  "devDependencies": {
+    "artillery": "^2.0.0"
+  }
+}

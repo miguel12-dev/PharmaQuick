@@ -1,0 +1,89 @@
+/**
+ * Cabecera pública PharmaQuick (logo + acciones)
+ * Requiere css/styles.css antes (variables --pq-*).
+ */
+
+.pq-site-header {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(14px) saturate(1.2);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    border-bottom: 1px solid rgba(var(--pq-primary-rgb), 0.08);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+}
+
+.pq-site-header__logo-wrap {
+    display: block;
+    width: min(100%, clamp(160px, 42vw, 240px));
+    max-width: 240px;
+    line-height: 0;
+}
+
+.pq-site-header__logo {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: clamp(40px, 10vw, 52px);
+    object-fit: contain;
+    object-position: left center;
+}
+
+.pq-site-header .btn-outline-primary {
+    color: var(--pq-primary-dark);
+    border-color: rgba(var(--pq-primary-rgb), 0.45);
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.pq-site-header .btn-outline-primary:hover {
+    color: #fff;
+    background-color: var(--pq-primary);
+    border-color: var(--pq-primary);
+}
+
+.pq-site-header .btn-primary {
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+/* Nuevos estilos para navegación */
+.pq-nav-link {
+    color: #4a5568;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.5rem 0;
+    transition: color 0.2s ease;
+    font-family: 'Outfit', sans-serif;
+}
+
+.pq-nav-link:hover {
+    color: var(--pq-primary);
+}
+
+.pq-site-header .btn-link {
+    transition: transform 0.2s ease, color 0.2s ease;
+    text-decoration: none;
+}
+
+.pq-site-header .btn-link:hover {
+    transform: translateY(-1px);
+    color: var(--pq-primary) !important;
+}
+
+.border-start {
+    border-color: rgba(var(--pq-primary-rgb), 0.1) !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .pq-nav-link {
+        font-size: 0.85rem;
+    }
+    .pq-site-header__inner {
+        padding-top: 0.75rem !important;
+        padding-bottom: 0.75rem !important;
+    }
+}

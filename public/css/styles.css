@@ -1,13 +1,13 @@
 :root {
-    /* Primary color: PharmaGreen Mint Premium */
-    --pq-primary: #10b981;
-    --pq-primary-rgb: 16, 185, 129;
-    --pq-primary-dark: #059669;
-    --pq-primary-light: #34d399;
-    --pq-primary-soft: rgba(16, 185, 129, 0.1);
+    /* Primary color: verde menta marca (logo PharmaQuick) */
+    --pq-primary: #3eb489;
+    --pq-primary-rgb: 62, 180, 137;
+    --pq-primary-dark: #2d9a73;
+    --pq-primary-light: #5dc9a4;
+    --pq-primary-soft: rgba(62, 180, 137, 0.12);
     
     --pq-secondary: #0f172a;
-    --pq-success: #10b981;
+    --pq-success: #3eb489;
     --pq-danger: #ef4444;
     --pq-warning: #f59e0b;
     --pq-info: #0ea5e9;
@@ -823,7 +823,7 @@ body.sidebar-collapsed .navbar-logo-collapsed {
 }
 
 .inventory-semaforo-verde {
-    background-color: rgba(16, 185, 129, 0.14);
+    background-color: rgba(var(--pq-primary-rgb), 0.14);
     color: var(--pq-primary-dark);
 }
 

@@ -1,0 +1,31 @@
+# Walkthrough: Registro Global de Clientes
+
+Se ha implementado el sistema de registro de clientes a nivel global en PharmaQuick, permitiendo que usuarios independientes de una farmacia puedan registrarse, iniciar sesión y realizar compras/reservas.
+
+## Cambios Realizados
+
+### 1. Base de Datos (pharma_master)
+- Se modificó la tabla `usuarios` para incluir el rol `CLIENTE` en el `ENUM`.
+- Se permitió que `farmacia_id` sea `NULL`, indicando un usuario del sistema y no de una farmacia específica.
+
+### 2. Backend (PHP)
+- **`UsuarioRepository.php`**: Nuevo método `create()` y ajuste en `authenticate()` para manejar usuarios sin farmacia.
+- **`AuthService.php`**: Lógica de autenticación de dos niveles (Master -> Clúster). Implementación del método `register()`.
+- **`JwtMiddleware.php`**: Consulta obligatoria al Master para obtener el rol, asegurando que `CLIENTE` sea reconocido globalmente.
+
+### 3. Frontend (JS SPA)
+- **`RegisterPage.js`**: Nueva página de registro con validaciones y diseño premium.
+- **`LayoutHelper.js`**: Utilidad centralizada para renderizar el layout y filtrar el sidebar según el rol (`CLIENTE` no ve módulos administrativos).
+- **`SiteHeader.js`**: Dropdown de usuario con nombre y cierre de sesión.
+- **`HomePage.js`**: Flujo optimizado para que usuarios logueados vayan directo al carrito/reserva.
+- **`SalesController.js`**: Soporte para añadir productos automáticamente desde la URL (ej. `?producto=123`).
+
+## Verificación Recomendada
+
+1. **Registro**: Ir a `/register`, crear una cuenta.
+2. **Login**: Iniciar sesión con la nueva cuenta.
+3. **Sidebar**: Verificar que solo se vea "Ventas", "Reservas" y "Perfil" (o lo permitido para clientes).
+4. **Compra**: Desde el home, hacer clic en "Comprar" de un producto y verificar que se añada al carrito automáticamente en la página de ventas.
+
+> [!IMPORTANT]
+> Recuerda ejecutar el script de migración SQL en `pharma_master` antes de probar el registro en producción.

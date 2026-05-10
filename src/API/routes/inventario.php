@@ -144,7 +144,7 @@ function handleGetFefo(): void {
                 l.stock_reservado,
                 l.costo_unitario,
                 DATEDIFF(l.fecha_vencimiento, CURDATE()) AS dias_restantes
-            FROM lotes l
+            FROM lotes l FORCE INDEX (idx_fefo_lookup)
             WHERE l.farmacia_id = :farmacia_id
               AND l.producto_id = :producto_id
               AND l.stock_actual > 0
@@ -482,7 +482,7 @@ function handlePostMovimientoInventario(): void {
         require_once SRC_PATH . '/Domain/Services/InventarioMovimientoService.php';
         $pdo = PDOFactory::getCluster(1);
 
-        if (!class_exists(\PharmaQuick\Infrastructure\Persistence\LoteRepository::class)) {
+        if (!class_exists(LoteRepository::class)) {
             throw new RuntimeException('No se pudo cargar LoteRepository');
         }
 

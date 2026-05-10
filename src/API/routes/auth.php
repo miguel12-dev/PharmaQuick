@@ -6,9 +6,19 @@ declare(strict_types=1);
  * PharmaQuick - Rutas de Autenticación
  * 
  * Maneja el login y logout (rutas públicas, SIN middleware JWT)
+ * OPTIMIZADO: Usa singleton de AuthService
+ * @version 1.1.0
  */
 
+// Singleton de AuthService para reuse
+static $authService = null;
+if ($authService === null) {
+    $authService = new AuthService(1);
+}
+
 function handleAuthLogin(): void {
+    global $authService;
+    
     // Soporta tanto JSON como FormData
     $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
     
@@ -29,20 +39,36 @@ function handleAuthLogin(): void {
     }
 
     try {
-        // Cargar dependencias en orden
-        require_once SRC_PATH . '/Core/Exceptions.php';
-        require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
-        require_once SRC_PATH . '/Infrastructure/Persistence/UsuarioRepository.php';
-        require_once SRC_PATH . '/Infrastructure/Services/JwtService.php';
-        require_once SRC_PATH . '/Infrastructure/Services/AuthService.php';
-
-        $authService = new AuthService(1);
         $result = $authService->login($email, $password);
 
         JsonResponse::authSuccess(1, $result['user'], $result['token'], 'Autenticacion exitosa');
 
     } catch (AuthenticationException $e) {
         JsonResponse::error($e->getMessage(), 401);
+    } catch (\Throwable $e) {
+        JsonResponse::error('Error: ' . $e->getMessage(), 500);
+    }
+}
+
+function handleAuthRegister(): void {
+    global $authService;
+    
+    $postData = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+    
+    $email = $postData['email'] ?? '';
+    $password = $postData['password'] ?? '';
+    $nombre = $postData['nombre'] ?? null;
+
+    if (empty($email) || empty($password)) {
+        JsonResponse::error('Email y contrasena son requeridos', 400);
+        return;
+    }
+
+    try {
+        $result = $authService->register($email, $password, $nombre);
+        JsonResponse::success($result, 201, 'Registro exitoso. Ya puede iniciar sesion.');
+    } catch (AuthenticationException $e) {
+        JsonResponse::error($e->getMessage(), 400);
     } catch (\Throwable $e) {
         JsonResponse::error('Error: ' . $e->getMessage(), 500);
     }

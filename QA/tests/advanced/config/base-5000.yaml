@@ -1,0 +1,86 @@
+# PharmaQuick - Configuración Base para Tests de Carga Avanzados (5000 usuarios)
+# Esta configuración base se incluye en todos los tests avanzados
+# Define la infraestructura común, plugins y configuración de salida
+
+# Configuración base que se merging con cada test específico
+_base: &base
+  target: "http://localhost:8080"
+  plugins:
+    expect: {}
+  # Configuración de salida para métricas
+  processor: "../scripts/processors.js"
+  variables:
+    environment: "production-mock"
+    apiVersion: "v1"
+
+# Configuración de fases comunes para 5000 usuarios
+_phases: &_phases
+  # Fase 1: Warm-up gradual (2 minutos)
+  - name: "Warm-up Ligero"
+    duration: 120
+    arrivalRate: 10
+    rampTo: 50
+
+  # Fase 2: Carga media (3 minutos)
+  - name: "Carga Media"
+    duration: 180
+    arrivalRate: 50
+    rampTo: 200
+
+  # Fase 3: Carga alta (3 minutos)
+  - name: "Carga Alta"
+    duration: 180
+    arrivalRate: 200
+    rampTo: 500
+
+  # Fase 4: Pico máximo (2 minutos)
+  - name: "Pico Máximo"
+    duration: 120
+    arrivalRate: 500
+    rampTo: 1000
+
+  # Fase 5: Carga sostenida maxima (5 minutos)
+  - name: "Carga Sostenida 5000"
+    duration: 300
+    arrivalRate: 1000
+
+  # Fase 6: Reducción gradual (2 minutos)
+  - name: "Enfriamiento"
+    duration: 120
+    arrivalRate: 1000
+    rampTo: 50
+
+# Configuración de ensures para tests de alto volumen
+_ensure: &_ensure
+  thresholds:
+    - http.response_time.p95: 1000
+    - http.response_time.p99: 2000
+    - http.codes.200: "> 0"
+    - http.codes.201: "> 0"
+    - http.codes.400: "< 5%"
+    - http.codes.401: "< 10%"
+    - http.codes.500: "< 1%"
+  conditions:
+    - expression: "http.codes.200 > 100"
+      strict: false
+
+# Settings de Artillery para alto volumen
+_settings: &_settings
+  # Asegurar que el engine use HTTP/2 si está disponible
+  http2: false
+  # Timeout para requests
+  timeout: 30
+  # Configuración de cookies
+  cookies:
+    enabled: true
+  # Certificados SSL
+  tls:
+    enabled: false
+    rejectUnauthorized: true
+
+# Exportar como variables de configuración
+export:
+  base: *base
+  phases: *_phases
+  ensure: *_ensure
+  settings: *_settings

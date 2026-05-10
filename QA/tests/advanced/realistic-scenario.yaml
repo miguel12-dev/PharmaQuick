@@ -1,0 +1,297 @@
+# PharmaQuick - Test de Escenario Realista (5000 usuarios)
+# Simula patrones de uso realistas de una farmacia:
+# - Consulta de productos (40%)
+# - Búsqueda de productos (25%)
+# - Compras y reservas (20%)
+# - Administración (10%)
+# - Inventario y precios (5%)
+
+config:
+  target: "http://localhost:8080"
+  phases:
+    # Simulación de día laboral típico
+    # Morning ramp - 8am a 9am
+    - name: "Mañana Temprano"
+      duration: 180
+      arrivalRate: 50
+      rampTo: 300
+
+    # Morning peak - 9am a 12pm
+    - name: "Pico Mañana"
+      duration: 180
+      arrivalRate: 300
+      rampTo: 800
+
+    # Lunch time - 12pm a 2pm (menor actividad)
+    - name: "Hora Almuerzo"
+      duration: 120
+      arrivalRate: 800
+      rampTo: 500
+
+    # Afternoon - 2pm a 6pm
+    - name: "Tarde Laboral"
+      duration: 240
+      arrivalRate: 500
+      rampTo: 1500
+
+    # Evening peak - 6pm a 9pm (pico más alto)
+    - name: "Pico Vespertino"
+      duration: 180
+      arrivalRate: 1500
+      rampTo: 3000
+
+    # Peak hour - 9pm a 11pm (máximo)
+    - name: "Hora Pico Máxima"
+      duration: 120
+      arrivalRate: 3000
+      rampTo: 5000
+
+    # Night - 11pm a 12am (declive)
+    - name: "Noche"
+      duration: 60
+      arrivalRate: 5000
+      rampTo: 1000
+
+  # Datos de usuarios
+  payload:
+    path: "data/usuarios.csv"
+    fields:
+      - "email"
+      - "password"
+      - "nombre"
+      - "rol"
+    order: "random"
+    skipHeader: true
+
+  ensure:
+    thresholds:
+      - http.response_time.p95: 800
+      - http.response_time.p99: 1500
+      - http.codes.500: "< 2%"
+    conditions:
+      - expression: "http.codes.200 > 1000"
+        strict: false
+
+  timeout: 20
+
+scenarios:
+  # ESCENARIO 1: Consulta de productos (40%)
+  - name: "Consultar Catálogo Productos"
+    weight: 40
+    flow:
+      # Login
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Listar productos
+      - get:
+          url: "/api/productos"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 2
+
+      # Ver categorías
+      - get:
+          url: "/api/productos/categorias"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Ver precios
+      - get:
+          url: "/api/precios"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+  # ESCENARIO 2: Búsqueda de productos (25%)
+  - name: "Buscar y Filtrar Productos"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Búsqueda por nombre
+      - get:
+          url: "/api/productos/search?q=ibuprofeno"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 2
+
+      # Filtrar por categoría
+      - get:
+          url: "/api/productos/categorias"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Ver inventario FEFO
+      - get:
+          url: "/api/inventario/fefo"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+  # ESCENARIO 3: Compra y reservas (20%)
+  - name: "Proceso Compra y Reservas"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Ver inventario disponible
+      - get:
+          url: "/api/inventario/resumen"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 2
+
+      # Crear reserva
+      - post:
+          url: "/api/reservas"
+          json:
+            productos:
+              - productoId: 1
+                cantidad: 2
+            observaciones: "Test de carga"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 201
+
+      - think: 3
+
+      # Ver mis reservas
+      - get:
+          url: "/api/reservas"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+  # ESCENARIO 4: Administración (10%)
+  - name: "Operaciones Administrativas"
+    weight: 10
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "admin@pharmaquick.com"
+            password: "password"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Ver todas las ventas
+      - get:
+          url: "/api/ventas"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 2
+
+      # Ver alertas de inventario
+      - get:
+          url: "/api/inventario/alertas"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Ver movimientos de inventario
+      - get:
+          url: "/api/inventario/movimientos"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+  # ESCENARIO 5: Inventario y lotes (5%)
+  - name: "Consultar Inventario y Lotes"
+    weight: 5
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Ver lotes
+      - get:
+          url: "/api/lotes"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 2
+
+      # Ver resumen inventario
+      - get:
+          url: "/api/inventario/resumen"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200

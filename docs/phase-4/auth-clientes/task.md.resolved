@@ -1,0 +1,26 @@
+# Tareas: Registro de Clientes Global y Flujo de Compra
+
+## Fase 1: Backend y Base de Datos ✅
+- [x] Aplicar cambios en la tabla `usuarios` de `pharma_master` (rol ENUM y farmacia_id nullable)
+- [x] Actualizar `UsuarioRepository.php` con método `create()` y soporte para Master
+- [x] Actualizar `AuthService.php` para autenticar contra Master
+- [x] Actualizar `JwtMiddleware.php` para obtener rol desde Master
+- [x] Implementar ruta de registro en `auth.php` y `Router.php`
+
+## Fase 2: Frontend - Registro y Login ✅
+- [x] Crear `RegisterPage.js`
+- [x] Actualizar `LoginPage.js` con enlace a registro
+- [x] Registrar ruta `/register` en `app.js` y `Router.js`
+- [x] Añadir script de registro en `index.html`
+
+## Fase 3: Interfaz de Usuario y Flujo ✅
+- [x] Crear `LayoutHelper.js` para manejo centralizado de layout y roles
+- [x] Actualizar `SiteHeader.js` con dropdown de usuario autenticado
+- [x] Actualizar `HomePage.js` para redirección directa de Compra/Reserva si logueado
+- [x] Refactorizar `DashboardPage`, `SalesPage` y `ReservationsPage` para usar `LayoutHelper`
+- [x] Implementar auto-añadido al carrito en `SalesController.js` desde URL
+
+## Fase 4: Verificación ⏳
+- [ ] Probar flujo completo de registro -> login -> compra
+- [ ] Verificar persistencia en `pharma_master`
+- [ ] Validar que los clientes NO vean menús administrativos

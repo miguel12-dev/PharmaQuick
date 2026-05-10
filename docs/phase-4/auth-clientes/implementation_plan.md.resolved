@@ -1,0 +1,64 @@
+# Registro de Clientes Global y Flujo de Compra
+
+Este plan actualiza la estrategia para almacenar clientes en la base de datos maestra (`pharma_master`) y permitirles gestionar sus compras y reservas de forma integrada.
+
+## User Review Required
+
+> [!IMPORTANT]
+> - Todos los usuarios (incluyendo clientes) se validarán prioritariamente contra la tabla `usuarios` en `pharma_master`.
+> - Los clientes tendrán `farmacia_id = NULL` en la tabla maestra ya que son "clientes del sistema".
+> - El rol `CLIENTE` se añadirá al ENUM de roles.
+
+## Proposed Changes
+
+### Database (Master - pharma_master)
+
+#### [MODIFY] [Migration/Manual Change]
+- `ALTER TABLE usuarios MODIFY rol ENUM('ADMINISTRADOR', 'USUARIO', 'CLIENTE') DEFAULT 'USUARIO'`;
+- `ALTER TABLE usuarios MODIFY farmacia_id INT UNSIGNED NULL`;
+- Asegurar que el campo `email` sea único de forma global en la tabla maestra.
+
+---
+
+### Backend (PHP)
+
+#### [MODIFY] [UsuarioRepository.php](file:///c:/Users/Miguel/Desktop/Projects/ing_Yudy/PharmaQuick/src/Infrastructure/Persistence/UsuarioRepository.php)
+- Añadir método `create(array $data): int` para registrar nuevos clientes.
+- Actualizar `authenticate` y `findById` para manejar correctamente `farmacia_id` nulo.
+
+#### [MODIFY] [AuthService.php](file:///c:/Users/Miguel/Desktop/Projects/ing_Yudy/PharmaQuick/src/Infrastructure/Services/AuthService.php)
+- Modificar el constructor para que pueda usar la conexión Master por defecto.
+- Actualizar `login()` para buscar primero en `pharma_master`.
+
+#### [MODIFY] [JwtMiddleware.php](file:///c:/Users/Miguel/Desktop/Projects/ing_Yudy/PharmaQuick/src/API/Middleware/JwtMiddleware.php)
+- Actualizar `obtenerRol()` para consultar siempre la tabla maestra (`pharma_master`), asegurando consistencia de roles a nivel de sistema.
+
+#### [MODIFY] [auth.php](file:///c:/Users/Miguel/Desktop/Projects/ing_Yudy/PharmaQuick/src/API/routes/auth.php)
+- Implementar `handleAuthRegister()` para capturar datos de clientes (email, password, nombre) y guardarlos en el master.
+
+---
+
+### Frontend (JS)
+
+#### [NEW] [RegisterPage.js](file:///c:/Users/Miguel/Desktop/Projects/ing_Yudy/PharmaQuick/public/frontend/pages/RegisterPage.js)
+- Formulario de registro moderno.
+- Al registrarse, el usuario es redirigido al login.
+
+#### [MODIFY] [SiteHeader.js](file:///c:/Users/Miguel/Desktop/Projects/ing_Yudy/PharmaQuick/public/frontend/layout/SiteHeader.js)
+- Implementar el apartado visual del usuario autenticado (Nombre, Dropdown con Perfil, Cambiar Contraseña, Cerrar Sesión).
+- Mostrar este apartado en el Home si el usuario está logueado.
+
+#### [MODIFY] [PublicStoreView.js](file:///c:/Users/Miguel/Desktop/Projects/ing_Yudy/PharmaQuick/public/frontend/modules/public-store/PublicStoreView.js)
+- Ajustar los botones de "Comprar" y "Reservar" para que, si ya está logueado, procedan directamente a la acción sin pasar por el login.
+
+#### [MODIFY] [ReservationsPage.js](file:///c:/Users/Miguel/Desktop/Projects/ing_Yudy/PharmaQuick/public/frontend/pages/ReservationsPage.js)
+- Ocultar menús administrativos en el sidebar si el usuario es `CLIENTE`.
+
+## Verification Plan
+
+### Manual Verification
+1. **Registro**: Ir a `/register`, crear cuenta. Verificar en BD que está en `pharma_master` con `rol = CLIENTE`.
+2. **Login**: Iniciar sesión. Verificar que el Header muestra el nombre del usuario.
+3. **Home**: Verificar que el Header persiste en el Home.
+4. **Compra/Reserva**: Desde la tienda, intentar comprar/reservar. Verificar que se asocia correctamente al `usuario_id` del cliente.
+5. **Seguridad**: Intentar acceder a `/inventario` como cliente y verificar que no es posible o el menú no aparece.

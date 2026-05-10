@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <base href="/">
     <title>PharmaQuick</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💊</text></svg>">
     <!-- Font Awesome 6 (Local) -->
@@ -15,24 +16,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="css/styles.css" rel="stylesheet">
+    <link href="css/styles.css?v=home-modern" rel="stylesheet">
+    <link href="css/site-header.css?v=home-modern" rel="stylesheet">
+    <link href="css/home.css?v=home-modern" rel="stylesheet">
+    <link href="css/login.css?v=home-modern" rel="stylesheet">
+    <link href="css/public-store.css" rel="stylesheet">
+    <link href="frontend/styles/client-catalog.css" rel="stylesheet">
 </head>
 <body class="bg-light">
     <!-- Contenedor principal SPA -->
     <div id="app"></div>
 
-    <!-- Template: Login Page -->
+    <!-- Template: Login Page (solo tarjeta; cabecera en frontend/layout/SiteHeader.js) -->
     <template id="template-login">
-        <div class="container">
-            <div class="row justify-content-center align-items-center min-vh-100">
+            <div class="row justify-content-center">
                 <div class="col-12 col-sm-8 col-md-6 col-lg-4">
-                    <div class="card shadow-lg border-0">
-                        <div class="card-body p-4">
-                            <div class="text-center mb-4">
-                                <i class="bi bi-capsule text-primary fs-1"></i>
-                                <h3 class="mt-2 fw-bold text-dark">PharmaQuick</h3>
-                                <p class="text-muted small">Gestión de Farmacias</p>
-                            </div>
+                    <div class="card login-card shadow-lg border-0">
+                        <div class="card-body">
+                            <p class="text-center login-subtitle mb-4 mb-lg-4">
+                                Ingresa con tu cuenta de farmacia para continuar.
+                            </p>
 
                             <form id="loginForm">
                                 <div class="mb-3">
@@ -82,11 +85,10 @@
                     </div>
 
                     <div class="text-center mt-3">
-                        <small class="text-muted">&copy; 2024 PharmaQuick v1.0</small>
+                        <small class="text-muted">&copy; 2026 PharmaQuick v1.0</small>
                     </div>
                 </div>
             </div>
-        </div>
     </template>
 
     <!-- Template: Layout (Navbar + Sidebar) -->
@@ -123,6 +125,16 @@
                     <i class="fas fa-truck-medical"></i>
                     <span class="nav-text">Proveedores</span>
                 </a>
+                <a class="nav-link" href="/ventas" data-page="ventas">
+                    <i class="fas fa-cash-register"></i>
+                    <span class="nav-text">Ventas</span>
+                </a>
+                <!-- [DESHABILITADO] Reservas - Deshabilitado por no utilizarse
+                <a class="nav-link" href="/reservas" data-page="reservas">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span class="nav-text">Reservas</span>
+                </a>
+                -->
                 <hr class="mx-3 my-2 text-white-50">
                 <a class="nav-link" href="/configuracion" data-page="configuracion">
                     <i class="fas fa-cog"></i>
@@ -333,6 +345,118 @@
         <div id="pricesContainer" class="d-none"></div>
     </template>
 
+    <!-- Template: Ventas (POS) -->
+    <template id="template-ventas">
+        <div class="row h-100">
+            <div class="col-lg-8 d-flex flex-column mb-3 mb-lg-0">
+                <div class="card border-0 shadow-sm flex-grow-1">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold m-0"><i class="fas fa-cash-register text-primary me-2"></i>Punto de Venta</h5>
+                            <button id="btnScanBarcode" class="btn btn-outline-primary"><i class="fas fa-barcode me-2"></i>Escanear QR/Barras</button>
+                        </div>
+                        <div id="readerContainer" class="mb-3 d-none border rounded p-2">
+                            <div id="reader" style="width: 100%;"></div>
+                        </div>
+                        <div class="input-group mb-4 position-relative">
+                            <span class="input-group-text bg-light border-end-0"><i class="fas fa-search text-muted"></i></span>
+                            <input type="text" id="posSearchProduct" class="form-control border-start-0 bg-light" placeholder="Buscar por código de barras o nombre..." autocomplete="off">
+                            <div id="posSearchResults" class="list-group position-absolute w-100 shadow mt-1" style="top: 100%; z-index: 1050; display: none; max-height: 300px; overflow-y: auto;"></div>
+                        </div>
+
+                        <div class="table-responsive flex-grow-1">
+                            <table class="table table-hover align-middle" id="cartTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Lote (FEFO)</th>
+                                        <th style="width: 120px;">Cant.</th>
+                                        <th>Precio</th>
+                                        <th>Subtotal</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cartTableBody">
+                                    <tr id="emptyCartRow"><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-shopping-cart fa-2x mb-2 opacity-50"></i><br>El carrito está vacío</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <h5 class="fw-bold mb-4">Resumen de Venta</h5>
+                        
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Subtotal</span>
+                            <span class="fw-semibold" id="posSubtotal">$0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span class="text-muted">Impuestos (0%)</span>
+                            <span class="fw-semibold" id="posTaxes">$0.00</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-4">
+                            <span class="fs-5 fw-bold text-dark">Total</span>
+                            <span class="fs-4 fw-bold text-primary" id="posTotal">$0.00</span>
+                        </div>
+                        
+                        <div class="mt-auto">
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">Método de Pago</label>
+                                <select class="form-select bg-light" id="posPaymentMethod">
+                                    <option value="EFECTIVO">Efectivo</option>
+                                    <option value="TARJETA">Tarjeta de Crédito/Débito</option>
+                                    <option value="TRANSFERENCIA">Transferencia</option>
+                                </select>
+                            </div>
+                            <button id="btnCompleteSale" class="btn btn-primary w-100 py-3 fw-bold shadow-sm" disabled>
+                                <i class="fas fa-check-circle me-2"></i>Completar Venta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- [DESHABILITADO] Template: Reservas - Deshabilitado por no utilizarse
+    <template id="template-reservas">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="fw-bold m-0"><i class="fas fa-calendar-alt text-primary me-2"></i>Gestión de Reservas</h4>
+                        <p class="text-muted small m-0 mt-1">Administra los medicamentos reservados</p>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle" id="reservationsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Producto</th>
+                                <th>Lote</th>
+                                <th>Cant.</th>
+                                <th>Fecha Límite</th>
+                                <th>Estado</th>
+                                <th class="text-end">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reservationsTableBody">
+                            <tr><td colspan="7" class="text-center text-muted py-4">Cargando reservas...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </template>
+    -->
+
     <!-- Template: 404 Page -->
     <template id="template-404">
         <div class="container-fluid p-4">
@@ -349,10 +473,11 @@
     <div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     
     <!-- Core -->
     <script src="frontend/core/config/env.js"></script>
-    <script src="frontend/core/router/Router.js"></script>
+    <script src="frontend/core/router/Router.js?v=home-route"></script>
     <script src="frontend/core/auth/AuthService.js"></script>
     <script src="frontend/core/api/HttpClient.js"></script>
     <script src="frontend/core/api/HttpErrorHandler.js"></script>
@@ -376,16 +501,46 @@
     <script src="frontend/modules/inventory/InventoryService.js"></script>
     <script src="frontend/modules/inventory/InventoryController.js"></script>
     <script src="frontend/modules/inventory/InventoryView.js"></script>
+    <script src="frontend/modules/sales/SalesService.js"></script>
+    <script src="frontend/modules/sales/SalesController.js"></script>
+    <script src="frontend/modules/sales/SalesView.js"></script>
+    <!-- [DESHABILITADO] Scripts de reservas - Deshabilitado por no utilizarse
+    <script src="frontend/modules/reservations/ReservationService.js"></script>
+    <script src="frontend/modules/reservations/ReservationController.js"></script>
+    <script src="frontend/modules/reservations/ReservationView.js"></script>
+    -->
+    <script src="frontend/modules/public-store/PublicCatalogService.js?v=fix-v2"></script>
+    <script src="frontend/modules/public-store/PublicStoreView.js"></script>
     
+    <!-- Layout público -->
+    <script src="frontend/layout/LayoutHelper.js"></script>
+    <script src="frontend/layout/SiteHeader.js?v=home-modern"></script>
+    <!-- Client Layout (E-commerce) -->
+    <script src="frontend/layout/ClientLayout.js"></script>
     <!-- Pages -->
-    <script src="frontend/pages/LoginPage.js"></script>
+    <script src="frontend/pages/HomePage.js?v=home-route"></script>
+    <script src="frontend/pages/RegisterPage.js"></script>
+    <script src="frontend/pages/LoginPage.js?v=home-modern"></script>
+    <script src="frontend/pages/PublicStorePage.js"></script>
     <script src="frontend/pages/DashboardPage.js"></script>
     <script src="frontend/pages/ProductsPage.js"></script>
     <script src="frontend/pages/InventoryPage.js"></script>
+    <script src="frontend/pages/SalesPage.js"></script>
+    <!-- [DESHABILITADO] <script src="frontend/pages/ReservationsPage.js"></script> -->
     <script src="frontend/pages/ProfilePage.js"></script>
     <script src="frontend/pages/NotFoundPage.js"></script>
     
+    <!-- Client Pages (E-commerce for CLIENTE role) -->
+    <script src="frontend/pages/ClientDashboardPage.js"></script>
+    <script src="frontend/pages/ClientStorePage.js"></script>
+    <script src="frontend/pages/ClientCatalogPage.js"></script>
+    <script src="frontend/pages/ClientProfilePage.js"></script>
+    <script src="frontend/pages/ClientShoppingPage.js"></script>
+    <script src="frontend/modules/shopping/ShoppingService.js"></script>
+    <script src="frontend/modules/shopping/CartService.js"></script>
+    <!-- [DESHABILITADO] <script src="frontend/pages/ClientReservationsPage.js"></script> -->
+    
     <!-- App -->
-    <script src="js/app.js"></script>
+    <script src="js/app.js?v=home-route"></script>
 </body>
 </html>

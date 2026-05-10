@@ -1,0 +1,253 @@
+# PharmaQuick - Test de Estrés Masivo (5000 usuarios simultáneos)
+# Objetivo: Encontrar el punto de ruptura del sistema
+# Este test incrementa gradualmente la carga hasta 5000 usuarios
+
+config:
+  target: "http://localhost:8080"
+  phases:
+    # Fase 1: Warm-up (2 min) - 10 a 50 usuarios
+    - name: "Warm-up Inicial"
+      duration: 120
+      arrivalRate: 10
+      rampTo: 50
+
+    # Fase 2: Carga ligera (3 min) - 50 a 200 usuarios
+    - name: "Carga Ligera"
+      duration: 180
+      arrivalRate: 50
+      rampTo: 200
+
+    # Fase 3: Carga media (3 min) - 200 a 500 usuarios
+    - name: "Carga Media"
+      duration: 180
+      arrivalRate: 200
+      rampTo: 500
+
+    # Fase 4: Carga alta (3 min) - 500 a 1500 usuarios
+    - name: "Carga Alta"
+      duration: 180
+      arrivalRate: 500
+      rampTo: 1500
+
+    # Fase 5: Carga extrema (4 min) - 1500 a 3500 usuarios
+    - name: "Carga Extrema"
+      duration: 240
+      arrivalRate: 1500
+      rampTo: 3500
+
+    # Fase 6: Pico máximo (3 min) - 3500 a 5000 usuarios
+    - name: "Pico Máximo 5000"
+      duration: 180
+      arrivalRate: 3500
+      rampTo: 5000
+
+    # Fase 7: Sostención (5 min) - Mantener 5000 usuarios
+    - name: "Carga Sostenida 5000"
+      duration: 300
+      arrivalRate: 5000
+
+    # Fase 8: Enfriamiento (2 min) - Reducción gradual
+    - name: "Enfriamiento"
+      duration: 120
+      arrivalRate: 5000
+      rampTo: 100
+
+  # Cargar datos de usuarios para testing realista
+  payload:
+    path: "data/usuarios.csv"
+    fields:
+      - "email"
+      - "password"
+      - "nombre"
+      - "rol"
+    order: "random"
+    skipHeader: true
+
+  ensure:
+    thresholds:
+      - http.response_time.p95: 1500
+      - http.response_time.p99: 3000
+      - http.codes.500: "< 5%"
+      - http.codes.502: "< 3%"
+      - http.codes.503: "< 2%"
+    conditions:
+      - expression: "http.codes.200 > 500"
+        strict: false
+      - expression: "http.response_time.p99 < 5000"
+        strict: false
+
+  # Configuración de engine
+  http2: false
+  timeout: 30
+
+scenarios:
+  # Escenario 1: Usuario autenticado - CRUD completo (40%)
+  - name: "Usuario Autenticado - CRUD Completo"
+    weight: 40
+    flow:
+      # Login
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Obtener perfil
+      - get:
+          url: "/api/perfil"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 2
+
+      # Listar productos
+      - get:
+          url: "/api/productos"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Obtener inventario resumen
+      - get:
+          url: "/api/inventario/resumen"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+  # Escenario 2: Operaciones de inventario (25%)
+  - name: "Operaciones de Inventario"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Ver lotes
+      - get:
+          url: "/api/lotes"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 2
+
+      # Ver inventario FEFO
+      - get:
+          url: "/api/inventario/fefo"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Ver alertas de inventario
+      - get:
+          url: "/api/inventario/alertas"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+  # Escenario 3: Búsqueda y filtrado (20%)
+  - name: "Búsqueda de Productos"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Buscar productos
+      - get:
+          url: "/api/productos/search?q=para"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 2
+
+      # Ver categorías
+      - get:
+          url: "/api/productos/categorias"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+  # Escenario 4: Ventas y reservas (15%)
+  - name: "Ventas y Reservas"
+    weight: 15
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.data.token"
+              as: "jwtToken"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Ver ventas
+      - get:
+          url: "/api/ventas"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 2
+
+      # Ver reservas
+      - get:
+          url: "/api/reservas"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 1
+
+      # Ver top productos
+      - get:
+          url: "/api/ventas/top-productos"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200

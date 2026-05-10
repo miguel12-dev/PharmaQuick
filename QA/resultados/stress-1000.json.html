@@ -1,0 +1,3970 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Artillery report</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.6.0/chart.min.js"
+    integrity="sha384-scMuAXtFmPAlw0+pXLvnpHCt6VHh7AknTPdNrwiph5BA6MJWysg5WgSDl7r63txN"
+    crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.min.js"
+    integrity="sha384-v7eExOYhwaHa3+GhP+lHytJsMcidazNdjiaggRhdbvVTVTCjweLpa23t37ZKxaCf"
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"
+    integrity="sha384-H6KKS1H1WwuERMSm+54dYLzjg0fKqRK5ZRyASdbrI/lwrCc6bXEmtGYr5SwvP1pZ"
+    crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.5.3/ace.js" charset="utf=8"
+    integrity="sha512-NofUHaTd/uaO1GXfw0JvXptI9XdO5LLrfjl7jVqnFlbxdgqVlE3SmuXAUoqRTB5GQKd82yzhchaDlc6C6+SylA=="
+    crossorigin="anonymous"></script>
+
+  <link href="https://artilleryio.github.io/artillery-tailwind/src/build.css" rel="stylesheet" type="text/css"
+    crossorigin="anonymous" />
+
+  <style>
+    html {
+      --bg-dark: #161616;
+      --bg: #202020;
+      --text: #ffffff;
+      --text-faded: #9b9b9b;
+      --border: #383838;
+      height: 100%;
+    }
+
+
+    .tab {
+      color: #9B9B9B;
+      border-color: transparent;
+    }
+
+    .tab:hover {
+      color: #FFFFFF;
+    }
+
+    .tab.active {
+      color: #FFFFFF;
+      border-color: #FFFFFF;
+    }
+
+    .tab.active:hover {
+      color: #FFFFFF;
+    }
+
+    .tab:hover span:first-child,
+    .tab.active:hover span:first-child {
+      background: #000000;
+    }
+
+    #errorsContainer>p {
+      color: var(--green);
+    }
+
+    #editor {
+      font-size: 10pt;
+    }
+
+    #editor input,
+    button {
+      color: var(--bg-dark);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .border-gray {
+      border: 1px solid var(--border);
+    }
+
+    .border-bottom-gray {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .chevron-down span {
+      transform: rotate(180deg);
+    }
+
+    .cursor-pointer {
+      cursor: pointer;
+    }
+
+    .index-tree-wrapper {
+      display: none;
+    }
+
+    @media (min-width: 768px) {
+      .index-tree-wrapper {
+        display: inline-flex;
+      }
+    }
+
+  </style>
+  <script>
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    posthog.init('_uzX-_WJoVmE_tsLvu0OFD2tpd0HGz72D5sU1zM2hbs', {api_host: 'https://app.posthog.com', autocapture: false});
+    posthog.capture('report view', { });
+  </script>
+</head>
+
+<body>
+
+    <header class="header bg-black-default border-b border-gray-700 mb-9">
+      <div class="container m-auto relative flex items-center justify-between py-3 px-4 md:px-8">
+        <div class="flex items-center">
+          <div
+            class="group-hover:border-black-200 flex overflow-hidden rounded-md border-2 border-gray-800 transition mr-2">
+            <svg width="32" height="32" viewBox="0 0 300 306" fill="white" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M177.235 169.156L138.632 132.074L107.952 144.704L93.2929 130.623L228.213 75.9894L180.953 214.829L166.06 200.523L177.235 169.156ZM183.738 150.815L199.254 106.778L156.348 124.505L183.738 150.815Z"
+                fill="white" />
+              <path
+                d="M136.138 135.974L175.036 173.339L208.275 137.452L221.883 150.524L136.914 242.26L123.306 229.189L162.984 186.35L124.087 148.986L84.4087 191.824L70.8005 178.752L155.769 87.0157L169.378 100.088L136.138 135.974Z"
+                fill="white" />
+            </svg>
+          </div>
+          <div class="flex flex-col">
+            <h1 class="font-medium text-sm" id="report-name">
+              Artillery Report
+            </h1>
+            <div class="text-gray-default my-0 block text-xs transition group-hover:text-gray-700" id="timestamp"></div>
+          </div>
+        </div>
+        <div class="text-xsm">
+          <a target="_blank" rel="nofollow noopener" class="focus:text-beige text-gray-default transition-colors hover:text-gray-300 flex items-center space-x-1" href="https://artillery.io/docs">
+            <span>Docs</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" aria-label="External link" aria-labelledby="icon_external_1" x="0px" y="0px" role="img"><title id="icon_external_1" lang="en">External link</title><g fill="currentColor"><path d="M19 19H5V5H12V3H5C3.89 3 3 3.9 3 5V19C3 20.1 3.89 21 5 21H19C20.1 21 21 20.1 21 19V12H19V19ZM14 3V5H17.59L7.76 14.83L9.17 16.24L19 6.41V10H21V3H14Z"></path></g></svg>
+          </a>
+        </div>
+      </div>
+      <!-- tabs -->
+      <div class="bg-black-default relative pt-4 text-sm">
+        <div class="container m-auto flex items-center space-x-2 px-4 md:px-8">
+          <button id="charts-tab" class="tab active group border-b border-b-2 py-2 transition-all">
+            <span class="text-xsm flex items-center space-x-2 rounded py-1.5 px-2.5 transition-all">
+              
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2.33331 12.3267L6.33331 8.32001L8.99998 10.9867L14.6666 4.61334L13.7266 3.67334L8.99998 8.98667L6.33331 6.32001L1.33331 11.3267L2.33331 12.3267Z" fill="currentColor"/>
+                  </svg>
+              <span class="leading-4">Reports</span>
+            </span>
+          </button>
+          <button id="json-tab" class="tab group border-b border-b-2 py-2 transition-all">
+            <span class="text-xsm flex items-center space-x-2 rounded py-1.5 px-2.5 transition-all">
+              
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6.26665 11.0667L3.19998 8L6.26665 4.93333L5.33331 4L1.33331 8L5.33331 12L6.26665 11.0667ZM9.73331 11.0667L12.8 8L9.73331 4.93333L10.6666 4L14.6666 8L10.6666 12L9.73331 11.0667V11.0667Z" fill="currentColor"/>
+                </svg>  
+              <span class="leading-4">JSON Output</span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </header>
+    <main style="margin-bottom: 2.5rem;">
+      <div class="container text-sm m-auto px-4 md:px-8">
+        <!-- summary blocks -->
+        <div class="app-test-stats w-full">
+          <ul class="flex flex-wrap space-x-3.5" id="summary-blocks">
+          </ul>
+        </div>
+        <div class="flex items-start w-full flex-row space-x-0 md:space-x-4 mt-1">
+          <!-- counters summary -->
+          <div class="w-full" id="charts-col">
+            <div class="overflow-x-auto overflow-y-hidden rounded border-gray mb-4">
+              <table class="w-full border-collapse text-left">
+                <thead class="text-gray-default bg-black-200 border-b border-gray-800" style="background-color: #2b2b2b;">
+                  <tr>
+                    <th class="whitespace-nowrap p-2" colspan="6">
+                      <span class="text-xsm" style="font-weight: 500 !important;">Metric</span>
+                    </th>
+                    <th class="whitespace-nowrap p-2" colspan="6">
+                      <span class="text-xsm" style="font-weight: 500 !important;">Value</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-800" id="customCountersTable">
+                </tbody>
+              </table>
+            </div>
+            <div id="errorsChartsRow">
+              <h4><i class="fas fa-chart-area"></i> Errors at intervals</h4>
+              <canvas id="errorsAtIntervalsChart"></canvas>
+            </div>
+            <!-- charts -->
+            <div id="customCountersAtIntervalsChart" class="space-y-4"></div>
+          </div>
+          <div class="index-tree-wrapper w-56 text-xsm sticky top-3">
+            <div id="index-tree">
+            </div>
+          </div>
+        </div>
+
+        <!-- json text output -->
+        <div>
+          <div class="hidden border-gray rounded" style="overflow: hidden;" id="json-output">
+            <div class="p-2 text-gray-default text-xsm flex items-center justify-between text-gray-default" style="border-bottom: 1px solid #383838; background-color: #2b2b2b; font-weight: 500;">JSON Output
+              <button id="copy-json" class="flex justify-center items-center space-x-2 font-medium text-center rounded transition-all p-1.5 text-xsm hover:text-gray-300 focus:text-gray-300 bg-transparent focus:ring hover:bg-black-700 text-gray-default focus:ring-black-200">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-label="" aria-labelledby="icon_copy" x="0px" y="0px" role="img" class="inline false"><title id="icon_copy" lang="en"></title><g fill="#9b9b9b"><path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"></path></g></svg>
+              </button>
+            </div>
+            <div id="editor"></div>
+          </div>
+        </div>
+      </div> <!-- /.row -->
+
+
+      <div class="row">
+        <div class="codes-line text-center col-lg-12"></div>
+      </div>
+      <div class="row">
+        <div class="errors-line text-center col-lg-12"></div>
+      </div>
+  </div>
+  </main>
+  <footer id="footer" class="bg-black-default py-4 text-xsm text-gray-default" style="margin-top: 2rem;">
+    <div class="container m-auto px-4 md:px-8">
+      <a href="https://www.artillery.io">Artillery</a> &bull; move fast, stay fast, stay reliable &bull; <a href="https://www.artillery.io">www.artillery.io</a>
+    </div>
+  </footer>
+
+
+
+  <script charset="utf-8">
+    const Report = {
+  "aggregate": {
+    "counters": {
+      "vusers.created_by_name.Operaciones de Inventario": 32439,
+      "vusers.created": 108150,
+      "http.requests": 108268,
+      "http.codes.401": 3702,
+      "http.responses": 3879,
+      "http.downloaded_bytes": 254073,
+      "plugins.metrics-by-endpoint./api/auth/login.codes.401": 3702,
+      "errors.Failed capture or match": 3702,
+      "vusers.failed": 108091,
+      "vusers.created_by_name.Usuario Autenticado - CRUD": 43178,
+      "vusers.created_by_name.Ventas y Reservas": 10729,
+      "vusers.created_by_name.Búsqueda de Productos": 21804,
+      "http.codes.200": 177,
+      "plugins.metrics-by-endpoint./api/auth/login.codes.200": 59,
+      "plugins.metrics-by-endpoint./api/inventario/resumen.codes.200": 17,
+      "plugins.metrics-by-endpoint./api/inventario/alertas.codes.200": 17,
+      "vusers.completed": 59,
+      "plugins.metrics-by-endpoint./api/productos/search.codes.200": 22,
+      "plugins.metrics-by-endpoint./api/productos/categorias.codes.200": 22,
+      "plugins.metrics-by-endpoint./api/perfil.codes.200": 16,
+      "plugins.metrics-by-endpoint./api/productos.codes.200": 16,
+      "plugins.metrics-by-endpoint./api/auth/login.errors.ERR_SOCKET_TIMEOUT": 13846,
+      "errors.ERR_SOCKET_TIMEOUT": 13846,
+      "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 90543,
+      "errors.ECONNRESET": 90543,
+      "plugins.metrics-by-endpoint./api/ventas.codes.200": 4,
+      "plugins.metrics-by-endpoint./api/reservas.codes.200": 4
+    },
+    "rates": {
+      "http.request_rate": 390
+    },
+    "firstCounterAt": 1778164122415,
+    "firstHistogramAt": 1778164122666,
+    "lastCounterAt": 1778164394720,
+    "lastHistogramAt": 1778164185090,
+    "firstMetricAt": 1778164122415,
+    "lastMetricAt": 1778164394720,
+    "period": 1778164390000,
+    "summaries": {
+      "http.response_time": {
+        "min": 4,
+        "max": 204,
+        "count": 3879,
+        "mean": 16.7,
+        "p50": 7.9,
+        "median": 7.9,
+        "p75": 13.1,
+        "p90": 40.9,
+        "p95": 80.6,
+        "p99": 102.5,
+        "p999": 125.2
+      },
+      "http.response_time.4xx": {
+        "min": 4,
+        "max": 204,
+        "count": 3702,
+        "mean": 15.9,
+        "p50": 7.9,
+        "median": 7.9,
+        "p75": 13.1,
+        "p90": 27.9,
+        "p95": 77.5,
+        "p99": 102.5,
+        "p999": 122.7
+      },
+      "plugins.metrics-by-endpoint.response_time./api/auth/login": {
+        "min": 4,
+        "max": 204,
+        "count": 3761,
+        "mean": 17,
+        "p50": 7.9,
+        "median": 7.9,
+        "p75": 13.1,
+        "p90": 44.3,
+        "p95": 80.6,
+        "p99": 102.5,
+        "p999": 122.7
+      },
+      "http.response_time.2xx": {
+        "min": 4,
+        "max": 124,
+        "count": 177,
+        "mean": 34.8,
+        "p50": 10.1,
+        "median": 10.1,
+        "p75": 74.4,
+        "p90": 92.8,
+        "p95": 100.5,
+        "p99": 115.6,
+        "p999": 117.9
+      },
+      "plugins.metrics-by-endpoint.response_time./api/inventario/resumen": {
+        "min": 4,
+        "max": 22,
+        "count": 17,
+        "mean": 8.7,
+        "p50": 7,
+        "median": 7,
+        "p75": 10.9,
+        "p90": 13.1,
+        "p95": 16,
+        "p99": 16,
+        "p999": 16
+      },
+      "plugins.metrics-by-endpoint.response_time./api/inventario/alertas": {
+        "min": 5,
+        "max": 26,
+        "count": 17,
+        "mean": 8.9,
+        "p50": 7,
+        "median": 7,
+        "p75": 7.9,
+        "p90": 13.1,
+        "p95": 18,
+        "p99": 18,
+        "p999": 18
+      },
+      "vusers.session_length": {
+        "min": 2095.3,
+        "max": 2282.4,
+        "count": 59,
+        "mean": 2130.8,
+        "p50": 2143.5,
+        "median": 2143.5,
+        "p75": 2143.5,
+        "p90": 2143.5,
+        "p95": 2143.5,
+        "p99": 2143.5,
+        "p999": 2143.5
+      },
+      "plugins.metrics-by-endpoint.response_time./api/productos/search": {
+        "min": 5,
+        "max": 34,
+        "count": 22,
+        "mean": 7.9,
+        "p50": 6,
+        "median": 6,
+        "p75": 7.9,
+        "p90": 8.9,
+        "p95": 10.1,
+        "p99": 13.1,
+        "p999": 13.1
+      },
+      "plugins.metrics-by-endpoint.response_time./api/productos/categorias": {
+        "min": 4,
+        "max": 25,
+        "count": 22,
+        "mean": 8.9,
+        "p50": 7,
+        "median": 7,
+        "p75": 10.1,
+        "p90": 12.1,
+        "p95": 12.1,
+        "p99": 13.9,
+        "p999": 13.9
+      },
+      "plugins.metrics-by-endpoint.response_time./api/perfil": {
+        "min": 4,
+        "max": 124,
+        "count": 16,
+        "mean": 14.1,
+        "p50": 6,
+        "median": 6,
+        "p75": 8.9,
+        "p90": 8.9,
+        "p95": 10.9,
+        "p99": 10.9,
+        "p999": 10.9
+      },
+      "plugins.metrics-by-endpoint.response_time./api/productos": {
+        "min": 5,
+        "max": 47,
+        "count": 16,
+        "mean": 10.8,
+        "p50": 7.9,
+        "median": 7.9,
+        "p75": 10.9,
+        "p90": 13.1,
+        "p95": 13.1,
+        "p99": 13.1,
+        "p999": 13.1
+      },
+      "plugins.metrics-by-endpoint.response_time./api/ventas": {
+        "min": 4,
+        "max": 10,
+        "count": 4,
+        "mean": 7.3,
+        "p50": 6,
+        "median": 6,
+        "p75": 8.9,
+        "p90": 8.9,
+        "p95": 8.9,
+        "p99": 8.9,
+        "p999": 8.9
+      },
+      "plugins.metrics-by-endpoint.response_time./api/reservas": {
+        "min": 4,
+        "max": 18,
+        "count": 4,
+        "mean": 10.5,
+        "p50": 8.9,
+        "median": 8.9,
+        "p75": 10.9,
+        "p90": 10.9,
+        "p95": 10.9,
+        "p99": 10.9,
+        "p999": 10.9
+      }
+    },
+    "histograms": {
+      "http.response_time": {
+        "min": 4,
+        "max": 204,
+        "count": 3879,
+        "mean": 16.7,
+        "p50": 7.9,
+        "median": 7.9,
+        "p75": 13.1,
+        "p90": 40.9,
+        "p95": 80.6,
+        "p99": 102.5,
+        "p999": 125.2
+      },
+      "http.response_time.4xx": {
+        "min": 4,
+        "max": 204,
+        "count": 3702,
+        "mean": 15.9,
+        "p50": 7.9,
+        "median": 7.9,
+        "p75": 13.1,
+        "p90": 27.9,
+        "p95": 77.5,
+        "p99": 102.5,
+        "p999": 122.7
+      },
+      "plugins.metrics-by-endpoint.response_time./api/auth/login": {
+        "min": 4,
+        "max": 204,
+        "count": 3761,
+        "mean": 17,
+        "p50": 7.9,
+        "median": 7.9,
+        "p75": 13.1,
+        "p90": 44.3,
+        "p95": 80.6,
+        "p99": 102.5,
+        "p999": 122.7
+      },
+      "http.response_time.2xx": {
+        "min": 4,
+        "max": 124,
+        "count": 177,
+        "mean": 34.8,
+        "p50": 10.1,
+        "median": 10.1,
+        "p75": 74.4,
+        "p90": 92.8,
+        "p95": 100.5,
+        "p99": 115.6,
+        "p999": 117.9
+      },
+      "plugins.metrics-by-endpoint.response_time./api/inventario/resumen": {
+        "min": 4,
+        "max": 22,
+        "count": 17,
+        "mean": 8.7,
+        "p50": 7,
+        "median": 7,
+        "p75": 10.9,
+        "p90": 13.1,
+        "p95": 16,
+        "p99": 16,
+        "p999": 16
+      },
+      "plugins.metrics-by-endpoint.response_time./api/inventario/alertas": {
+        "min": 5,
+        "max": 26,
+        "count": 17,
+        "mean": 8.9,
+        "p50": 7,
+        "median": 7,
+        "p75": 7.9,
+        "p90": 13.1,
+        "p95": 18,
+        "p99": 18,
+        "p999": 18
+      },
+      "vusers.session_length": {
+        "min": 2095.3,
+        "max": 2282.4,
+        "count": 59,
+        "mean": 2130.8,
+        "p50": 2143.5,
+        "median": 2143.5,
+        "p75": 2143.5,
+        "p90": 2143.5,
+        "p95": 2143.5,
+        "p99": 2143.5,
+        "p999": 2143.5
+      },
+      "plugins.metrics-by-endpoint.response_time./api/productos/search": {
+        "min": 5,
+        "max": 34,
+        "count": 22,
+        "mean": 7.9,
+        "p50": 6,
+        "median": 6,
+        "p75": 7.9,
+        "p90": 8.9,
+        "p95": 10.1,
+        "p99": 13.1,
+        "p999": 13.1
+      },
+      "plugins.metrics-by-endpoint.response_time./api/productos/categorias": {
+        "min": 4,
+        "max": 25,
+        "count": 22,
+        "mean": 8.9,
+        "p50": 7,
+        "median": 7,
+        "p75": 10.1,
+        "p90": 12.1,
+        "p95": 12.1,
+        "p99": 13.9,
+        "p999": 13.9
+      },
+      "plugins.metrics-by-endpoint.response_time./api/perfil": {
+        "min": 4,
+        "max": 124,
+        "count": 16,
+        "mean": 14.1,
+        "p50": 6,
+        "median": 6,
+        "p75": 8.9,
+        "p90": 8.9,
+        "p95": 10.9,
+        "p99": 10.9,
+        "p999": 10.9
+      },
+      "plugins.metrics-by-endpoint.response_time./api/productos": {
+        "min": 5,
+        "max": 47,
+        "count": 16,
+        "mean": 10.8,
+        "p50": 7.9,
+        "median": 7.9,
+        "p75": 10.9,
+        "p90": 13.1,
+        "p95": 13.1,
+        "p99": 13.1,
+        "p999": 13.1
+      },
+      "plugins.metrics-by-endpoint.response_time./api/ventas": {
+        "min": 4,
+        "max": 10,
+        "count": 4,
+        "mean": 7.3,
+        "p50": 6,
+        "median": 6,
+        "p75": 8.9,
+        "p90": 8.9,
+        "p95": 8.9,
+        "p99": 8.9,
+        "p999": 8.9
+      },
+      "plugins.metrics-by-endpoint.response_time./api/reservas": {
+        "min": 4,
+        "max": 18,
+        "count": 4,
+        "mean": 10.5,
+        "p50": 8.9,
+        "median": 8.9,
+        "p75": 10.9,
+        "p90": 10.9,
+        "p95": 10.9,
+        "p99": 10.9,
+        "p999": 10.9
+      }
+    }
+  },
+  "intermediate": [
+    {
+      "counters": {
+        "vusers.created_by_name.Operaciones de Inventario": 43,
+        "vusers.created": 114,
+        "http.requests": 115,
+        "http.codes.401": 112,
+        "http.responses": 114,
+        "http.downloaded_bytes": 6398,
+        "plugins.metrics-by-endpoint./api/auth/login.codes.401": 112,
+        "errors.Failed capture or match": 112,
+        "vusers.failed": 112,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 49,
+        "vusers.created_by_name.Ventas y Reservas": 5,
+        "vusers.created_by_name.Búsqueda de Productos": 17,
+        "http.codes.200": 2,
+        "plugins.metrics-by-endpoint./api/auth/login.codes.200": 1,
+        "plugins.metrics-by-endpoint./api/perfil.codes.200": 1
+      },
+      "rates": {
+        "http.request_rate": 17
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164122415,
+      "firstHistogramAt": 1778164122666,
+      "lastCounterAt": 1778164129999,
+      "lastHistogramAt": 1778164129974,
+      "firstMetricAt": 1778164122415,
+      "lastMetricAt": 1778164129999,
+      "period": "1778164120000",
+      "summaries": {
+        "http.response_time": {
+          "min": 5,
+          "max": 204,
+          "count": 114,
+          "mean": 19.5,
+          "p50": 7,
+          "median": 7,
+          "p75": 10.1,
+          "p90": 67.4,
+          "p95": 80.6,
+          "p99": 125.2,
+          "p999": 147
+        },
+        "http.response_time.4xx": {
+          "min": 5,
+          "max": 204,
+          "count": 112,
+          "mean": 18,
+          "p50": 7,
+          "median": 7,
+          "p75": 10.1,
+          "p90": 57.4,
+          "p95": 77.5,
+          "p99": 94.6,
+          "p999": 147
+        },
+        "plugins.metrics-by-endpoint.response_time./api/auth/login": {
+          "min": 5,
+          "max": 204,
+          "count": 113,
+          "mean": 18.6,
+          "p50": 7,
+          "median": 7,
+          "p75": 10.1,
+          "p90": 67.4,
+          "p95": 80.6,
+          "p99": 94.6,
+          "p999": 147
+        },
+        "http.response_time.2xx": {
+          "min": 81,
+          "max": 124,
+          "count": 2,
+          "mean": 102.5,
+          "p50": 80.6,
+          "median": 80.6,
+          "p75": 80.6,
+          "p90": 80.6,
+          "p95": 80.6,
+          "p99": 80.6,
+          "p999": 80.6
+        },
+        "plugins.metrics-by-endpoint.response_time./api/perfil": {
+          "min": 124,
+          "max": 124,
+          "count": 1,
+          "mean": 124,
+          "p50": 125.2,
+          "median": 125.2,
+          "p75": 125.2,
+          "p90": 125.2,
+          "p95": 125.2,
+          "p99": 125.2,
+          "p999": 125.2
+        }
+      },
+      "histograms": {
+        "http.response_time": {
+          "min": 5,
+          "max": 204,
+          "count": 114,
+          "mean": 19.5,
+          "p50": 7,
+          "median": 7,
+          "p75": 10.1,
+          "p90": 67.4,
+          "p95": 80.6,
+          "p99": 125.2,
+          "p999": 147
+        },
+        "http.response_time.4xx": {
+          "min": 5,
+          "max": 204,
+          "count": 112,
+          "mean": 18,
+          "p50": 7,
+          "median": 7,
+          "p75": 10.1,
+          "p90": 57.4,
+          "p95": 77.5,
+          "p99": 94.6,
+          "p999": 147
+        },
+        "plugins.metrics-by-endpoint.response_time./api/auth/login": {
+          "min": 5,
+          "max": 204,
+          "count": 113,
+          "mean": 18.6,
+          "p50": 7,
+          "median": 7,
+          "p75": 10.1,
+          "p90": 67.4,
+          "p95": 80.6,
+          "p99": 94.6,
+          "p999": 147
+        },
+        "http.response_time.2xx": {
+          "min": 81,
+          "max": 124,
+          "count": 2,
+          "mean": 102.5,
+          "p50": 80.6,
+          "median": 80.6,
+          "p75": 80.6,
+          "p90": 80.6,
+          "p95": 80.6,
+          "p99": 80.6,
+          "p999": 80.6
+        },
+        "plugins.metrics-by-endpoint.response_time./api/perfil": {
+          "min": 124,
+          "max": 124,
+          "count": 1,
+          "mean": 124,
+          "p50": 125.2,
+          "median": 125.2,
+          "p75": 125.2,
+          "p90": 125.2,
+          "p95": 125.2,
+          "p99": 125.2,
+          "p999": 125.2
+        }
+      }
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Operaciones de Inventario": 79,
+        "vusers.created": 266,
+        "http.requests": 271,
+        "http.codes.401": 264,
+        "http.responses": 271,
+        "http.downloaded_bytes": 17683,
+        "plugins.metrics-by-endpoint./api/auth/login.codes.401": 264,
+        "errors.Failed capture or match": 264,
+        "vusers.failed": 264,
+        "vusers.created_by_name.Ventas y Reservas": 37,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 95,
+        "vusers.created_by_name.Búsqueda de Productos": 55,
+        "http.codes.200": 7,
+        "plugins.metrics-by-endpoint./api/productos.codes.200": 2,
+        "vusers.completed": 3,
+        "plugins.metrics-by-endpoint./api/auth/login.codes.200": 2,
+        "plugins.metrics-by-endpoint./api/inventario/resumen.codes.200": 1,
+        "plugins.metrics-by-endpoint./api/inventario/alertas.codes.200": 1,
+        "plugins.metrics-by-endpoint./api/perfil.codes.200": 1
+      },
+      "rates": {
+        "http.request_rate": 29
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164130010,
+      "firstHistogramAt": 1778164130010,
+      "lastCounterAt": 1778164139998,
+      "lastHistogramAt": 1778164139896,
+      "firstMetricAt": 1778164130010,
+      "lastMetricAt": 1778164139998,
+      "period": "1778164130000",
+      "summaries": {
+        "http.response_time": {
+          "min": 5,
+          "max": 126,
+          "count": 271,
+          "mean": 16.4,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 10.9,
+          "p90": 43.4,
+          "p95": 85.6,
+          "p99": 111.1,
+          "p999": 122.7
+        },
+        "http.response_time.4xx": {
+          "min": 5,
+          "max": 126,
+          "count": 264,
+          "mean": 15.9,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 10.9,
+          "p90": 22,
+          "p95": 83.9,
+          "p99": 111.1,
+          "p999": 122.7
+        },
+        "plugins.metrics-by-endpoint.response_time./api/auth/login": {
+          "min": 5,
+          "max": 126,
+          "count": 266,
+          "mean": 16.5,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 10.9,
+          "p90": 37,
+          "p95": 85.6,
+          "p99": 111.1,
+          "p999": 122.7
+        },
+        "http.response_time.2xx": {
+          "min": 5,
+          "max": 109,
+          "count": 7,
+          "mean": 36.4,
+          "p50": 7,
+          "median": 7,
+          "p75": 47,
+          "p90": 73,
+          "p95": 73,
+          "p99": 73,
+          "p999": 73
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos": {
+          "min": 7,
+          "max": 47,
+          "count": 2,
+          "mean": 27,
+          "p50": 7,
+          "median": 7,
+          "p75": 7,
+          "p90": 7,
+          "p95": 7,
+          "p99": 7,
+          "p999": 7
+        },
+        "vusers.session_length": {
+          "min": 2111.7,
+          "max": 2282.4,
+          "count": 3,
+          "mean": 2181.5,
+          "p50": 2143.5,
+          "median": 2143.5,
+          "p75": 2143.5,
+          "p90": 2143.5,
+          "p95": 2143.5,
+          "p99": 2143.5,
+          "p999": 2143.5
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/resumen": {
+          "min": 7,
+          "max": 7,
+          "count": 1,
+          "mean": 7,
+          "p50": 7,
+          "median": 7,
+          "p75": 7,
+          "p90": 7,
+          "p95": 7,
+          "p99": 7,
+          "p999": 7
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/alertas": {
+          "min": 7,
+          "max": 7,
+          "count": 1,
+          "mean": 7,
+          "p50": 7,
+          "median": 7,
+          "p75": 7,
+          "p90": 7,
+          "p95": 7,
+          "p99": 7,
+          "p999": 7
+        },
+        "plugins.metrics-by-endpoint.response_time./api/perfil": {
+          "min": 5,
+          "max": 5,
+          "count": 1,
+          "mean": 5,
+          "p50": 5,
+          "median": 5,
+          "p75": 5,
+          "p90": 5,
+          "p95": 5,
+          "p99": 5,
+          "p999": 5
+        }
+      },
+      "histograms": {
+        "http.response_time": {
+          "min": 5,
+          "max": 126,
+          "count": 271,
+          "mean": 16.4,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 10.9,
+          "p90": 43.4,
+          "p95": 85.6,
+          "p99": 111.1,
+          "p999": 122.7
+        },
+        "http.response_time.4xx": {
+          "min": 5,
+          "max": 126,
+          "count": 264,
+          "mean": 15.9,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 10.9,
+          "p90": 22,
+          "p95": 83.9,
+          "p99": 111.1,
+          "p999": 122.7
+        },
+        "plugins.metrics-by-endpoint.response_time./api/auth/login": {
+          "min": 5,
+          "max": 126,
+          "count": 266,
+          "mean": 16.5,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 10.9,
+          "p90": 37,
+          "p95": 85.6,
+          "p99": 111.1,
+          "p999": 122.7
+        },
+        "http.response_time.2xx": {
+          "min": 5,
+          "max": 109,
+          "count": 7,
+          "mean": 36.4,
+          "p50": 7,
+          "median": 7,
+          "p75": 47,
+          "p90": 73,
+          "p95": 73,
+          "p99": 73,
+          "p999": 73
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos": {
+          "min": 7,
+          "max": 47,
+          "count": 2,
+          "mean": 27,
+          "p50": 7,
+          "median": 7,
+          "p75": 7,
+          "p90": 7,
+          "p95": 7,
+          "p99": 7,
+          "p999": 7
+        },
+        "vusers.session_length": {
+          "min": 2111.7,
+          "max": 2282.4,
+          "count": 3,
+          "mean": 2181.5,
+          "p50": 2143.5,
+          "median": 2143.5,
+          "p75": 2143.5,
+          "p90": 2143.5,
+          "p95": 2143.5,
+          "p99": 2143.5,
+          "p999": 2143.5
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/resumen": {
+          "min": 7,
+          "max": 7,
+          "count": 1,
+          "mean": 7,
+          "p50": 7,
+          "median": 7,
+          "p75": 7,
+          "p90": 7,
+          "p95": 7,
+          "p99": 7,
+          "p999": 7
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/alertas": {
+          "min": 7,
+          "max": 7,
+          "count": 1,
+          "mean": 7,
+          "p50": 7,
+          "median": 7,
+          "p75": 7,
+          "p90": 7,
+          "p95": 7,
+          "p99": 7,
+          "p999": 7
+        },
+        "plugins.metrics-by-endpoint.response_time./api/perfil": {
+          "min": 5,
+          "max": 5,
+          "count": 1,
+          "mean": 5,
+          "p50": 5,
+          "median": 5,
+          "p75": 5,
+          "p90": 5,
+          "p95": 5,
+          "p99": 5,
+          "p999": 5
+        }
+      }
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Búsqueda de Productos": 93,
+        "vusers.created": 403,
+        "http.requests": 411,
+        "http.codes.401": 398,
+        "http.responses": 412,
+        "http.downloaded_bytes": 24443,
+        "plugins.metrics-by-endpoint./api/auth/login.codes.401": 398,
+        "errors.Failed capture or match": 398,
+        "vusers.failed": 398,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 166,
+        "vusers.created_by_name.Operaciones de Inventario": 112,
+        "http.codes.200": 14,
+        "plugins.metrics-by-endpoint./api/auth/login.codes.200": 6,
+        "plugins.metrics-by-endpoint./api/inventario/resumen.codes.200": 1,
+        "vusers.created_by_name.Ventas y Reservas": 32,
+        "plugins.metrics-by-endpoint./api/inventario/alertas.codes.200": 1,
+        "vusers.completed": 4,
+        "plugins.metrics-by-endpoint./api/productos/search.codes.200": 3,
+        "plugins.metrics-by-endpoint./api/productos/categorias.codes.200": 3
+      },
+      "rates": {
+        "http.request_rate": 42
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164140014,
+      "firstHistogramAt": 1778164140014,
+      "lastCounterAt": 1778164149995,
+      "lastHistogramAt": 1778164149994,
+      "firstMetricAt": 1778164140014,
+      "lastMetricAt": 1778164149995,
+      "period": "1778164140000",
+      "summaries": {
+        "http.response_time": {
+          "min": 4,
+          "max": 113,
+          "count": 412,
+          "mean": 16.2,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 10.9,
+          "p90": 41.7,
+          "p95": 83.9,
+          "p99": 104.6,
+          "p999": 111.1
+        },
+        "http.response_time.4xx": {
+          "min": 5,
+          "max": 113,
+          "count": 398,
+          "mean": 15.3,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 10.9,
+          "p90": 22,
+          "p95": 79.1,
+          "p99": 104.6,
+          "p999": 111.1
+        },
+        "plugins.metrics-by-endpoint.response_time./api/auth/login": {
+          "min": 5,
+          "max": 113,
+          "count": 404,
+          "mean": 16.4,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 10.9,
+          "p90": 44.3,
+          "p95": 83.9,
+          "p99": 104.6,
+          "p999": 111.1
+        },
+        "http.response_time.2xx": {
+          "min": 4,
+          "max": 108,
+          "count": 14,
+          "mean": 41.5,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 80.6,
+          "p90": 87.4,
+          "p95": 96.6,
+          "p99": 96.6,
+          "p999": 96.6
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/resumen": {
+          "min": 8,
+          "max": 8,
+          "count": 1,
+          "mean": 8,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 7.9,
+          "p90": 7.9,
+          "p95": 7.9,
+          "p99": 7.9,
+          "p999": 7.9
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/alertas": {
+          "min": 8,
+          "max": 8,
+          "count": 1,
+          "mean": 8,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 7.9,
+          "p90": 7.9,
+          "p95": 7.9,
+          "p99": 7.9,
+          "p999": 7.9
+        },
+        "vusers.session_length": {
+          "min": 2102,
+          "max": 2147.9,
+          "count": 4,
+          "mean": 2128.5,
+          "p50": 2143.5,
+          "median": 2143.5,
+          "p75": 2143.5,
+          "p90": 2143.5,
+          "p95": 2143.5,
+          "p99": 2143.5,
+          "p999": 2143.5
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos/search": {
+          "min": 5,
+          "max": 6,
+          "count": 3,
+          "mean": 5.7,
+          "p50": 6,
+          "median": 6,
+          "p75": 6,
+          "p90": 6,
+          "p95": 6,
+          "p99": 6,
+          "p999": 6
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos/categorias": {
+          "min": 4,
+          "max": 8,
+          "count": 3,
+          "mean": 5.7,
+          "p50": 5,
+          "median": 5,
+          "p75": 5,
+          "p90": 5,
+          "p95": 5,
+          "p99": 5,
+          "p999": 5
+        }
+      },
+      "histograms": {
+        "http.response_time": {
+          "min": 4,
+          "max": 113,
+          "count": 412,
+          "mean": 16.2,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 10.9,
+          "p90": 41.7,
+          "p95": 83.9,
+          "p99": 104.6,
+          "p999": 111.1
+        },
+        "http.response_time.4xx": {
+          "min": 5,
+          "max": 113,
+          "count": 398,
+          "mean": 15.3,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 10.9,
+          "p90": 22,
+          "p95": 79.1,
+          "p99": 104.6,
+          "p999": 111.1
+        },
+        "plugins.metrics-by-endpoint.response_time./api/auth/login": {
+          "min": 5,
+          "max": 113,
+          "count": 404,
+          "mean": 16.4,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 10.9,
+          "p90": 44.3,
+          "p95": 83.9,
+          "p99": 104.6,
+          "p999": 111.1
+        },
+        "http.response_time.2xx": {
+          "min": 4,
+          "max": 108,
+          "count": 14,
+          "mean": 41.5,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 80.6,
+          "p90": 87.4,
+          "p95": 96.6,
+          "p99": 96.6,
+          "p999": 96.6
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/resumen": {
+          "min": 8,
+          "max": 8,
+          "count": 1,
+          "mean": 8,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 7.9,
+          "p90": 7.9,
+          "p95": 7.9,
+          "p99": 7.9,
+          "p999": 7.9
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/alertas": {
+          "min": 8,
+          "max": 8,
+          "count": 1,
+          "mean": 8,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 7.9,
+          "p90": 7.9,
+          "p95": 7.9,
+          "p99": 7.9,
+          "p999": 7.9
+        },
+        "vusers.session_length": {
+          "min": 2102,
+          "max": 2147.9,
+          "count": 4,
+          "mean": 2128.5,
+          "p50": 2143.5,
+          "median": 2143.5,
+          "p75": 2143.5,
+          "p90": 2143.5,
+          "p95": 2143.5,
+          "p99": 2143.5,
+          "p999": 2143.5
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos/search": {
+          "min": 5,
+          "max": 6,
+          "count": 3,
+          "mean": 5.7,
+          "p50": 6,
+          "median": 6,
+          "p75": 6,
+          "p90": 6,
+          "p95": 6,
+          "p99": 6,
+          "p999": 6
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos/categorias": {
+          "min": 4,
+          "max": 8,
+          "count": 3,
+          "mean": 5.7,
+          "p50": 5,
+          "median": 5,
+          "p75": 5,
+          "p90": 5,
+          "p95": 5,
+          "p99": 5,
+          "p999": 5
+        }
+      }
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Ventas y Reservas": 59,
+        "vusers.created": 558,
+        "http.requests": 581,
+        "http.codes.401": 545,
+        "http.responses": 581,
+        "http.downloaded_bytes": 42266,
+        "plugins.metrics-by-endpoint./api/auth/login.codes.401": 545,
+        "errors.Failed capture or match": 545,
+        "vusers.failed": 545,
+        "vusers.created_by_name.Operaciones de Inventario": 163,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 233,
+        "vusers.created_by_name.Búsqueda de Productos": 103,
+        "http.codes.200": 36,
+        "plugins.metrics-by-endpoint./api/auth/login.codes.200": 11,
+        "plugins.metrics-by-endpoint./api/inventario/resumen.codes.200": 5,
+        "plugins.metrics-by-endpoint./api/productos/search.codes.200": 3,
+        "plugins.metrics-by-endpoint./api/inventario/alertas.codes.200": 5,
+        "vusers.completed": 12,
+        "plugins.metrics-by-endpoint./api/productos/categorias.codes.200": 3,
+        "plugins.metrics-by-endpoint./api/perfil.codes.200": 4,
+        "plugins.metrics-by-endpoint./api/productos.codes.200": 4,
+        "plugins.metrics-by-endpoint./api/ventas.codes.200": 1
+      },
+      "rates": {
+        "http.request_rate": 59
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164150015,
+      "firstHistogramAt": 1778164150030,
+      "lastCounterAt": 1778164159997,
+      "lastHistogramAt": 1778164159961,
+      "firstMetricAt": 1778164150015,
+      "lastMetricAt": 1778164159997,
+      "period": "1778164150000",
+      "summaries": {
+        "http.response_time": {
+          "min": 4,
+          "max": 117,
+          "count": 581,
+          "mean": 16.7,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 10.9,
+          "p90": 40,
+          "p95": 89.1,
+          "p99": 104.6,
+          "p999": 115.6
+        },
+        "http.response_time.4xx": {
+          "min": 4,
+          "max": 115,
+          "count": 545,
+          "mean": 15.5,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 10.9,
+          "p90": 27.9,
+          "p95": 82.3,
+          "p99": 102.5,
+          "p999": 113.3
+        },
+        "plugins.metrics-by-endpoint.response_time./api/auth/login": {
+          "min": 4,
+          "max": 117,
+          "count": 556,
+          "mean": 17.1,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 12.1,
+          "p90": 44.3,
+          "p95": 89.1,
+          "p99": 104.6,
+          "p999": 115.6
+        },
+        "http.response_time.2xx": {
+          "min": 4,
+          "max": 117,
+          "count": 36,
+          "mean": 34.6,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 87.4,
+          "p90": 96.6,
+          "p95": 100.5,
+          "p99": 102.5,
+          "p999": 102.5
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/resumen": {
+          "min": 5,
+          "max": 8,
+          "count": 5,
+          "mean": 6,
+          "p50": 5,
+          "median": 5,
+          "p75": 7,
+          "p90": 7,
+          "p95": 7,
+          "p99": 7,
+          "p999": 7
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos/search": {
+          "min": 6,
+          "max": 8,
+          "count": 3,
+          "mean": 6.7,
+          "p50": 6,
+          "median": 6,
+          "p75": 6,
+          "p90": 6,
+          "p95": 6,
+          "p99": 6,
+          "p999": 6
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/alertas": {
+          "min": 6,
+          "max": 8,
+          "count": 5,
+          "mean": 6.6,
+          "p50": 6,
+          "median": 6,
+          "p75": 7,
+          "p90": 7,
+          "p95": 7,
+          "p99": 7,
+          "p999": 7
+        },
+        "vusers.session_length": {
+          "min": 2110.1,
+          "max": 2154.9,
+          "count": 12,
+          "mean": 2136.7,
+          "p50": 2143.5,
+          "median": 2143.5,
+          "p75": 2143.5,
+          "p90": 2143.5,
+          "p95": 2143.5,
+          "p99": 2143.5,
+          "p999": 2143.5
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos/categorias": {
+          "min": 5,
+          "max": 25,
+          "count": 3,
+          "mean": 12.3,
+          "p50": 7,
+          "median": 7,
+          "p75": 7,
+          "p90": 7,
+          "p95": 7,
+          "p99": 7,
+          "p999": 7
+        },
+        "plugins.metrics-by-endpoint.response_time./api/perfil": {
+          "min": 4,
+          "max": 6,
+          "count": 4,
+          "mean": 5,
+          "p50": 5,
+          "median": 5,
+          "p75": 5,
+          "p90": 5,
+          "p95": 5,
+          "p99": 5,
+          "p999": 5
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos": {
+          "min": 6,
+          "max": 13,
+          "count": 4,
+          "mean": 9.5,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 10.9,
+          "p90": 10.9,
+          "p95": 10.9,
+          "p99": 10.9,
+          "p999": 10.9
+        },
+        "plugins.metrics-by-endpoint.response_time./api/ventas": {
+          "min": 10,
+          "max": 10,
+          "count": 1,
+          "mean": 10,
+          "p50": 10.1,
+          "median": 10.1,
+          "p75": 10.1,
+          "p90": 10.1,
+          "p95": 10.1,
+          "p99": 10.1,
+          "p999": 10.1
+        }
+      },
+      "histograms": {
+        "http.response_time": {
+          "min": 4,
+          "max": 117,
+          "count": 581,
+          "mean": 16.7,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 10.9,
+          "p90": 40,
+          "p95": 89.1,
+          "p99": 104.6,
+          "p999": 115.6
+        },
+        "http.response_time.4xx": {
+          "min": 4,
+          "max": 115,
+          "count": 545,
+          "mean": 15.5,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 10.9,
+          "p90": 27.9,
+          "p95": 82.3,
+          "p99": 102.5,
+          "p999": 113.3
+        },
+        "plugins.metrics-by-endpoint.response_time./api/auth/login": {
+          "min": 4,
+          "max": 117,
+          "count": 556,
+          "mean": 17.1,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 12.1,
+          "p90": 44.3,
+          "p95": 89.1,
+          "p99": 104.6,
+          "p999": 115.6
+        },
+        "http.response_time.2xx": {
+          "min": 4,
+          "max": 117,
+          "count": 36,
+          "mean": 34.6,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 87.4,
+          "p90": 96.6,
+          "p95": 100.5,
+          "p99": 102.5,
+          "p999": 102.5
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/resumen": {
+          "min": 5,
+          "max": 8,
+          "count": 5,
+          "mean": 6,
+          "p50": 5,
+          "median": 5,
+          "p75": 7,
+          "p90": 7,
+          "p95": 7,
+          "p99": 7,
+          "p999": 7
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos/search": {
+          "min": 6,
+          "max": 8,
+          "count": 3,
+          "mean": 6.7,
+          "p50": 6,
+          "median": 6,
+          "p75": 6,
+          "p90": 6,
+          "p95": 6,
+          "p99": 6,
+          "p999": 6
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/alertas": {
+          "min": 6,
+          "max": 8,
+          "count": 5,
+          "mean": 6.6,
+          "p50": 6,
+          "median": 6,
+          "p75": 7,
+          "p90": 7,
+          "p95": 7,
+          "p99": 7,
+          "p999": 7
+        },
+        "vusers.session_length": {
+          "min": 2110.1,
+          "max": 2154.9,
+          "count": 12,
+          "mean": 2136.7,
+          "p50": 2143.5,
+          "median": 2143.5,
+          "p75": 2143.5,
+          "p90": 2143.5,
+          "p95": 2143.5,
+          "p99": 2143.5,
+          "p999": 2143.5
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos/categorias": {
+          "min": 5,
+          "max": 25,
+          "count": 3,
+          "mean": 12.3,
+          "p50": 7,
+          "median": 7,
+          "p75": 7,
+          "p90": 7,
+          "p95": 7,
+          "p99": 7,
+          "p999": 7
+        },
+        "plugins.metrics-by-endpoint.response_time./api/perfil": {
+          "min": 4,
+          "max": 6,
+          "count": 4,
+          "mean": 5,
+          "p50": 5,
+          "median": 5,
+          "p75": 5,
+          "p90": 5,
+          "p95": 5,
+          "p99": 5,
+          "p999": 5
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos": {
+          "min": 6,
+          "max": 13,
+          "count": 4,
+          "mean": 9.5,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 10.9,
+          "p90": 10.9,
+          "p95": 10.9,
+          "p99": 10.9,
+          "p999": 10.9
+        },
+        "plugins.metrics-by-endpoint.response_time./api/ventas": {
+          "min": 10,
+          "max": 10,
+          "count": 1,
+          "mean": 10,
+          "p50": 10.1,
+          "median": 10.1,
+          "p75": 10.1,
+          "p90": 10.1,
+          "p95": 10.1,
+          "p99": 10.1,
+          "p999": 10.1
+        }
+      }
+    },
+    {
+      "counters": {
+        "http.requests": 821,
+        "http.codes.401": 785,
+        "http.responses": 820,
+        "http.downloaded_bytes": 50762,
+        "plugins.metrics-by-endpoint./api/auth/login.codes.401": 785,
+        "errors.Failed capture or match": 785,
+        "vusers.failed": 785,
+        "vusers.created_by_name.Operaciones de Inventario": 234,
+        "vusers.created": 797,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 340,
+        "vusers.created_by_name.Búsqueda de Productos": 148,
+        "vusers.created_by_name.Ventas y Reservas": 75,
+        "http.codes.200": 35,
+        "plugins.metrics-by-endpoint./api/auth/login.codes.200": 13,
+        "plugins.metrics-by-endpoint./api/perfil.codes.200": 1,
+        "plugins.metrics-by-endpoint./api/productos.codes.200": 1,
+        "vusers.completed": 11,
+        "plugins.metrics-by-endpoint./api/inventario/resumen.codes.200": 3,
+        "plugins.metrics-by-endpoint./api/productos/search.codes.200": 6,
+        "plugins.metrics-by-endpoint./api/inventario/alertas.codes.200": 3,
+        "plugins.metrics-by-endpoint./api/productos/categorias.codes.200": 5,
+        "plugins.metrics-by-endpoint./api/ventas.codes.200": 1,
+        "plugins.metrics-by-endpoint./api/reservas.codes.200": 2
+      },
+      "rates": {
+        "http.request_rate": 82
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164160000,
+      "firstHistogramAt": 1778164160012,
+      "lastCounterAt": 1778164169999,
+      "lastHistogramAt": 1778164169999,
+      "firstMetricAt": 1778164160000,
+      "lastMetricAt": 1778164169999,
+      "period": "1778164160000",
+      "summaries": {
+        "http.response_time": {
+          "min": 4,
+          "max": 139,
+          "count": 820,
+          "mean": 16.2,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 13.1,
+          "p90": 34.8,
+          "p95": 77.5,
+          "p99": 100.5,
+          "p999": 113.3
+        },
+        "http.response_time.4xx": {
+          "min": 4,
+          "max": 139,
+          "count": 785,
+          "mean": 15.4,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 12.1,
+          "p90": 23.8,
+          "p95": 76,
+          "p99": 100.5,
+          "p999": 113.3
+        },
+        "plugins.metrics-by-endpoint.response_time./api/auth/login": {
+          "min": 4,
+          "max": 139,
+          "count": 798,
+          "mean": 16.5,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 13.1,
+          "p90": 37.7,
+          "p95": 77.5,
+          "p99": 100.5,
+          "p999": 113.3
+        },
+        "http.response_time.2xx": {
+          "min": 4,
+          "max": 101,
+          "count": 35,
+          "mean": 33.3,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 71.5,
+          "p90": 76,
+          "p95": 85.6,
+          "p99": 87.4,
+          "p999": 87.4
+        },
+        "plugins.metrics-by-endpoint.response_time./api/perfil": {
+          "min": 6,
+          "max": 6,
+          "count": 1,
+          "mean": 6,
+          "p50": 6,
+          "median": 6,
+          "p75": 6,
+          "p90": 6,
+          "p95": 6,
+          "p99": 6,
+          "p999": 6
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos": {
+          "min": 11,
+          "max": 11,
+          "count": 1,
+          "mean": 11,
+          "p50": 10.9,
+          "median": 10.9,
+          "p75": 10.9,
+          "p90": 10.9,
+          "p95": 10.9,
+          "p99": 10.9,
+          "p999": 10.9
+        },
+        "vusers.session_length": {
+          "min": 2095.3,
+          "max": 2137.3,
+          "count": 11,
+          "mean": 2116.9,
+          "p50": 2101.1,
+          "median": 2101.1,
+          "p75": 2143.5,
+          "p90": 2143.5,
+          "p95": 2143.5,
+          "p99": 2143.5,
+          "p999": 2143.5
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/resumen": {
+          "min": 5,
+          "max": 16,
+          "count": 3,
+          "mean": 9,
+          "p50": 6,
+          "median": 6,
+          "p75": 6,
+          "p90": 6,
+          "p95": 6,
+          "p99": 6,
+          "p999": 6
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos/search": {
+          "min": 5,
+          "max": 8,
+          "count": 6,
+          "mean": 6,
+          "p50": 5,
+          "median": 5,
+          "p75": 6,
+          "p90": 7,
+          "p95": 7,
+          "p99": 7,
+          "p999": 7
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/alertas": {
+          "min": 6,
+          "max": 6,
+          "count": 3,
+          "mean": 6,
+          "p50": 6,
+          "median": 6,
+          "p75": 6,
+          "p90": 6,
+          "p95": 6,
+          "p99": 6,
+          "p999": 6
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos/categorias": {
+          "min": 6,
+          "max": 10,
+          "count": 5,
+          "mean": 7.2,
+          "p50": 6,
+          "median": 6,
+          "p75": 7.9,
+          "p90": 7.9,
+          "p95": 7.9,
+          "p99": 7.9,
+          "p999": 7.9
+        },
+        "plugins.metrics-by-endpoint.response_time./api/ventas": {
+          "min": 6,
+          "max": 6,
+          "count": 1,
+          "mean": 6,
+          "p50": 6,
+          "median": 6,
+          "p75": 6,
+          "p90": 6,
+          "p95": 6,
+          "p99": 6,
+          "p999": 6
+        },
+        "plugins.metrics-by-endpoint.response_time./api/reservas": {
+          "min": 4,
+          "max": 11,
+          "count": 2,
+          "mean": 7.5,
+          "p50": 4,
+          "median": 4,
+          "p75": 4,
+          "p90": 4,
+          "p95": 4,
+          "p99": 4,
+          "p999": 4
+        }
+      },
+      "histograms": {
+        "http.response_time": {
+          "min": 4,
+          "max": 139,
+          "count": 820,
+          "mean": 16.2,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 13.1,
+          "p90": 34.8,
+          "p95": 77.5,
+          "p99": 100.5,
+          "p999": 113.3
+        },
+        "http.response_time.4xx": {
+          "min": 4,
+          "max": 139,
+          "count": 785,
+          "mean": 15.4,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 12.1,
+          "p90": 23.8,
+          "p95": 76,
+          "p99": 100.5,
+          "p999": 113.3
+        },
+        "plugins.metrics-by-endpoint.response_time./api/auth/login": {
+          "min": 4,
+          "max": 139,
+          "count": 798,
+          "mean": 16.5,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 13.1,
+          "p90": 37.7,
+          "p95": 77.5,
+          "p99": 100.5,
+          "p999": 113.3
+        },
+        "http.response_time.2xx": {
+          "min": 4,
+          "max": 101,
+          "count": 35,
+          "mean": 33.3,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 71.5,
+          "p90": 76,
+          "p95": 85.6,
+          "p99": 87.4,
+          "p999": 87.4
+        },
+        "plugins.metrics-by-endpoint.response_time./api/perfil": {
+          "min": 6,
+          "max": 6,
+          "count": 1,
+          "mean": 6,
+          "p50": 6,
+          "median": 6,
+          "p75": 6,
+          "p90": 6,
+          "p95": 6,
+          "p99": 6,
+          "p999": 6
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos": {
+          "min": 11,
+          "max": 11,
+          "count": 1,
+          "mean": 11,
+          "p50": 10.9,
+          "median": 10.9,
+          "p75": 10.9,
+          "p90": 10.9,
+          "p95": 10.9,
+          "p99": 10.9,
+          "p999": 10.9
+        },
+        "vusers.session_length": {
+          "min": 2095.3,
+          "max": 2137.3,
+          "count": 11,
+          "mean": 2116.9,
+          "p50": 2101.1,
+          "median": 2101.1,
+          "p75": 2143.5,
+          "p90": 2143.5,
+          "p95": 2143.5,
+          "p99": 2143.5,
+          "p999": 2143.5
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/resumen": {
+          "min": 5,
+          "max": 16,
+          "count": 3,
+          "mean": 9,
+          "p50": 6,
+          "median": 6,
+          "p75": 6,
+          "p90": 6,
+          "p95": 6,
+          "p99": 6,
+          "p999": 6
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos/search": {
+          "min": 5,
+          "max": 8,
+          "count": 6,
+          "mean": 6,
+          "p50": 5,
+          "median": 5,
+          "p75": 6,
+          "p90": 7,
+          "p95": 7,
+          "p99": 7,
+          "p999": 7
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/alertas": {
+          "min": 6,
+          "max": 6,
+          "count": 3,
+          "mean": 6,
+          "p50": 6,
+          "median": 6,
+          "p75": 6,
+          "p90": 6,
+          "p95": 6,
+          "p99": 6,
+          "p999": 6
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos/categorias": {
+          "min": 6,
+          "max": 10,
+          "count": 5,
+          "mean": 7.2,
+          "p50": 6,
+          "median": 6,
+          "p75": 7.9,
+          "p90": 7.9,
+          "p95": 7.9,
+          "p99": 7.9,
+          "p999": 7.9
+        },
+        "plugins.metrics-by-endpoint.response_time./api/ventas": {
+          "min": 6,
+          "max": 6,
+          "count": 1,
+          "mean": 6,
+          "p50": 6,
+          "median": 6,
+          "p75": 6,
+          "p90": 6,
+          "p95": 6,
+          "p99": 6,
+          "p999": 6
+        },
+        "plugins.metrics-by-endpoint.response_time./api/reservas": {
+          "min": 4,
+          "max": 11,
+          "count": 2,
+          "mean": 7.5,
+          "p50": 4,
+          "median": 4,
+          "p75": 4,
+          "p90": 4,
+          "p95": 4,
+          "p99": 4,
+          "p999": 4
+        }
+      }
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Operaciones de Inventario": 323,
+        "vusers.created": 1048,
+        "http.requests": 1084,
+        "http.codes.401": 1029,
+        "http.responses": 1085,
+        "http.downloaded_bytes": 75539,
+        "plugins.metrics-by-endpoint./api/auth/login.codes.401": 1029,
+        "errors.Failed capture or match": 1029,
+        "vusers.failed": 1029,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 414,
+        "http.codes.200": 56,
+        "plugins.metrics-by-endpoint./api/productos/search.codes.200": 5,
+        "vusers.created_by_name.Búsqueda de Productos": 207,
+        "plugins.metrics-by-endpoint./api/auth/login.codes.200": 20,
+        "vusers.created_by_name.Ventas y Reservas": 104,
+        "plugins.metrics-by-endpoint./api/inventario/resumen.codes.200": 5,
+        "plugins.metrics-by-endpoint./api/productos/categorias.codes.200": 6,
+        "vusers.completed": 18,
+        "plugins.metrics-by-endpoint./api/perfil.codes.200": 8,
+        "plugins.metrics-by-endpoint./api/inventario/alertas.codes.200": 5,
+        "plugins.metrics-by-endpoint./api/productos.codes.200": 7
+      },
+      "rates": {
+        "http.request_rate": 109
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164170001,
+      "firstHistogramAt": 1778164170012,
+      "lastCounterAt": 1778164179998,
+      "lastHistogramAt": 1778164179998,
+      "firstMetricAt": 1778164170001,
+      "lastMetricAt": 1778164179998,
+      "period": "1778164170000",
+      "summaries": {
+        "http.response_time": {
+          "min": 4,
+          "max": 116,
+          "count": 1085,
+          "mean": 17.5,
+          "p50": 8.9,
+          "median": 8.9,
+          "p75": 15,
+          "p90": 40,
+          "p95": 77.5,
+          "p99": 98.5,
+          "p999": 106.7
+        },
+        "http.response_time.4xx": {
+          "min": 4,
+          "max": 112,
+          "count": 1029,
+          "mean": 16.5,
+          "p50": 8.9,
+          "median": 8.9,
+          "p75": 13.9,
+          "p90": 29.1,
+          "p95": 77.5,
+          "p99": 94.6,
+          "p999": 104.6
+        },
+        "plugins.metrics-by-endpoint.response_time./api/auth/login": {
+          "min": 4,
+          "max": 116,
+          "count": 1049,
+          "mean": 17.8,
+          "p50": 8.9,
+          "median": 8.9,
+          "p75": 15,
+          "p90": 49.9,
+          "p95": 79.1,
+          "p99": 98.5,
+          "p999": 106.7
+        },
+        "http.response_time.2xx": {
+          "min": 5,
+          "max": 116,
+          "count": 56,
+          "mean": 35.1,
+          "p50": 10.9,
+          "median": 10.9,
+          "p75": 73,
+          "p90": 82.3,
+          "p95": 100.5,
+          "p99": 100.5,
+          "p999": 100.5
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos/search": {
+          "min": 5,
+          "max": 13,
+          "count": 5,
+          "mean": 7.6,
+          "p50": 5,
+          "median": 5,
+          "p75": 10.1,
+          "p90": 10.1,
+          "p95": 10.1,
+          "p99": 10.1,
+          "p999": 10.1
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/resumen": {
+          "min": 7,
+          "max": 22,
+          "count": 5,
+          "mean": 12.2,
+          "p50": 10.9,
+          "median": 10.9,
+          "p75": 13.1,
+          "p90": 13.1,
+          "p95": 13.1,
+          "p99": 13.1,
+          "p999": 13.1
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos/categorias": {
+          "min": 6,
+          "max": 12,
+          "count": 6,
+          "mean": 9,
+          "p50": 7,
+          "median": 7,
+          "p75": 10.9,
+          "p90": 12.1,
+          "p95": 12.1,
+          "p99": 12.1,
+          "p999": 12.1
+        },
+        "vusers.session_length": {
+          "min": 2096.1,
+          "max": 2160.9,
+          "count": 18,
+          "mean": 2127.7,
+          "p50": 2143.5,
+          "median": 2143.5,
+          "p75": 2143.5,
+          "p90": 2143.5,
+          "p95": 2143.5,
+          "p99": 2143.5,
+          "p999": 2143.5
+        },
+        "plugins.metrics-by-endpoint.response_time./api/perfil": {
+          "min": 6,
+          "max": 11,
+          "count": 8,
+          "mean": 8.1,
+          "p50": 7,
+          "median": 7,
+          "p75": 8.9,
+          "p90": 8.9,
+          "p95": 8.9,
+          "p99": 8.9,
+          "p999": 8.9
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/alertas": {
+          "min": 7,
+          "max": 26,
+          "count": 5,
+          "mean": 12.4,
+          "p50": 8.9,
+          "median": 8.9,
+          "p75": 13.1,
+          "p90": 13.1,
+          "p95": 13.1,
+          "p99": 13.1,
+          "p999": 13.1
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos": {
+          "min": 5,
+          "max": 13,
+          "count": 7,
+          "mean": 8.1,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 7.9,
+          "p90": 10.1,
+          "p95": 10.1,
+          "p99": 10.1,
+          "p999": 10.1
+        }
+      },
+      "histograms": {
+        "http.response_time": {
+          "min": 4,
+          "max": 116,
+          "count": 1085,
+          "mean": 17.5,
+          "p50": 8.9,
+          "median": 8.9,
+          "p75": 15,
+          "p90": 40,
+          "p95": 77.5,
+          "p99": 98.5,
+          "p999": 106.7
+        },
+        "http.response_time.4xx": {
+          "min": 4,
+          "max": 112,
+          "count": 1029,
+          "mean": 16.5,
+          "p50": 8.9,
+          "median": 8.9,
+          "p75": 13.9,
+          "p90": 29.1,
+          "p95": 77.5,
+          "p99": 94.6,
+          "p999": 104.6
+        },
+        "plugins.metrics-by-endpoint.response_time./api/auth/login": {
+          "min": 4,
+          "max": 116,
+          "count": 1049,
+          "mean": 17.8,
+          "p50": 8.9,
+          "median": 8.9,
+          "p75": 15,
+          "p90": 49.9,
+          "p95": 79.1,
+          "p99": 98.5,
+          "p999": 106.7
+        },
+        "http.response_time.2xx": {
+          "min": 5,
+          "max": 116,
+          "count": 56,
+          "mean": 35.1,
+          "p50": 10.9,
+          "median": 10.9,
+          "p75": 73,
+          "p90": 82.3,
+          "p95": 100.5,
+          "p99": 100.5,
+          "p999": 100.5
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos/search": {
+          "min": 5,
+          "max": 13,
+          "count": 5,
+          "mean": 7.6,
+          "p50": 5,
+          "median": 5,
+          "p75": 10.1,
+          "p90": 10.1,
+          "p95": 10.1,
+          "p99": 10.1,
+          "p999": 10.1
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/resumen": {
+          "min": 7,
+          "max": 22,
+          "count": 5,
+          "mean": 12.2,
+          "p50": 10.9,
+          "median": 10.9,
+          "p75": 13.1,
+          "p90": 13.1,
+          "p95": 13.1,
+          "p99": 13.1,
+          "p999": 13.1
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos/categorias": {
+          "min": 6,
+          "max": 12,
+          "count": 6,
+          "mean": 9,
+          "p50": 7,
+          "median": 7,
+          "p75": 10.9,
+          "p90": 12.1,
+          "p95": 12.1,
+          "p99": 12.1,
+          "p999": 12.1
+        },
+        "vusers.session_length": {
+          "min": 2096.1,
+          "max": 2160.9,
+          "count": 18,
+          "mean": 2127.7,
+          "p50": 2143.5,
+          "median": 2143.5,
+          "p75": 2143.5,
+          "p90": 2143.5,
+          "p95": 2143.5,
+          "p99": 2143.5,
+          "p999": 2143.5
+        },
+        "plugins.metrics-by-endpoint.response_time./api/perfil": {
+          "min": 6,
+          "max": 11,
+          "count": 8,
+          "mean": 8.1,
+          "p50": 7,
+          "median": 7,
+          "p75": 8.9,
+          "p90": 8.9,
+          "p95": 8.9,
+          "p99": 8.9,
+          "p999": 8.9
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/alertas": {
+          "min": 7,
+          "max": 26,
+          "count": 5,
+          "mean": 12.4,
+          "p50": 8.9,
+          "median": 8.9,
+          "p75": 13.1,
+          "p90": 13.1,
+          "p95": 13.1,
+          "p99": 13.1,
+          "p999": 13.1
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos": {
+          "min": 5,
+          "max": 13,
+          "count": 7,
+          "mean": 8.1,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 7.9,
+          "p90": 10.1,
+          "p95": 10.1,
+          "p99": 10.1,
+          "p999": 10.1
+        }
+      }
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Ventas y Reservas": 137,
+        "vusers.created": 1298,
+        "http.requests": 1319,
+        "http.codes.401": 569,
+        "http.responses": 596,
+        "http.downloaded_bytes": 36982,
+        "plugins.metrics-by-endpoint./api/auth/login.codes.401": 569,
+        "errors.Failed capture or match": 569,
+        "vusers.failed": 570,
+        "vusers.created_by_name.Búsqueda de Productos": 239,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 509,
+        "vusers.created_by_name.Operaciones de Inventario": 413,
+        "http.codes.200": 27,
+        "plugins.metrics-by-endpoint./api/auth/login.codes.200": 6,
+        "plugins.metrics-by-endpoint./api/productos/search.codes.200": 5,
+        "plugins.metrics-by-endpoint./api/productos/categorias.codes.200": 5,
+        "vusers.completed": 11,
+        "plugins.metrics-by-endpoint./api/productos.codes.200": 2,
+        "plugins.metrics-by-endpoint./api/inventario/resumen.codes.200": 2,
+        "plugins.metrics-by-endpoint./api/inventario/alertas.codes.200": 2,
+        "plugins.metrics-by-endpoint./api/ventas.codes.200": 2,
+        "plugins.metrics-by-endpoint./api/reservas.codes.200": 2,
+        "plugins.metrics-by-endpoint./api/perfil.codes.200": 1,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 1,
+        "errors.ECONNRESET": 1
+      },
+      "rates": {
+        "http.request_rate": 132
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164180003,
+      "firstHistogramAt": 1778164180017,
+      "lastCounterAt": 1778164189990,
+      "lastHistogramAt": 1778164185090,
+      "firstMetricAt": 1778164180003,
+      "lastMetricAt": 1778164189990,
+      "period": "1778164180000",
+      "summaries": {
+        "http.response_time": {
+          "min": 4,
+          "max": 114,
+          "count": 596,
+          "mean": 16.2,
+          "p50": 8.9,
+          "median": 8.9,
+          "p75": 13.1,
+          "p90": 37,
+          "p95": 79.1,
+          "p99": 98.5,
+          "p999": 108.9
+        },
+        "http.response_time.4xx": {
+          "min": 4,
+          "max": 114,
+          "count": 569,
+          "mean": 15.7,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 12.1,
+          "p90": 32.8,
+          "p95": 77.5,
+          "p99": 98.5,
+          "p999": 108.9
+        },
+        "plugins.metrics-by-endpoint.response_time./api/auth/login": {
+          "min": 4,
+          "max": 114,
+          "count": 575,
+          "mean": 16.4,
+          "p50": 8.9,
+          "median": 8.9,
+          "p75": 13.1,
+          "p90": 37.7,
+          "p95": 79.1,
+          "p99": 98.5,
+          "p999": 108.9
+        },
+        "http.response_time.2xx": {
+          "min": 4,
+          "max": 102,
+          "count": 27,
+          "mean": 27.1,
+          "p50": 8.9,
+          "median": 8.9,
+          "p75": 18,
+          "p90": 79.1,
+          "p95": 92.8,
+          "p99": 98.5,
+          "p999": 98.5
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos/search": {
+          "min": 5,
+          "max": 34,
+          "count": 5,
+          "mean": 12.6,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 8.9,
+          "p90": 8.9,
+          "p95": 8.9,
+          "p99": 8.9,
+          "p999": 8.9
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos/categorias": {
+          "min": 7,
+          "max": 14,
+          "count": 5,
+          "mean": 10.2,
+          "p50": 10.1,
+          "median": 10.1,
+          "p75": 12.1,
+          "p90": 12.1,
+          "p95": 12.1,
+          "p99": 12.1,
+          "p999": 12.1
+        },
+        "vusers.session_length": {
+          "min": 2102.3,
+          "max": 2157.7,
+          "count": 11,
+          "mean": 2130.6,
+          "p50": 2143.5,
+          "median": 2143.5,
+          "p75": 2143.5,
+          "p90": 2143.5,
+          "p95": 2143.5,
+          "p99": 2143.5,
+          "p999": 2143.5
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos": {
+          "min": 6,
+          "max": 6,
+          "count": 2,
+          "mean": 6,
+          "p50": 6,
+          "median": 6,
+          "p75": 6,
+          "p90": 6,
+          "p95": 6,
+          "p99": 6,
+          "p999": 6
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/resumen": {
+          "min": 4,
+          "max": 11,
+          "count": 2,
+          "mean": 7.5,
+          "p50": 4,
+          "median": 4,
+          "p75": 4,
+          "p90": 4,
+          "p95": 4,
+          "p99": 4,
+          "p999": 4
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/alertas": {
+          "min": 5,
+          "max": 18,
+          "count": 2,
+          "mean": 11.5,
+          "p50": 5,
+          "median": 5,
+          "p75": 5,
+          "p90": 5,
+          "p95": 5,
+          "p99": 5,
+          "p999": 5
+        },
+        "plugins.metrics-by-endpoint.response_time./api/ventas": {
+          "min": 4,
+          "max": 9,
+          "count": 2,
+          "mean": 6.5,
+          "p50": 4,
+          "median": 4,
+          "p75": 4,
+          "p90": 4,
+          "p95": 4,
+          "p99": 4,
+          "p999": 4
+        },
+        "plugins.metrics-by-endpoint.response_time./api/reservas": {
+          "min": 9,
+          "max": 18,
+          "count": 2,
+          "mean": 13.5,
+          "p50": 8.9,
+          "median": 8.9,
+          "p75": 8.9,
+          "p90": 8.9,
+          "p95": 8.9,
+          "p99": 8.9,
+          "p999": 8.9
+        },
+        "plugins.metrics-by-endpoint.response_time./api/perfil": {
+          "min": 5,
+          "max": 5,
+          "count": 1,
+          "mean": 5,
+          "p50": 5,
+          "median": 5,
+          "p75": 5,
+          "p90": 5,
+          "p95": 5,
+          "p99": 5,
+          "p999": 5
+        }
+      },
+      "histograms": {
+        "http.response_time": {
+          "min": 4,
+          "max": 114,
+          "count": 596,
+          "mean": 16.2,
+          "p50": 8.9,
+          "median": 8.9,
+          "p75": 13.1,
+          "p90": 37,
+          "p95": 79.1,
+          "p99": 98.5,
+          "p999": 108.9
+        },
+        "http.response_time.4xx": {
+          "min": 4,
+          "max": 114,
+          "count": 569,
+          "mean": 15.7,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 12.1,
+          "p90": 32.8,
+          "p95": 77.5,
+          "p99": 98.5,
+          "p999": 108.9
+        },
+        "plugins.metrics-by-endpoint.response_time./api/auth/login": {
+          "min": 4,
+          "max": 114,
+          "count": 575,
+          "mean": 16.4,
+          "p50": 8.9,
+          "median": 8.9,
+          "p75": 13.1,
+          "p90": 37.7,
+          "p95": 79.1,
+          "p99": 98.5,
+          "p999": 108.9
+        },
+        "http.response_time.2xx": {
+          "min": 4,
+          "max": 102,
+          "count": 27,
+          "mean": 27.1,
+          "p50": 8.9,
+          "median": 8.9,
+          "p75": 18,
+          "p90": 79.1,
+          "p95": 92.8,
+          "p99": 98.5,
+          "p999": 98.5
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos/search": {
+          "min": 5,
+          "max": 34,
+          "count": 5,
+          "mean": 12.6,
+          "p50": 7.9,
+          "median": 7.9,
+          "p75": 8.9,
+          "p90": 8.9,
+          "p95": 8.9,
+          "p99": 8.9,
+          "p999": 8.9
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos/categorias": {
+          "min": 7,
+          "max": 14,
+          "count": 5,
+          "mean": 10.2,
+          "p50": 10.1,
+          "median": 10.1,
+          "p75": 12.1,
+          "p90": 12.1,
+          "p95": 12.1,
+          "p99": 12.1,
+          "p999": 12.1
+        },
+        "vusers.session_length": {
+          "min": 2102.3,
+          "max": 2157.7,
+          "count": 11,
+          "mean": 2130.6,
+          "p50": 2143.5,
+          "median": 2143.5,
+          "p75": 2143.5,
+          "p90": 2143.5,
+          "p95": 2143.5,
+          "p99": 2143.5,
+          "p999": 2143.5
+        },
+        "plugins.metrics-by-endpoint.response_time./api/productos": {
+          "min": 6,
+          "max": 6,
+          "count": 2,
+          "mean": 6,
+          "p50": 6,
+          "median": 6,
+          "p75": 6,
+          "p90": 6,
+          "p95": 6,
+          "p99": 6,
+          "p999": 6
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/resumen": {
+          "min": 4,
+          "max": 11,
+          "count": 2,
+          "mean": 7.5,
+          "p50": 4,
+          "median": 4,
+          "p75": 4,
+          "p90": 4,
+          "p95": 4,
+          "p99": 4,
+          "p999": 4
+        },
+        "plugins.metrics-by-endpoint.response_time./api/inventario/alertas": {
+          "min": 5,
+          "max": 18,
+          "count": 2,
+          "mean": 11.5,
+          "p50": 5,
+          "median": 5,
+          "p75": 5,
+          "p90": 5,
+          "p95": 5,
+          "p99": 5,
+          "p999": 5
+        },
+        "plugins.metrics-by-endpoint.response_time./api/ventas": {
+          "min": 4,
+          "max": 9,
+          "count": 2,
+          "mean": 6.5,
+          "p50": 4,
+          "median": 4,
+          "p75": 4,
+          "p90": 4,
+          "p95": 4,
+          "p99": 4,
+          "p999": 4
+        },
+        "plugins.metrics-by-endpoint.response_time./api/reservas": {
+          "min": 9,
+          "max": 18,
+          "count": 2,
+          "mean": 13.5,
+          "p50": 8.9,
+          "median": 8.9,
+          "p75": 8.9,
+          "p90": 8.9,
+          "p95": 8.9,
+          "p99": 8.9,
+          "p999": 8.9
+        },
+        "plugins.metrics-by-endpoint.response_time./api/perfil": {
+          "min": 5,
+          "max": 5,
+          "count": 1,
+          "mean": 5,
+          "p50": 5,
+          "median": 5,
+          "p75": 5,
+          "p90": 5,
+          "p95": 5,
+          "p99": 5,
+          "p999": 5
+        }
+      }
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 622,
+        "vusers.created": 1546,
+        "http.requests": 1546,
+        "vusers.created_by_name.Operaciones de Inventario": 441,
+        "vusers.created_by_name.Búsqueda de Productos": 322,
+        "vusers.created_by_name.Ventas y Reservas": 161,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ERR_SOCKET_TIMEOUT": 1008,
+        "errors.ERR_SOCKET_TIMEOUT": 1008,
+        "vusers.failed": 1294,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 286,
+        "errors.ECONNRESET": 286
+      },
+      "rates": {
+        "http.request_rate": 156
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164190016,
+      "lastCounterAt": 1778164199999,
+      "firstMetricAt": 1778164190016,
+      "lastMetricAt": 1778164199999,
+      "period": "1778164190000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 1800,
+        "errors.ECONNRESET": 1800,
+        "vusers.failed": 2770,
+        "vusers.created_by_name.Operaciones de Inventario": 557,
+        "vusers.created": 1799,
+        "http.requests": 1799,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ERR_SOCKET_TIMEOUT": 970,
+        "errors.ERR_SOCKET_TIMEOUT": 970,
+        "vusers.created_by_name.Búsqueda de Productos": 342,
+        "vusers.created_by_name.Ventas y Reservas": 184,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 716
+      },
+      "rates": {
+        "http.request_rate": 180
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164200000,
+      "lastCounterAt": 1778164209994,
+      "firstMetricAt": 1778164200000,
+      "lastMetricAt": 1778164209994,
+      "period": "1778164200000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 848,
+        "vusers.created": 2120,
+        "http.requests": 2120,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 1406,
+        "errors.ECONNRESET": 1406,
+        "vusers.failed": 1406,
+        "vusers.created_by_name.Operaciones de Inventario": 614,
+        "vusers.created_by_name.Búsqueda de Productos": 457,
+        "vusers.created_by_name.Ventas y Reservas": 201
+      },
+      "rates": {
+        "http.request_rate": 213
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164210000,
+      "lastCounterAt": 1778164219997,
+      "firstMetricAt": 1778164210000,
+      "lastMetricAt": 1778164219997,
+      "period": "1778164210000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 1076,
+        "vusers.created": 2766,
+        "http.requests": 2765,
+        "vusers.created_by_name.Búsqueda de Productos": 591,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 1501,
+        "errors.ECONNRESET": 1501,
+        "vusers.failed": 2506,
+        "vusers.created_by_name.Operaciones de Inventario": 847,
+        "vusers.created_by_name.Ventas y Reservas": 252,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ERR_SOCKET_TIMEOUT": 1005,
+        "errors.ERR_SOCKET_TIMEOUT": 1005
+      },
+      "rates": {
+        "http.request_rate": 277
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164220006,
+      "lastCounterAt": 1778164229999,
+      "firstMetricAt": 1778164220006,
+      "lastMetricAt": 1778164229999,
+      "period": "1778164220000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 3436,
+        "errors.ECONNRESET": 3436,
+        "vusers.failed": 4409,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 1366,
+        "vusers.created": 3435,
+        "http.requests": 3435,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ERR_SOCKET_TIMEOUT": 973,
+        "errors.ERR_SOCKET_TIMEOUT": 973,
+        "vusers.created_by_name.Búsqueda de Productos": 712,
+        "vusers.created_by_name.Operaciones de Inventario": 1017,
+        "vusers.created_by_name.Ventas y Reservas": 340
+      },
+      "rates": {
+        "http.request_rate": 344
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164230000,
+      "lastCounterAt": 1778164239999,
+      "firstMetricAt": 1778164230000,
+      "lastMetricAt": 1778164239999,
+      "period": "1778164230000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 1613,
+        "vusers.created": 4103,
+        "http.requests": 4102,
+        "vusers.created_by_name.Operaciones de Inventario": 1237,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 3384,
+        "errors.ECONNRESET": 3384,
+        "vusers.failed": 3384,
+        "vusers.created_by_name.Búsqueda de Productos": 842,
+        "vusers.created_by_name.Ventas y Reservas": 411
+      },
+      "rates": {
+        "http.request_rate": 412
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164240001,
+      "lastCounterAt": 1778164249999,
+      "firstMetricAt": 1778164240001,
+      "lastMetricAt": 1778164249999,
+      "period": "1778164240000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "http.requests": 4760,
+        "vusers.created_by_name.Operaciones de Inventario": 1449,
+        "vusers.created": 4759,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 3493,
+        "errors.ECONNRESET": 3492,
+        "vusers.failed": 4496,
+        "vusers.created_by_name.Búsqueda de Productos": 948,
+        "vusers.created_by_name.Ventas y Reservas": 455,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 1907,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ERR_SOCKET_TIMEOUT": 1004,
+        "errors.ERR_SOCKET_TIMEOUT": 1004
+      },
+      "rates": {
+        "http.request_rate": 478
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164250000,
+      "lastCounterAt": 1778164259999,
+      "firstMetricAt": 1778164250000,
+      "lastMetricAt": 1778164259999,
+      "period": "1778164250000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ERR_SOCKET_TIMEOUT": 974,
+        "errors.ERR_SOCKET_TIMEOUT": 974,
+        "vusers.failed": 6387,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 5412,
+        "errors.ECONNRESET": 5413,
+        "vusers.created_by_name.Búsqueda de Productos": 1118,
+        "vusers.created": 5405,
+        "http.requests": 5406,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 2187,
+        "vusers.created_by_name.Operaciones de Inventario": 1557,
+        "vusers.created_by_name.Ventas y Reservas": 543
+      },
+      "rates": {
+        "http.request_rate": 540
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164260000,
+      "lastCounterAt": 1778164269998,
+      "firstMetricAt": 1778164260000,
+      "lastMetricAt": 1778164269998,
+      "period": "1778164260000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Búsqueda de Productos": 1153,
+        "vusers.created": 5957,
+        "http.requests": 5957,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 2400,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 5246,
+        "errors.ECONNRESET": 5246,
+        "vusers.failed": 5246,
+        "vusers.created_by_name.Operaciones de Inventario": 1757,
+        "vusers.created_by_name.Ventas y Reservas": 647
+      },
+      "rates": {
+        "http.request_rate": 598
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164270000,
+      "lastCounterAt": 1778164279999,
+      "firstMetricAt": 1778164270000,
+      "lastMetricAt": 1778164279999,
+      "period": "1778164270000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Ventas y Reservas": 605,
+        "vusers.created": 6217,
+        "http.requests": 6217,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 2524,
+        "vusers.created_by_name.Operaciones de Inventario": 1837,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 4942,
+        "errors.ECONNRESET": 4941,
+        "vusers.failed": 5943,
+        "vusers.created_by_name.Búsqueda de Productos": 1251,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ERR_SOCKET_TIMEOUT": 1002,
+        "errors.ERR_SOCKET_TIMEOUT": 1002
+      },
+      "rates": {
+        "http.request_rate": 624
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164280000,
+      "lastCounterAt": 1778164289999,
+      "firstMetricAt": 1778164280000,
+      "lastMetricAt": 1778164289999,
+      "period": "1778164280000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Búsqueda de Productos": 1264,
+        "vusers.created": 6398,
+        "http.requests": 6398,
+        "vusers.created_by_name.Operaciones de Inventario": 1888,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 6405,
+        "errors.ECONNRESET": 6406,
+        "vusers.failed": 7382,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ERR_SOCKET_TIMEOUT": 976,
+        "errors.ERR_SOCKET_TIMEOUT": 976,
+        "vusers.created_by_name.Ventas y Reservas": 620,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 2626
+      },
+      "rates": {
+        "http.request_rate": 641
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164290000,
+      "lastCounterAt": 1778164299999,
+      "firstMetricAt": 1778164290000,
+      "lastMetricAt": 1778164299999,
+      "period": "1778164290000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Búsqueda de Productos": 1287,
+        "vusers.created": 6603,
+        "http.requests": 6601,
+        "vusers.created_by_name.Ventas y Reservas": 702,
+        "vusers.created_by_name.Operaciones de Inventario": 1995,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 5889,
+        "errors.ECONNRESET": 5889,
+        "vusers.failed": 5889,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 2619
+      },
+      "rates": {
+        "http.request_rate": 663
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164300000,
+      "lastCounterAt": 1778164309999,
+      "firstMetricAt": 1778164300000,
+      "lastMetricAt": 1778164309999,
+      "period": "1778164300000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Operaciones de Inventario": 2020,
+        "vusers.created": 6878,
+        "http.requests": 6880,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 2746,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 5618,
+        "errors.ECONNRESET": 5618,
+        "vusers.failed": 6618,
+        "vusers.created_by_name.Búsqueda de Productos": 1414,
+        "vusers.created_by_name.Ventas y Reservas": 698,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ERR_SOCKET_TIMEOUT": 1000,
+        "errors.ERR_SOCKET_TIMEOUT": 1000
+      },
+      "rates": {
+        "http.request_rate": 690
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164310000,
+      "lastCounterAt": 1778164319991,
+      "firstMetricAt": 1778164310000,
+      "lastMetricAt": 1778164319991,
+      "period": "1778164310000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ERR_SOCKET_TIMEOUT": 978,
+        "errors.ERR_SOCKET_TIMEOUT": 978,
+        "vusers.failed": 8031,
+        "vusers.created_by_name.Ventas y Reservas": 644,
+        "vusers.created": 7064,
+        "http.requests": 7062,
+        "vusers.created_by_name.Operaciones de Inventario": 2148,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 7053,
+        "errors.ECONNRESET": 7053,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 2818,
+        "vusers.created_by_name.Búsqueda de Productos": 1454
+      },
+      "rates": {
+        "http.request_rate": 707
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164320000,
+      "lastCounterAt": 1778164329999,
+      "firstMetricAt": 1778164320000,
+      "lastMetricAt": 1778164329999,
+      "period": "1778164320000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "http.requests": 7291,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 2875,
+        "vusers.created": 7290,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 6588,
+        "errors.ECONNRESET": 6588,
+        "vusers.failed": 6588,
+        "vusers.created_by_name.Búsqueda de Productos": 1466,
+        "vusers.created_by_name.Operaciones de Inventario": 2196,
+        "vusers.created_by_name.Ventas y Reservas": 753
+      },
+      "rates": {
+        "http.request_rate": 731
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164330000,
+      "lastCounterAt": 1778164339999,
+      "firstMetricAt": 1778164330000,
+      "lastMetricAt": 1778164339999,
+      "period": "1778164330000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Búsqueda de Productos": 1514,
+        "vusers.created": 7481,
+        "http.requests": 7482,
+        "vusers.created_by_name.Operaciones de Inventario": 2246,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 6199,
+        "errors.ECONNRESET": 6199,
+        "vusers.failed": 7199,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 2978,
+        "vusers.created_by_name.Ventas y Reservas": 743,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ERR_SOCKET_TIMEOUT": 1000,
+        "errors.ERR_SOCKET_TIMEOUT": 1000
+      },
+      "rates": {
+        "http.request_rate": 750
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164340000,
+      "lastCounterAt": 1778164349998,
+      "firstMetricAt": 1778164340000,
+      "lastMetricAt": 1778164349998,
+      "period": "1778164340000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Operaciones de Inventario": 2428,
+        "vusers.created": 7715,
+        "http.requests": 7714,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 7709,
+        "errors.ECONNRESET": 7709,
+        "vusers.failed": 8687,
+        "vusers.created_by_name.Ventas y Reservas": 700,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ERR_SOCKET_TIMEOUT": 978,
+        "errors.ERR_SOCKET_TIMEOUT": 978,
+        "vusers.created_by_name.Búsqueda de Productos": 1549,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 3038
+      },
+      "rates": {
+        "http.request_rate": 773
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164350000,
+      "lastCounterAt": 1778164359998,
+      "firstMetricAt": 1778164350000,
+      "lastMetricAt": 1778164359998,
+      "period": "1778164350000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 6962,
+        "errors.ECONNRESET": 6962,
+        "vusers.failed": 6962,
+        "vusers.created_by_name.Búsqueda de Productos": 1549,
+        "vusers.created": 7649,
+        "http.requests": 7649,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 3060,
+        "vusers.created_by_name.Ventas y Reservas": 768,
+        "vusers.created_by_name.Operaciones de Inventario": 2272
+      },
+      "rates": {
+        "http.request_rate": 767
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164360000,
+      "lastCounterAt": 1778164369999,
+      "firstMetricAt": 1778164360000,
+      "lastMetricAt": 1778164369999,
+      "period": "1778164360000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Búsqueda de Productos": 1082,
+        "vusers.created": 5306,
+        "http.requests": 5307,
+        "vusers.created_by_name.Operaciones de Inventario": 1578,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 2120,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 4037,
+        "errors.ECONNRESET": 4037,
+        "vusers.failed": 5034,
+        "vusers.created_by_name.Ventas y Reservas": 526,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ERR_SOCKET_TIMEOUT": 997,
+        "errors.ERR_SOCKET_TIMEOUT": 997
+      },
+      "rates": {
+        "http.request_rate": 533
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164370000,
+      "lastCounterAt": 1778164379999,
+      "firstMetricAt": 1778164370000,
+      "lastMetricAt": 1778164379999,
+      "period": "1778164370000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ERR_SOCKET_TIMEOUT": 981,
+        "errors.ERR_SOCKET_TIMEOUT": 981,
+        "vusers.failed": 3737,
+        "vusers.created_by_name.Operaciones de Inventario": 849,
+        "vusers.created": 2755,
+        "http.requests": 2755,
+        "vusers.created_by_name.Búsqueda de Productos": 531,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 2756,
+        "errors.ECONNRESET": 2756,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 1086,
+        "vusers.created_by_name.Ventas y Reservas": 289
+      },
+      "rates": {
+        "http.request_rate": 276
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164380000,
+      "lastCounterAt": 1778164389993,
+      "firstMetricAt": 1778164380000,
+      "lastMetricAt": 1778164389993,
+      "period": "1778164380000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Búsqueda de Productos": 96,
+        "vusers.created": 420,
+        "http.requests": 420,
+        "plugins.metrics-by-endpoint./api/auth/login.errors.ECONNRESET": 420,
+        "errors.ECONNRESET": 420,
+        "vusers.failed": 420,
+        "vusers.created_by_name.Usuario Autenticado - CRUD": 147,
+        "vusers.created_by_name.Operaciones de Inventario": 139,
+        "vusers.created_by_name.Ventas y Reservas": 38
+      },
+      "rates": {
+        "http.request_rate": 96
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1778164390018,
+      "lastCounterAt": 1778164394720,
+      "firstMetricAt": 1778164390018,
+      "lastMetricAt": 1778164394720,
+      "period": "1778164390000",
+      "summaries": {},
+      "histograms": {}
+    }
+  ],
+  "name": "stress-1000.json"
+};
+    const editor = ace.edit("editor");
+    editor.getSession().setMode("ace/mode/javascript");
+    editor.setValue(JSON.stringify(Report, null, 2));
+    editor.gotoLine(1);
+    editor.setHighlightActiveLine(false);
+    editor.setOption("maxLines", 50);
+    editor.setTheme("ace/theme/clouds_midnight");
+
+    // let sanitizedName = Report.name.replace(/_/, " ").split(" ").map((w) => w[0].toUpperCase()+w.substring(1,w.length)).join(" ")
+    $('#report-name').html(Report.name.replace(".json", ""))
+
+    const l = _;
+
+    const chartBgColors = {
+      red: "rgba(255, 99, 132, 0.2)",
+      orange: "rgba(255, 159, 64, 0.2)",
+      yellow: "rgba(255, 205, 86, 0.2)",
+      green: "rgba(75, 192, 192, 0.2)",
+      blue: "rgba(54, 162, 235, 0.2)",
+    };
+
+    const chartBorderColors = {
+      green: "#24EB70",
+      red: "#ff0000",
+      orange: "#FF6D1B",
+      purple: "#6100FF",
+      blue: "#0047FF"
+    };
+
+    const getHttpColor = (httpCode) => {
+      const code = parseInt(httpCode, 10);
+
+      if (code >= 100 && code < 200) {
+        return chartBorderColors.blue;
+      } else if (code >= 200 && code < 300) {
+        return chartBorderColors.green;
+      } else if (code >= 300 && code < 400) {
+        return chartBorderColors.red;
+      } else if (code >= 400 && code < 500) {
+        return chartBorderColors.purple;
+      }
+
+      return chartBorderColors.orange;
+    }
+
+    const getLatencyColor = (latency) => {
+      switch (latency) {
+        case "min":
+          return chartBorderColors.red;
+        case "max":
+          return chartBorderColors.orange;
+        case "median":
+          return chartBorderColors.purple;
+        case "p95":
+          return chartBorderColors.green;
+        case "p99":
+          return chartBorderColors.green;
+        default:
+          return '';
+      }
+    };
+
+    const getCustomStats = (stats) =>
+      l.omitBy(
+        stats,
+        (_, key) =>
+          key.startsWith("errors.") ||
+          key.startsWith("core.") ||
+          key.startsWith("engine.")
+      );
+
+    const scenarioCounts = l.pickBy(Report.aggregate.counters, (_, key) =>
+      key.startsWith("vusers.created_by_name")
+    );
+
+    if (l.size(scenarioCounts) > 0) {
+      l.each(scenarioCounts, function (count, key) {
+        const [, , name] = key.split(".");
+
+        const $tdName = $("<td>" + name + "</td>");
+        const percentage =
+          Math.round(
+            (count / Report.aggregate.counters["vusers.created"]) *
+            100 *
+            1000
+          ) / 1000;
+        const $tdCount = $("<td>" + count + " (" + percentage + "%)" + "</td>");
+        $("<tr></tr>")
+          .append($tdName)
+          .append($tdCount)
+          .appendTo($("#scenarioCounts"));
+      });
+    } else {
+      $("#scenarioCountsContainer").hide();
+    }
+
+    const httpCodes = l.pickBy(Report.aggregate.counters, (_, key) =>
+      key.startsWith("http.codes")
+    );
+
+    const errors = l.pickBy(Report.aggregate.counters, (_, key) =>
+      key.startsWith("errors.")
+    );
+    if (l.size(errors) > 0) {
+      l.each(errors, function (count, error) {
+        const [, errorDetail] = error.split("errors.");
+
+        $("<tr></tr>")
+          .append($("<td>" + errorDetail + "</td>"))
+          .append($("<td>" + count + "</td>"))
+          .appendTo($("#errors"));
+      });
+    } else {
+      $("#errorsContainer > p").html(
+        "&#10004; Test completed without network or OS errors."
+      );
+    }
+
+    const getTimePeriodAggregates = (summaries) => {
+      const summary =
+        summaries["socketio.response_time"] ||
+        summaries["http.response_time"];
+      const metrics = ["min", "max", "median", "p95", "p99"];
+
+      return l.pickBy(summary, (_, key) => metrics.includes(key));
+    };
+
+    const getLatencyDistribution = (data) => {
+      return l.reduce(
+        data,
+        (acc, value, key) => {
+          acc.labels.push(key);
+          acc.values.push(value);
+
+          return acc;
+        },
+        { labels: [], values: [] }
+      );
+    };
+
+    const randomRgbColor = () => {
+      const r = Math.floor(Math.random() * 256);
+      const g = Math.floor(Math.random() * 256);
+      const b = Math.floor(Math.random() * 256);
+
+      return "rgb(" + r + ", " + g + ", " + b + ")";
+    };
+
+    const latencyDistributionData = getLatencyDistribution(
+      getTimePeriodAggregates(Report.aggregate.summaries)
+    );
+
+    const latencyAtIntervalsData = (intermediates = []) => {
+      const data = intermediates.reduce(
+        (acc, entry, idx) => {
+          const latencies = getTimePeriodAggregates(entry.summaries);
+
+          l.each(latencies, (latency, key) => {
+            acc.values[key] = acc.values[key] || [];
+
+            acc.values[key].push(latency);
+          });
+
+          acc.labels.push((idx + 1) * 10);
+
+          return acc;
+        },
+        { labels: [], values: {} }
+      );
+
+      return {
+        labels: data.labels,
+        datasets: l.map(data.values, (entry, key) => {
+          const color = getLatencyColor(key);
+
+          return {
+            label: key,
+            data: entry,
+            fill: false,
+            backgroundColor: color,
+            borderColor: color,
+            tension: 0.5,
+          };
+        })
+      };
+    };
+
+
+    const getMeanRpsData = (intermediates = []) => {
+      const data = intermediates.reduce(
+        (acc, entry, idx) => {
+          const count =
+            entry.rates["http.request_rate"] ||
+            entry.rates["socketio.emit_rate"] ||
+            entry.rates["websocket.send_rate"] ||
+            0;
+
+          acc.labels.push((idx + 1) * 10);
+          acc.values.push(count);
+
+          return acc;
+        },
+        { labels: [], values: [] }
+      );
+
+      return {
+        labels: data.labels,
+        datasets: [
+          {
+            data: data.values,
+            fill: false,
+            borderColor: "#0047FF",
+            tension: 0.5,
+          },
+        ],
+      };
+    };
+
+    const getHttpCodesData = (counters) => {
+      const httpCodes = l.pickBy(counters, (_, key) =>
+        key.startsWith("http.codes")
+      );
+      const labels = [];
+      const data = [];
+      const bgColors = [
+        "rgba(54, 232, 235, 0.5)",
+        "rgba(54, 235, 93, 0.5)",
+        "rgba(229, 235, 54, 0.5)",
+        "rgba(166, 54, 235, 0.5)",
+        "rgba(235, 54, 69, 0.5)",
+      ];
+
+      if (l.size(httpCodes) > 0) {
+        l.each(httpCodes, function (count, key) {
+          let [, , , code] = key.split(".");
+          code = parseInt(code, 10);
+
+          labels.push(code);
+          data.push(count);
+        });
+      }
+
+      return {
+        labels,
+        datasets: [
+          {
+            backgroundColor: labels.map(getHttpColor),
+            hoverOffset: 4,
+            data,
+          },
+        ],
+      };
+    };
+
+    const timeFormat = "DD[/]MM[/]YYYY, hh:mm:ss"
+    $("#timestamp").html(
+      moment(Report.aggregate.period).format(timeFormat)
+    );
+    $('#copy-json').on("click", (e) => {
+      navigator.clipboard.writeText(JSON.stringify(Report, null, 2));
+
+      $('#copy-json').html(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-label="" aria-labelledby="icon_start" x="0px" y="0px" role="img" class="inline false"><title id="icon_start" lang="en"></title><g fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"></path></g></svg>`)
+      setTimeout(function () {
+        $('#copy-json').html(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-label="" aria-labelledby="icon_start" x="0px" y="0px" role="img" class="inline false"><title id="icon_start" lang="en"></title><g fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"></path></g></svg>`)
+      }, 1000)
+    })
+
+
+    // tabs logic
+    $("#charts-tab").on("click", (e) => {
+      $("#charts-tab").addClass("active")
+      $("#json-tab").removeClass("active")
+
+      $("#index-tree").removeClass("hidden")
+      $("#charts-col").removeClass("hidden")
+      $("#json-output").addClass("hidden")
+    })
+
+    $("#json-tab").on("click", (e) => {
+      $("#json-tab").addClass("active")
+      $("#charts-tab").removeClass("active")
+
+      $("#index-tree").addClass("hidden")
+      $("#charts-col").addClass("hidden")
+      $("#json-output").removeClass("hidden")
+    })
+
+    //counters toggle
+    $("#counters-title").on("click", (e) => {
+      $('#customCountersTable').hasClass("hidden") ? $('#customCountersTable').removeClass("hidden") : $('#customCountersTable').addClass("hidden")
+      $('#counters-title').hasClass("chevron-down") ? $('#counters-title').removeClass("chevron-down") : $('#counters-title').addClass("chevron-down")
+    })
+
+
+    const iconDuration = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-label="Duration" aria-labelledby="icon_duration" x="0px" y="0px" role="img"><title id="icon_duration" lang="en">Duration</title><g fill="#9B9B9B"><path d="M15 1H9V3H15V1ZM11 14H13V8H11V14ZM19.03 7.39L20.45 5.97C20.02 5.46 19.55 4.98 19.04 4.56L17.62 5.98C16.07 4.74 14.12 4 12 4C7.03 4 3 8.03 3 13C3 17.97 7.02 22 12 22C16.98 22 21 17.97 21 13C21 10.88 20.26 8.93 19.03 7.39ZM12 20C8.13 20 5 16.87 5 13C5 9.13 8.13 6 12 6C15.87 6 19 9.13 19 13C19 16.87 15.87 20 12 20Z"></path></g></svg>`
+    const checkCircle = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
+        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+        <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+      </svg>`
+
+    const xCircle = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-label="Regions" aria-labelledby="icon_regions" x="0px" y="0px" role="img"><title id="icon_regions" lang="en">Regions</title><g fill="#9B9B9B"><path d="M12 2C6.47 2 2 6.47 2 12C2 17.53 6.47 22 12 22C17.53 22 22 17.53 22 12C22 6.47 17.53 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20ZM15.59 7L12 10.59L8.41 7L7 8.41L10.59 12L7 15.59L8.41 17L12 13.41L15.59 17L17 15.59L13.41 12L17 8.41L15.59 7Z"></path></g></svg>`
+    const iconStarted = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-label="Started" aria-labelledby="icon_started" x="0px" y="0px" role="img"><title id="icon_started" lang="en">Started</title><g fill="#9B9B9B"><path d="M11.99 2C6.47 2 2 6.48 2 12C2 17.52 6.47 22 11.99 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 11.99 2ZM12 20C7.58 20 4 16.42 4 12C4 7.58 7.58 4 12 4C16.42 4 20 7.58 20 12C20 16.42 16.42 20 12 20ZM12.5 7H11V13L16.25 16.15L17 14.92L12.5 12.25V7Z"></path></g></svg>`
+    const iconFinished = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-label="Finished" aria-labelledby="icon_finished" x="0px" y="0px" role="img"><title id="icon_finished" lang="en">Finished</title><g fill="#9B9B9B"><path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20ZM16.59 7.58L10 14.17L7.41 11.59L6 13L10 17L18 9L16.59 7.58Z"></path></g></svg>`
+    // summary blocks
+
+    const timeStarted = moment(Report.aggregate.firstMetricAt)
+    const timeFinished = moment(Report.aggregate.lastMetricAt)
+
+    function formatDuration(s) {
+      var min = Math.floor(s / 60)
+      var sec = s - min * 60
+      return min + "m " + sec + "s"
+    }
+
+    const summaryInfo = [
+      { icon: iconDuration, name: "Duration", value: formatDuration(timeFinished.diff(timeStarted, "seconds")) || "n/a" },
+      { icon: iconStarted, name: "Started", value: timeStarted.format(timeFormat) || "n/a" },
+      { icon: iconFinished, name: "Completed", value: timeFinished.format(timeFormat) || "n/a" },
+      { icon: xCircle, name: "Errors", value: !errors ? "n/a" : errors.length ? errors.length : "0" },
+    ]
+
+    function summaryBlock(block) {
+      return (
+        `<li class="summary-block flex flex-auto items-center justify-start rounded py-2 px-3 mb-3 border-gray" >
+              <div class="mr-3 text-gray-default">`+
+        block.icon +
+        `</div>
+              <div><div class="text-gray-default text-xsm">`+
+        block.name +
+        `</div>
+              <div class="text-xsm">
+                `+ block.value + `
+              </div>
+              </div>
+        </li>`
+      )
+    }
+
+    summaryInfo.forEach((block) => {
+      const appendage = summaryBlock(block)
+      $("#summary-blocks").append(appendage);
+    })
+
+
+    if (l.size(errors) > 0) {
+      const getErrorsAtIntervalsData = (intermediates = []) => {
+        const data = intermediates.reduce(
+          (acc, entry, idx) => {
+            const errorsCounters = l.pickBy(entry.counters, (_, key) =>
+              key.startsWith("errors.")
+            );
+
+            l.each(errorsCounters, (count, key) => {
+              const [, errorDetail] = key.split("errors.");
+
+              acc.values[errorDetail] = acc.values[errorDetail] || [];
+
+              acc.values[errorDetail].push(count);
+            });
+
+            acc.labels.push((idx + 1) * 10);
+
+            return acc;
+          },
+          { labels: [], values: {} }
+        );
+
+        return {
+          labels: data.labels,
+          datasets: l.map(data.values, (entry, key) => {
+            return {
+              label: key,
+              data: entry,
+              fill: false,
+              backgroundColor: Object.values(chartBorderColors),
+              borderColor: Object.values(chartBorderColors),
+              tension: 0.5,
+            };
+          })
+        };
+      };
+
+
+      new Chart(document.getElementById("errorsAtIntervalsChart"), {
+        type: "line",
+        data: getErrorsAtIntervalsData(Report.intermediate),
+        options: {
+          plugins: { legend: { position: "bottom" } },
+          aspectRatio: 3.5,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: "count",
+              },
+            },
+          },
+        },
+      });
+    }
+    !errors.length && $("#errorsChartsRow").hide();
+
+    const unorderedCustomCounters = Report.aggregate.counters;
+    const customCounters = Object.keys(unorderedCustomCounters).sort().reduce(
+      (obj, key) => {
+        obj[key] = unorderedCustomCounters[key];
+        return obj;
+      },
+      {}
+    );
+
+    if (l.size(customCounters) > 0) {
+      let rows = [];
+      l.each(customCounters, function (count, key) {
+        const row = $("<tr></tr>")
+          .append($('<td class="text-xsm whitespace-nowrap p-2 font-normal text-white" colspan="6">' + key + '</td>'))
+          .append($('<td class="text-xsm whitespace-nowrap p-2 font-normal text-white" colspan="6">' + count + '</td>'));
+        rows.push(row);
+      });
+
+
+
+      rows.forEach((row) => row.appendTo($("#customCountersTable")));
+      const getCustomStatsAtIntervalsData = (intermediates = []) => {
+        const data = intermediates.reduce(
+          (acc, entry, idx) => {
+            const customCounters = entry.counters;
+
+            l.each(customCounters, (count, key) => {
+              acc.values[key] = acc.values[key] || [];
+              acc.values[key].push(count);
+            });
+
+            acc.labels.push((idx + 1) * 10);
+            return acc;
+          },
+          { labels: [], values: {} }
+        );
+        return {
+          labels: data.labels,
+          datasets: l.map(data.values, (entry, key) => {
+            color = "#0047FF";
+            return {
+              label: key,
+              data: entry,
+              fill: false,
+              backgroundColor: color,
+              borderColor: color,
+              tension: 0.5,
+            };
+          }),
+        };
+      };
+
+      $("#expandCustomCountersRow").on("click", (e) => {
+        e.preventDefault();
+        $("#customCountersTable tr").removeClass("hidden");
+        $("#expandCustomCountersRow").addClass("hidden");
+      });
+
+      // create intermediate charts array with name and type
+      let intervalChartsArray = []
+      Report.intermediate.forEach((interval, i) => {
+        Object.keys(interval.counters).forEach((counter) => {
+          intervalChartsArray.find((chart) => chart.name == counter) || intervalChartsArray.push({ name: counter, data: [], type: "interval" })
+
+        })
+      })
+
+      let intervalChartsSet = []
+      intervalChartsArray.forEach((c) => {
+        if (!intervalChartsSet.includes(c)) {
+          intervalChartsSet.push(c);
+        }
+      });
+
+      // add data per interval for each chart 
+      intervalChartsSet.forEach((chart, i) => {
+        Report.intermediate.forEach((interval, j) => {
+          const value = interval.counters[chart.name] || 0
+          intervalChartsSet[i].data.push({ counters: { [chart.name]: value } })
+        })
+      })
+
+      // add summary data 
+      let aggregateChartsArray = []
+      Object.keys(Report.aggregate.summaries).forEach((summary) => {
+        const data = Report.aggregate.summaries[summary]
+        aggregateChartsArray.push({ name: summary, data: data, type: "aggregate" })
+
+      })
+
+      let chartsSet = [...intervalChartsSet, ...aggregateChartsArray].sort((a, b) => a.name < b.name ? -1 : 1)
+
+      const sanitizer = /[.| |'|"]/g
+      chartsSet.forEach((chart) => {
+        $('#customCountersAtIntervalsChart').append("<div id='" + chart.name.replaceAll(sanitizer, "-")
+          + "-wrapper' class='text-xsm rounded' style='border: 1px solid #383838;'><div class='p-2 text-gray-default' style='border-bottom: 1px solid #383838; background-color: #2b2b2b; font-weight: 500;''>"
+          + chart.name + "</div><div class='p-4'><canvas id='" + chart.name + "'>unable to create chart</canvas></div></div>")
+
+        if (chart.type === 'interval') {
+          new Chart(document.getElementById(chart.name), {
+            type: "bar",
+            data: getCustomStatsAtIntervalsData(chart.data),
+            options: {
+              barPercentage: 0.2,
+              plugins: { legend: { display: false } },
+              aspectRatio: 2.5,
+              responsive: true,
+              maintainAspectRatio: true,
+              scales: {
+                x: {
+                  title: {
+                    display: true,
+                    text: "time"
+                  },
+                  ticks: {
+                    color: '#9b9b9b',
+                  },
+                  grid: {
+                    color: 'transparent',
+                    borderColor: '#383838',
+                  },
+                },
+                y: {
+                  beginAtZero: true,
+                  title: {
+                    display: true,
+                    text: "count",
+                  },
+                  ticks: {
+                    color: '#9b9b9b',
+                    precision: 0,
+                  },
+                  grid: {
+                    color: '#383838',
+                    borderColor: '#383838',
+                  },
+                },
+              },
+            },
+          });
+        } else if (chart.type === 'aggregate') {
+          const { labels, values } = getLatencyDistribution(
+            l.pickBy(chart.data, (_, key) =>
+              ["min", "max", "median", "p95", "p99"].includes(key)
+            )
+          );
+          new Chart(document.getElementById(chart.name), {
+            type: "bar",
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  data: values,
+                  backgroundColor: Object.values(chartBorderColors),
+                  borderColor: Object.values(chartBgColors),
+                  borderWidth: 1,
+                },
+              ],
+            },
+            options: {
+              plugins: { legend: { display: false } },
+              barPercentage: 0.4,
+              scales: {
+                x: {
+                  ticks: {
+                    color: '#9b9b9b',
+                    precision: 0,
+                  },
+                  grid: {
+                    color: 'transparent',
+                    borderColor: '#383838',
+                  },
+                },
+                y: {
+                  beginAtZero: true,
+                  title: {
+                    display: true,
+                    text: "ms",
+                  },
+                  ticks: {
+                    color: '#9b9b9b',
+                    precision: 0,
+                  },
+                  grid: {
+                    color: '#383838',
+                    borderColor: '#383838',
+                  },
+                },
+              },
+            },
+          })
+        }
+      })
+
+      // parse out index tabs from custom counters for index nav
+      const parentRegex = /^([^.| ]+)/
+      const nodeRegex = /[ |\.](.*)/
+
+      let indexSet = new Set(chartsSet.map((c) => {
+        return c.name.match(parentRegex)[0]
+      }))
+
+      // create tree from index set
+      let indexTree = Array.from(indexSet).sort().reduce((key, value) => {
+        return { ...key, [value]: [] };
+      }, {});
+
+      // fill tree with custom counters according to parent tab
+      chartsSet.forEach((chart) => {
+        const node = chart.name
+        const parent = node ? chart.name.match(parentRegex)[0] : chart.name
+        indexTree[parent] && indexTree[parent].push({ name: node, type: chart.type })
+      })
+
+      // sort child nodes for each tab
+      for (let [key, value] of Object.entries(indexTree)) {
+        indexTree = {
+          ...indexTree, [key]: value.sort()
+        }
+      }
+
+      const chevron = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-label="Toggle charts list for vusers metrics (5)" aria-labelledby="icon_toggle_vusers metrics (5)" x="0px" y="0px" role="img"><title id="icon_toggle_vusers metrics (5)" lang="en">Toggle charts list for vusers metrics (5)</title><g fill="currentColor"><path d="M12 8L6 14L7.41 15.41L12 10.83L16.59 15.41L18 14L12 8Z"></path></g></svg>`
+
+      // populate index with divs
+      let $htmlTree = $('<div class="mt-0 flex flex-col justify-start space-y-3 pb-3 text-gray-default"></div>')
+      Object.keys(indexTree).forEach((parent) => {
+        const nodeClass = parent.replaceAll(sanitizer, "-")
+        const nodes = indexTree[parent].map((n) =>
+          `<a class="text-xsm focus:text-beige hover:bg-black-default focus:ring-black-200 text-gray-default ml-2 block truncate rounded px-2 py-1.5 font-medium transition hover:text-white focus:ring-2 text-gray-default bg-transparent" 
+            href="#` + (n.name).replaceAll(sanitizer, "-") + '-wrapper" id="' + n.name + '-node" >'
+          + n.name
+          + '</a>').join("")
+
+        nodes.length > 1 ? $htmlTree.append(
+          '<div class="w-full overflow-hidden"><h4 id="' + nodeClass + '-parent" > <div onclick="nodeClick(`' + nodeClass + '`)" class="accordion-toggle cursor-pointer text-gray-default focus:text-beige flex items-center px-0 py-1.5 hover:text-white">'
+          + parent + ' metrics (' + indexTree[parent].length + ')'
+          + '<span class="ml-1 transition" style="transition-origin: center;">' + chevron + '</span>'
+          + ' </div> <div class="' + nodeClass + '-node accordion-details relative flex w-56 flex-col space-y-1 h-auto hidden">' + nodes + '</div></h4></div>'
+        ) :
+          $htmlTree.append("<div class='flex-col h-auto py-3'><a class='hover:text-beige' href='#" + parent + "--wrapper'>" + parent + "</a></div>")
+
+      })
+      const indexTreeContainer = $("#index-tree")
+      $htmlTree.appendTo(indexTreeContainer)
+
+    } else {
+      $("#charts-col").hide();
+      $("#customCountersContainer").hide();
+    }
+
+    function nodeClick(tab) {
+      const nodeClass = '.' + tab + '-node'
+      const nodes = document.querySelectorAll(nodeClass);
+      const parentTab = document.getElementById(tab + "-parent");
+      [...parentTab.classList].includes('chevron-down') ? parentTab.classList.remove('chevron-down') : parentTab.classList.add('chevron-down');
+      for (const node of nodes) {
+        [...node.classList].includes("hidden") ? node.classList.remove("hidden") : node.classList.add("hidden");
+      }
+    }
+
+  </script>
+</body>
+
+</html>

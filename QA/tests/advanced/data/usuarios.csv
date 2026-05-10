@@ -1,0 +1,7 @@
+email,password,nombre,rol
+admin@pharmaquick.com,password,Administrador Central,ADMINISTRADOR
+vendedor@pharmaquick.com,password,Vendedor Principal,USUARIO
+vendedor2@pharmaquick.com,password,Vendedor Norte,USUARIO
+vendedor3@pharmaquick.com,password,Vendedor Cedritos,USUARIO
+vendedor4@pharmaquick.com,password,Vendedor Chapinero,USUARIO
+vendedor5@pharmaquick.com,password,Vendedor Calle 80,USUARIO
