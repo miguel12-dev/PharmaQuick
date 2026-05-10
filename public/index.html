@@ -92,6 +92,93 @@
             </div>
     </template>
 
+    <!-- Template: Register Page -->
+    <template id="template-register">
+            <div class="row justify-content-center">
+                <div class="col-12 col-sm-8 col-md-6 col-lg-4">
+                    <div class="card login-card shadow-lg border-0">
+                        <div class="card-body">
+                            <div class="text-center mb-2">
+                                <img src="/image/logo_pharmaQuick.png" alt="PharmaQuick" style="height: 45px; max-width: 100%;" class="img-fluid">
+                            </div>
+                                Crea tu cuenta de farmacia para comenzar a ordenar.
+                            </p>
+
+                            <form id="registerForm">
+                                <div class="mb-3">
+                                    <label for="nombre" class="form-label fw-semibold">
+                                        <i class="bi bi-person me-2"></i>Nombre Completo
+                                    </label>
+                                    <input type="text" class="form-control" id="nombre" required
+                                           placeholder="Ej: Juan Pérez" autocomplete="name">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="email" class="form-label fw-semibold">
+                                        <i class="bi bi-envelope me-2"></i>Correo Electrónico
+                                    </label>
+                                    <input type="email" class="form-control" id="email" required
+                                           placeholder="nombre@ejemplo.com" autocomplete="email">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="password" class="form-label fw-semibold">
+                                        <i class="bi bi-key me-2"></i>Contraseña
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="password" required
+                                               placeholder="Mínimo 6 caracteres" minlength="6" autocomplete="new-password">
+                                        <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                            <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="confirm_password" class="form-label fw-semibold">
+                                        <i class="bi bi-key-fill me-2"></i>Confirmar Contraseña
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="confirm_password" required
+                                               placeholder="Repite tu contraseña" autocomplete="new-password">
+                                        <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword">
+                                            <i class="bi bi-eye" id="toggleConfirmPasswordIcon"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div id="registerError" class="alert alert-danger d-none" role="alert">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    <span id="registerErrorMessage"></span>
+                                </div>
+
+                                <div id="registerSuccess" class="alert alert-success d-none" role="alert">
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    <span id="registerSuccessMessage"></span>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold" id="registerBtn">
+                                    <span id="registerBtnText">Crear Cuenta</span>
+                                    <span id="registerBtnSpinner" class="spinner-border spinner-border-sm d-none" role="status">
+                                        <span class="visually-hidden">Cargando...</span>
+                                    </span>
+                                </button>
+                            </form>
+
+                            <div class="text-center mt-4 pt-2 border-top">
+                                <p class="text-muted small mb-0">¿Ya tienes una cuenta?</p>
+                                <a href="/login" class="btn btn-link text-primary fw-bold text-decoration-none p-0" onclick="event.preventDefault(); Router.navigate('/login')">Inicia Sesión</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <small class="text-muted">&copy; 2026 PharmaQuick v1.0</small>
+                    </div>
+                </div>
+            </div>
+    </template>
+
     <!-- Template: Layout (Navbar + Sidebar) -->
     <template id="template-layout">
         <aside class="sidebar" id="sidebar">
