@@ -381,6 +381,45 @@ class PharmaRouter
             return;
         }
 
+        // ===================
+        // COMPRAS CLIENTE (Simuladas - públicas para testing)
+        // ===================
+        
+        // POST /api/compras - Crear compra simulada
+        if ($this->uri === '/api/compras' && $this->method === 'POST') {
+            require_once ROUTES_PATH . '/compras_cliente.php';
+            handlePostCompra();
+            return;
+        }
+
+        // GET /api/compras - Listar compras del cliente
+        if ($this->uri === '/api/compras' && $this->method === 'GET') {
+            require_once ROUTES_PATH . '/compras_cliente.php';
+            handleGetCompras();
+            return;
+        }
+
+        // GET /api/compras/{codigo} - Obtener compra específica
+        if ($this->method === 'GET' && preg_match('#^/api/compras/([A-Z0-9-]+)$#', $this->uri, $matches)) {
+            require_once ROUTES_PATH . '/compras_cliente.php';
+            handleGetCompraByCodigo($matches[1]);
+            return;
+        }
+
+        // POST /api/compras/metodo-pago - Guardar método de pago
+        if ($this->uri === '/api/compras/metodo-pago' && $this->method === 'POST') {
+            require_once ROUTES_PATH . '/compras_cliente.php';
+            handlePostMetodoPago();
+            return;
+        }
+
+        // GET /api/compras/metodos-pago - Listar métodos de pago del cliente
+        if ($this->uri === '/api/compras/metodos-pago' && $this->method === 'GET') {
+            require_once ROUTES_PATH . '/compras_cliente.php';
+            handleGetMetodosPago();
+            return;
+        }
+
         // [DESHABILITADO] Rutas de reservas - Línea comentada por no utilizarse en la aplicación
         // if ($this->uri === '/api/reservas' && $this->method === 'GET') {
         //     require_once ROUTES_PATH . '/reservas.php';

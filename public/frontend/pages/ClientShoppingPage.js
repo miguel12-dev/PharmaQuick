@@ -1,6 +1,7 @@
 /**
  * PharmaQuick - Client Shopping Page
  * Página de compras con simulación de pago real (Tarjeta/Nequi)
+ * Conectado a la base de datos
  */
 
 const ClientShoppingPage = {
@@ -18,9 +19,21 @@ const ClientShoppingPage = {
 
         ClientLayout.render(container, 'compras');
         
-        // Cargar carrito e historial
+        // Cargar carrito
         this.cart = JSON.parse(localStorage.getItem('clientCart') || '[]');
-        this.purchaseHistory = JSON.parse(localStorage.getItem('purchaseHistory') || '[]');
+        
+        // Cargar historial desde el backend
+        try {
+            if (window.shoppingService) {
+                this.purchaseHistory = await window.shoppingService.getPurchases();
+            } else {
+                // Fallback a localStorage si el servicio no está disponible
+                this.purchaseHistory = JSON.parse(localStorage.getItem('purchaseHistory') || '[]');
+            }
+        } catch (error) {
+            console.error('Error loading purchases:', error);
+            this.purchaseHistory = JSON.parse(localStorage.getItem('purchaseHistory') || '[]');
+        }
         
         // Determinar vista según estado
         this.renderShopping();
@@ -447,32 +460,81 @@ const ClientShoppingPage = {
         this.isProcessing = true;
         this.renderShopping();
         
-        // Simular delay de procesamiento (2-3 segundos)
-        await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 1000));
+        // Simular delay de procesamiento (1-2 segundos)
+        await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 500));
         
-        // Simular resultado (90% éxito para pruebas)
-        const success = Math.random() < 0.9;
-        
-        if (success) {
-            // Crear registro de compra
-            const purchase = {
-                id: 'PED-' + Date.now().toString(36).toUpperCase(),
-                fecha: new Date().toISOString(),
-                items: [...this.cart],
+        try {
+            // Preparar datos de la compra
+            const purchaseData = {
+                items: this.cart.map(item => ({
+                    producto_id: item.producto_id,
+                    nombre: item.nombre,
+                    cantidad: item.cantidad,
+                    precio: item.precio
+                })),
                 total: this.getCartTotal(),
-                paymentMethod: paymentMethod,
-                status: 'CONFIRMADA',
-                delivery: {
-                    address: deliveryAddress,
-                    name: deliveryName,
-                    phone: deliveryPhone,
-                    notes: document.getElementById('deliveryNotes').value
-                }
+                paymentMethod: paymentMethod === 'card' ? 'TARJETA' : 'NEQUI',
+                deliveryAddress: deliveryAddress,
+                deliveryName: deliveryName,
+                deliveryPhone: deliveryPhone,
+                deliveryNotes: document.getElementById('deliveryNotes').value
             };
             
-            // Guardar en historial
-            this.purchaseHistory.unshift(purchase);
-            localStorage.setItem('purchaseHistory', JSON.stringify(this.purchaseHistory));
+            // Intentar guardar en el backend
+            let purchase = null;
+            let savedToBackend = false;
+            
+            if (window.shoppingService) {
+                try {
+                    const result = await window.shoppingService.createPurchase(purchaseData);
+                    if (result.success) {
+                        purchase = {
+                            id: result.data.id,
+                            codigo_pedido: result.data.codigo_pedido,
+                            fecha: result.data.fecha,
+                            items: purchaseData.items,
+                            total: result.data.total,
+                            paymentMethod: result.data.metodo_pago,
+                            status: result.data.estado,
+                            delivery: {
+                                address: deliveryAddress,
+                                name: deliveryName,
+                                phone: deliveryPhone,
+                                notes: document.getElementById('deliveryNotes').value
+                            }
+                        };
+                        savedToBackend = true;
+                    }
+                } catch (backendError) {
+                    console.warn('Backend save failed, using local storage:', backendError);
+                }
+            }
+            
+            // Si no se guardó en backend, usar método local
+            if (!purchase) {
+                purchase = {
+                    id: 'PED-' + Date.now().toString(36).toUpperCase(),
+                    fecha: new Date().toISOString(),
+                    items: this.cart,
+                    total: this.getCartTotal(),
+                    paymentMethod: paymentMethod === 'card' ? 'TARJETA' : 'NEQUI',
+                    status: 'CONFIRMADA',
+                    delivery: {
+                        address: deliveryAddress,
+                        name: deliveryName,
+                        phone: deliveryPhone,
+                        notes: document.getElementById('deliveryNotes').value
+                    },
+                    _local: true // Marcar como guardado localmente
+                };
+                
+                // Guardar en historial local como backup
+                this.purchaseHistory.unshift(purchase);
+                localStorage.setItem('purchaseHistory', JSON.stringify(this.purchaseHistory));
+            } else {
+                // Agregar al historial local también para mostrar
+                this.purchaseHistory.unshift(purchase);
+            }
             
             // Limpiar carrito
             this.cart = [];
@@ -480,10 +542,12 @@ const ClientShoppingPage = {
             
             // Mostrar éxito
             this.isProcessing = false;
+            this.showToast(savedToBackend ? 'Compra guardada en la base de datos' : 'Compra procesada (almacenamiento local)', 'success');
             this.renderPurchaseSuccess(purchase);
-        } else {
+            
+        } catch (error) {
             this.isProcessing = false;
-            this.showToast('Error en el procesamiento. Intenta de nuevo.', 'danger');
+            this.showToast(error.message || 'Error en el procesamiento. Intenta de nuevo.', 'danger');
             this.renderShopping();
         }
     },
