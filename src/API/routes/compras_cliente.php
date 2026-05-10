@@ -25,23 +25,33 @@ function getProductImageFromCluster($pdoMaster, $productId, $farmaciaId, $produc
         if (!$productId && !$productoNombre) {
             return null;
         }
-        
+
         $clusterPrefix = getClusterPrefix($pdoMaster, $farmaciaId);
-        
-        if (!$clusterPrefix) {
+        return getProductImageFromClusterDirect($clusterPrefix, $productId, $productoNombre);
+    } catch (\Exception $e) {
+        return null;
+    }
+}
+
+/**
+ * Obtiene la imagen de un producto usando el prefijo del cluster directamente
+ */
+function getProductImageFromClusterDirect($clusterPrefix, $productId, $productoNombre = null) {
+    try {
+        if (!$clusterPrefix || (!$productId && !$productoNombre)) {
             return null;
         }
-        
+
         // Extraer el número del cluster del prefijo (ej: "db_cluster_1" -> 1)
         preg_match('/(?:db_)?cluster_(\d+)/', $clusterPrefix, $matches);
         $clusterNum = isset($matches[1]) ? (int)$matches[1] : null;
-        
+
         if (!$clusterNum) {
             return null;
         }
-        
+
         $pdoCluster = PDOFactory::getCluster($clusterNum);
-        
+
         // Verificar si la columna imagen existe en el cluster
         try {
             $stmtCheckCol = $pdoCluster->query("SHOW COLUMNS FROM productos LIKE 'imagen'");
@@ -49,11 +59,11 @@ function getProductImageFromCluster($pdoMaster, $productId, $farmaciaId, $produc
         } catch (\Exception $e) {
             $hasImagen = false;
         }
-        
+
         if (!$hasImagen) {
             return null;
         }
-        
+
         // Intentar primero por ID
         $imagen = null;
         if ($productId) {
@@ -62,7 +72,7 @@ function getProductImageFromCluster($pdoMaster, $productId, $farmaciaId, $produc
             $product = $stmt->fetch(PDO::FETCH_ASSOC);
             $imagen = $product['imagen'] ?? null;
         }
-        
+
         // Si no found, buscar por nombre
         if (!$imagen && $productoNombre) {
             $stmt = $pdoCluster->prepare("SELECT imagen FROM productos WHERE LOWER(nombre) = LOWER(?) LIMIT 1");
@@ -70,7 +80,7 @@ function getProductImageFromCluster($pdoMaster, $productId, $farmaciaId, $produc
             $product = $stmt->fetch(PDO::FETCH_ASSOC);
             $imagen = $product['imagen'] ?? null;
         }
-        
+
         return $imagen;
     } catch (\Exception $e) {
         return null;
@@ -368,9 +378,11 @@ function handleGetCompras()
                 cc.farmacia_id,
                 f.nombre AS nombre_farmacia,
                 f.direccion AS direccion_farmacia,
-                f.telefono AS telefono_farmacia
+                f.telefono AS telefono_farmacia,
+                cf.cluster_prefix
             FROM compras_cliente cc
             LEFT JOIN farmacias f ON cc.farmacia_id = f.id
+            LEFT JOIN cluster_farmacias cf ON f.id = cf.farmacia_id
             WHERE cc.usuario_id = ?
             ORDER BY cc.created_at DESC
             LIMIT 50
@@ -395,19 +407,19 @@ function handleGetCompras()
             $stmtDetalle->execute([$compra['id']]);
             $items = $stmtDetalle->fetchAll(\PDO::FETCH_ASSOC);
             
-            // Obtener imágenes desde el cluster de la farmacia
-            $farmaciaId = $compra['farmacia_id'] ?? 1;
+            // Obtener imágenes desde el cluster de la farmacia usando el prefijo ya obtenido
+            $clusterPrefix = $compra['cluster_prefix'] ?? null;
             foreach ($items as &$item) {
                 $productoId = $item['producto_id'] ?? null;
                 $productoNombre = $item['producto_nombre'] ?? null;
-                $item['producto_imagen'] = getProductImageFromCluster($pdo, $productoId, $farmaciaId, $productoNombre);
+                $item['producto_imagen'] = getProductImageFromClusterDirect($clusterPrefix, $productoId, $productoNombre);
             }
-            
+
             $compra['items'] = $items;
             $compra['fecha'] = $compra['created_at'];
-            unset($compra['created_at']);
+            unset($compra['created_at'], $compra['cluster_prefix']);
         }
-        
+
         JsonResponse::success($compras);
         
     } catch (\Throwable $e) {
@@ -427,7 +439,7 @@ function handleGetCompraByCodigo($codigo)
         $pdo = PDOFactory::getMaster();
         
         $stmt = $pdo->prepare("
-            SELECT 
+            SELECT
                 cc.id,
                 cc.codigo_pedido,
                 cc.total,
@@ -441,9 +453,11 @@ function handleGetCompraByCodigo($codigo)
                 cc.farmacia_id,
                 f.nombre AS nombre_farmacia,
                 f.direccion AS direccion_farmacia,
-                f.telefono AS telefono_farmacia
+                f.telefono AS telefono_farmacia,
+                cf.cluster_prefix
             FROM compras_cliente cc
             LEFT JOIN farmacias f ON cc.farmacia_id = f.id
+            LEFT JOIN cluster_farmacias cf ON f.id = cf.farmacia_id
             WHERE cc.codigo_pedido = ? AND cc.usuario_id = ?
         ");
         
@@ -470,18 +484,18 @@ function handleGetCompraByCodigo($codigo)
         $stmtDetalle->execute([$compra['id']]);
         $items = $stmtDetalle->fetchAll(\PDO::FETCH_ASSOC);
         
-        // Obtener imágenes desde el cluster de la farmacia
-        $farmaciaId = $compra['farmacia_id'] ?? 1;
+        // Obtener imágenes usando cluster_prefix ya disponible
+        $clusterPrefix = $compra['cluster_prefix'] ?? null;
         foreach ($items as &$item) {
             $productoId = $item['producto_id'] ?? null;
             $productoNombre = $item['producto_nombre'] ?? null;
-            $item['producto_imagen'] = getProductImageFromCluster($pdo, $productoId, $farmaciaId, $productoNombre);
+            $item['producto_imagen'] = getProductImageFromClusterDirect($clusterPrefix, $productoId, $productoNombre);
         }
-        
+
         $compra['items'] = $items;
         $compra['fecha'] = $compra['created_at'];
-        unset($compra['created_at']);
-        
+        unset($compra['created_at'], $compra['cluster_prefix']);
+
         JsonResponse::success($compra);
         
     } catch (\Throwable $e) {
