@@ -23,7 +23,15 @@ function handlePostCompra()
         // Validar campos requeridos
         $required = ['items', 'total', 'metodo_pago', 'direccion', 'nombre', 'telefono'];
         foreach ($required as $field) {
-            if (!isset($input[$field]) || empty($input[$field])) {
+            // Los nombres en el frontend pueden ser diferentes
+            $fieldMap = [
+                'direccion' => 'deliveryAddress',
+                'nombre' => 'deliveryName', 
+                'telefono' => 'deliveryPhone'
+            ];
+            $mappedField = $fieldMap[$field] ?? $field;
+            
+            if (!isset($input[$mappedField]) || empty($input[$mappedField])) {
                 JsonResponse::error("Campo requerido: $field", 400);
                 return;
             }
@@ -41,14 +49,8 @@ function handlePostCompra()
             return;
         }
         
-        // Obtener usuario_id desde la sesión/JWT (simulado)
-        // En producción vendría del token JWT
-        $usuarioId = $input['usuario_id'] ?? null;
-        if (!$usuarioId) {
-            // Intentar obtener desde el headers o session
-            $headers = getallheaders();
-            $usuarioId = $input['usuario_id'] ?? 1; // Default para testing
-        }
+        // Obtener usuario_id desde la sesión/JWT
+        $usuarioId = $input['usuario_id'] ?? 1;
         
         // Generar código de pedido único
         $codigoPedido = 'PED-' . strtoupper(bin2hex(random_bytes(4)));
@@ -56,8 +58,8 @@ function handlePostCompra()
         // Farmacia por defecto
         $farmaciaId = $input['farmacia_id'] ?? 1;
         
-        // Conectar a la base de datos
-        $pdo = PDOFactory::getCluster($farmaciaId);
+        // Conectar a la base de datos usando Master para tablas centrales
+        $pdo = PDOFactory::getMaster();
         
         // Iniciar transacción
         $pdo->beginTransaction();
@@ -85,10 +87,10 @@ function handlePostCompra()
                 $codigoPedido,
                 $input['total'],
                 $metodoPago,
-                $input['direccion'],
-                $input['nombre'],
-                $input['telefono'],
-                $input['observaciones'] ?? null
+                $input['deliveryAddress'],
+                $input['deliveryName'],
+                $input['deliveryPhone'],
+                $input['deliveryNotes'] ?? null
             ]);
             
             $compraId = $pdo->lastInsertId();
@@ -149,7 +151,7 @@ function handleGetCompras()
         $usuarioId = $_GET['usuario_id'] ?? 1;
         $farmaciaId = $_GET['farmacia_id'] ?? 1;
         
-        $pdo = PDOFactory::getCluster($farmaciaId);
+        $pdo = PDOFactory::getMaster();
         
         // Obtener compras del usuario
         $stmt = $pdo->prepare("
@@ -207,7 +209,7 @@ function handleGetCompraByCodigo($codigo)
         $usuarioId = $_GET['usuario_id'] ?? 1;
         $farmaciaId = $_GET['farmacia_id'] ?? 1;
         
-        $pdo = PDOFactory::getCluster($farmaciaId);
+        $pdo = PDOFactory::getMaster();
         
         $stmt = $pdo->prepare("
             SELECT 
@@ -278,7 +280,7 @@ function handlePostMetodoPago()
             return;
         }
         
-        $pdo = PDOFactory::getCluster(1);
+        $pdo = PDOFactory::getMaster();
         
         $stmt = $pdo->prepare("
             INSERT INTO metodos_pago_cliente (
@@ -315,7 +317,7 @@ function handleGetMetodosPago()
     try {
         $usuarioId = $_GET['usuario_id'] ?? 1;
         
-        $pdo = PDOFactory::getCluster(1);
+        $pdo = PDOFactory::getMaster();
         
         $stmt = $pdo->prepare("
             SELECT id, tipo, ultimo_digito, tipo_tarjeta, telefono, activo, created_at

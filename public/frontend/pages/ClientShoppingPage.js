@@ -494,6 +494,8 @@ const ClientShoppingPage = {
             if (window.shoppingService) {
                 try {
                     const result = await window.shoppingService.createPurchase(purchaseData);
+                    console.log('Backend response:', result);
+                    
                     if (result.success) {
                         purchase = {
                             id: result.data.id,
@@ -513,7 +515,12 @@ const ClientShoppingPage = {
                         savedToBackend = true;
                     }
                 } catch (backendError) {
-                    console.warn('Backend save failed, using local storage:', backendError);
+                    console.error('Error al guardar en backend:', backendError);
+                    // No usar fallback local, mostrar error al usuario
+                    this.showToast('Error al procesar compra: ' + backendError.message, 'danger');
+                    this.isProcessing = false;
+                    this.renderShopping();
+                    return;
                 }
             }
             

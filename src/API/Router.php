@@ -72,6 +72,7 @@ class PharmaRouter
         }
 
         JsonResponse::error('Recurso no encontrado', 404);
+        return;
     }
 
     private function isApiRequest(string $uri): bool
@@ -81,6 +82,9 @@ class PharmaRouter
 
     private function handleApi(): void
     {
+        // DEBUG: Log de la uri y método
+        error_log("handleApi called: uri=" . $this->uri . " method=" . $this->method);
+        
         // Verificar si es ruta pÃºblica (login/register)
         if (in_array($this->uri, $this->publicRoutes) && $this->method === 'POST') {
             if ($this->uri === '/api/auth/login') {
@@ -102,6 +106,14 @@ class PharmaRouter
         // Rutas pÃºblicas sin JWT (vitrina e-commerce)
         if (strpos($this->uri, '/api/public/') === 0) {
             $this->handlePublicApi();
+            return;
+        }
+
+        // Rutas de compras de cliente (públicas para testing - sin JWT)
+        $uriPath = parse_url($this->uri, PHP_URL_PATH);
+        error_log("DEBUG: Checking compras route, full uri=" . $this->uri . ", path=" . $uriPath);
+        if ($uriPath === '/api/compras' || strpos($uriPath, '/api/compras/') === 0) {
+            $this->handleComprasClienteApi();
             return;
         }
 
@@ -134,6 +146,43 @@ class PharmaRouter
         }
 
         JsonResponse::error('Recurso publico no encontrado', 404);
+    }
+
+    private function handleComprasClienteApi(): void
+    {
+        require_once ROUTES_PATH . '/compras_cliente.php';
+
+        // POST /api/compras - Crear compra
+        if ($this->uri === '/api/compras' && $this->method === 'POST') {
+            handlePostCompra();
+            return;
+        }
+
+        // GET /api/compras - Listar compras
+        if ($this->uri === '/api/compras' && $this->method === 'GET') {
+            handleGetCompras();
+            return;
+        }
+
+        // GET /api/compras/{codigo} - Obtener compra específica
+        if ($this->method === 'GET' && preg_match('#^/api/compras/([A-Z0-9-]+)$#', $this->uri, $matches)) {
+            handleGetCompraByCodigo($matches[1]);
+            return;
+        }
+
+        // POST /api/compras/metodo-pago - Guardar método de pago
+        if ($this->uri === '/api/compras/metodo-pago' && $this->method === 'POST') {
+            handlePostMetodoPago();
+            return;
+        }
+
+        // GET /api/compras/metodos-pago - Listar métodos de pago
+        if ($this->uri === '/api/compras/metodos-pago' && $this->method === 'GET') {
+            handleGetMetodosPago();
+            return;
+        }
+
+        JsonResponse::error('Recurso de compras no encontrado', 404);
     }
 
     private function dispatchRoutes(): void
@@ -378,45 +427,6 @@ class PharmaRouter
         if ($this->uri === '/api/ventas/crear' && $this->method === 'POST') {
             require_once ROUTES_PATH . '/ventas.php';
             handlePostVentasCrear();
-            return;
-        }
-
-        // ===================
-        // COMPRAS CLIENTE (Simuladas - públicas para testing)
-        // ===================
-        
-        // POST /api/compras - Crear compra simulada
-        if ($this->uri === '/api/compras' && $this->method === 'POST') {
-            require_once ROUTES_PATH . '/compras_cliente.php';
-            handlePostCompra();
-            return;
-        }
-
-        // GET /api/compras - Listar compras del cliente
-        if ($this->uri === '/api/compras' && $this->method === 'GET') {
-            require_once ROUTES_PATH . '/compras_cliente.php';
-            handleGetCompras();
-            return;
-        }
-
-        // GET /api/compras/{codigo} - Obtener compra específica
-        if ($this->method === 'GET' && preg_match('#^/api/compras/([A-Z0-9-]+)$#', $this->uri, $matches)) {
-            require_once ROUTES_PATH . '/compras_cliente.php';
-            handleGetCompraByCodigo($matches[1]);
-            return;
-        }
-
-        // POST /api/compras/metodo-pago - Guardar método de pago
-        if ($this->uri === '/api/compras/metodo-pago' && $this->method === 'POST') {
-            require_once ROUTES_PATH . '/compras_cliente.php';
-            handlePostMetodoPago();
-            return;
-        }
-
-        // GET /api/compras/metodos-pago - Listar métodos de pago del cliente
-        if ($this->uri === '/api/compras/metodos-pago' && $this->method === 'GET') {
-            require_once ROUTES_PATH . '/compras_cliente.php';
-            handleGetMetodosPago();
             return;
         }
 
