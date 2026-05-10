@@ -8,7 +8,6 @@ class PublicStorePage {
         // Setup View Callbacks
         this.view.onSearch = this.handleSearch.bind(this);
         this.view.onBuy = this.handleBuy.bind(this);
-        this.view.onReserve = this.handleReserve.bind(this);
         
         // Load data
         await this.loadCatalog();
@@ -90,12 +89,7 @@ class PublicStorePage {
         window.Router.navigate(`/login?next=${nextUrl}`);
     }
 
-    // [DESHABILITADO] handleReserve - Deshabilitado por no utilizarse
-    // static handleReserve(productId) {
-    //     // Redirigir al login con return a reservas
-    //     const nextUrl = encodeURIComponent(`/reservas?producto=${productId}`);
-    //     window.Router.navigate(`/login?next=${nextUrl}`);
-    // }
+    
 }
 
 window.PublicStorePage = PublicStorePage;

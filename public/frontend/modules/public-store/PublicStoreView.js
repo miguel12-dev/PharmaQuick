@@ -3,7 +3,7 @@ class PublicStoreView {
         this.container = container;
         this.onSearch = null;
         this.onBuy = null;
-        this.onReserve = null;
+        
     }
 
     render(products, query = '', loggedIn = false) {
@@ -120,9 +120,6 @@ class PublicStoreView {
                                 <button class="btn btn-primary btn-sm action-buy" data-id="${product.id}" ${!hasStock ? 'disabled' : ''}>
                                     <i class="fas fa-cart-plus me-1"></i> Comprar
                                 </button>
-                                <button class="btn btn-outline-primary btn-sm action-reserve" data-id="${product.id}" ${!hasStock ? 'disabled' : ''}>
-                                    <i class="fas fa-calendar-check me-1"></i> Reservar
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -162,7 +159,6 @@ class PublicStoreView {
     }
 
     attachActionEvents() {
-        // Buy and Reserve buttons
         this.container.querySelectorAll('.action-buy').forEach(btn => {
             // Avoid double binding
             const newBtn = btn.cloneNode(true);
@@ -174,16 +170,7 @@ class PublicStoreView {
             });
         });
 
-        this.container.querySelectorAll('.action-reserve').forEach(btn => {
-            // Avoid double binding
-            const newBtn = btn.cloneNode(true);
-            btn.parentNode.replaceChild(newBtn, btn);
-            
-            newBtn.addEventListener('click', (e) => {
-                const id = e.currentTarget.dataset.id;
-                if (this.onReserve) this.onReserve(id);
-            });
-        });
+        
     }
 
     showLoading() {

@@ -49,13 +49,7 @@ const ClientStorePage = {
                     <i class="fas fa-shopping-cart me-2"></i> Comprar
                 </a>
             </li>
-            <!-- [DESHABILITADO] Tab de Reservar - Deshabilitado por no utilizarse
-            <li class="nav-item">
-                <a class="nav-link ${activeTab === 'reservar' ? 'active' : ''}" href="#" data-tab="reservar" onclick="event.preventDefault(); window.ClientStorePage.switchTab('reservar')">
-                    <i class="fas fa-calendar-check me-2"></i> Reservar
-                </a>
-            </li>
-            -->
+            
         </ul>
         
         <!-- Buscador -->
@@ -128,11 +122,7 @@ const ClientStorePage = {
                             <button class="btn btn-primary btn-sm" onclick="window.ClientStorePage.addToCart(${p.id})" ${!hasStock ? 'disabled' : ''}>
                                 <i class="fas fa-cart-plus me-1"></i> Añadir al Carrito
                             </button>
-                            <!-- [DESHABILITADO] Botón de Reservar - Deshabilitado por no utilizarse
-                            <button class="btn btn-outline-success btn-sm" onclick="window.ClientStorePage.quickReserve(${p.id})" ${!hasStock ? 'disabled' : ''}>
-                                <i class="fas fa-calendar-plus me-1"></i> Reservar Ahora
-                            </button>
-                            -->
+                            
                         </div>
                     </div>
                 </div>
@@ -216,32 +206,7 @@ const ClientStorePage = {
         document.getElementById('productsGrid').innerHTML = this.renderProductCards(filtered);
     },
 
-    // [DESHABILITADO] Función quickReserve - Deshabilitado por no utilizarse
-    // async quickReserve(productId) {
-    //     const product = this.products.find(p => p.id === productId);
-    //     if (!product) return;
-    //     
-    //     if (!confirm(`¿Reservar "${product.nombre}"?`)) return;
-    //     
-    //     const httpClient = window.httpClient || window.HttpClient;
-    //     
-    //     try {
-    //         const session = JSON.parse(localStorage.getItem('pharmaSession') || '{}');
-    //         
-    //         const formData = new FormData();
-    //         formData.append('lote_id', product.lote_id || product.id);
-    //         formData.append('cantidad', 1);
-    //         
-    //         const data = await httpClient.post('/reservas/create', formData);
-    //         
-    //         if (data.success) {
-    //             this.showToast('Reserva creada exitosamente', 'success');
-    //             Router.navigate('/cliente/reservas');
-    //         }
-    //     } catch (error) {
-    //         this.showToast(error.message || 'Error al crear reserva', 'danger');
-    //     }
-    // },
+
 
     async processPurchase() {
         if (this.cart.length === 0) return;
