@@ -209,7 +209,7 @@ class Router {
      * Verificar si es ruta pública
      */
     static isPublicRoute(path) {
-        const publicRoutes = ['/', '/login', '/register', '/tienda', '/404', '/500', '/403'];
+        const publicRoutes = ['/', '/login', '/register', '/recover-password', '/tienda', '/404', '/500', '/403'];
         return publicRoutes.includes(path);
     }
     

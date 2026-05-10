@@ -90,3 +90,65 @@ function handleAuthRegister(): void {
         JsonResponse::error('Error: ' . $e->getMessage(), 500);
     }
 }
+
+/**
+ * Solicitar recuperación de contraseña
+ */
+function handleAuthRecover(): void {
+    global $authService;
+    
+    $postData = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+    $email = $postData['email'] ?? '';
+
+    if (empty($email)) {
+        JsonResponse::error('Email es requerido', 400);
+        return;
+    }
+
+    try {
+        $result = $authService->requestPasswordRecovery($email);
+        
+        if ($result === true) {
+            // Siempre devolver éxito por seguridad (no revelar si el email existe)
+            JsonResponse::success(null, 'Si el correo existe, recibirás un enlace para recuperar tu contraseña');
+        } else {
+            JsonResponse::error($result, 400);
+        }
+    } catch (\Throwable $e) {
+        // Por seguridad, no revelar el error exacto
+        JsonResponse::success(null, 'Si el correo existe, recibirás un enlace para recuperar tu contraseña');
+    }
+}
+
+/**
+ * Restablecer contraseña con token
+ */
+function handleAuthReset(): void {
+    global $authService;
+    
+    $postData = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+    $token = $postData['token'] ?? '';
+    $password = $postData['password'] ?? '';
+
+    if (empty($token) || empty($password)) {
+        JsonResponse::error('Token y nueva contrasena son requeridos', 400);
+        return;
+    }
+
+    if (strlen($password) < 6) {
+        JsonResponse::error('La contrasena debe tener al menos 6 caracteres', 400);
+        return;
+    }
+
+    try {
+        $result = $authService->resetPassword($token, $password);
+        
+        if ($result === true) {
+            JsonResponse::success(null, 'Contrasena actualizada correctamente. Ya puedes iniciar sesion.');
+        } else {
+            JsonResponse::error($result, 400);
+        }
+    } catch (\Throwable $e) {
+        JsonResponse::error($e->getMessage(), 400);
+    }
+}

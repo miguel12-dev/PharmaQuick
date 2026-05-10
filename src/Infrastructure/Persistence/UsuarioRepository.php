@@ -51,6 +51,61 @@ class UsuarioRepository {
         return $stmt->fetchColumn() !== false;
     }
 
+    /**
+     * Busca un usuario por email
+     */
+    public function findByEmail(string $email): ?array {
+        $stmt = $this->pdo->prepare("
+            SELECT id, farmacia_id, email, password_hash, rol, recover_token, recover_expires_at
+            FROM usuarios 
+            WHERE email = :email AND activo = 1
+            LIMIT 1
+        ");
+        $stmt->execute([':email' => $email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $user ?: null;
+    }
+
+    /**
+     * Busca un usuario por token de recuperación
+     */
+    public function findByRecoverToken(string $token): ?array {
+        $tokenHash = hash('sha256', $token);
+        $stmt = $this->pdo->prepare("
+            SELECT id, farmacia_id, email, password_hash, rol, recover_token, recover_expires_at
+            FROM usuarios 
+            WHERE recover_token = :token AND activo = 1
+            LIMIT 1
+        ");
+        $stmt->execute([':token' => $tokenHash]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $user ?: null;
+    }
+
+    /**
+     * Actualiza un usuario
+     */
+    public function update(int $userId, array $data): bool {
+        $fields = [];
+        $params = [':id' => $userId];
+
+        foreach ($data as $key => $value) {
+            $fields[] = "{$key} = :{$key}";
+            $params[":{$key}"] = $value;
+        }
+
+        if (empty($fields)) {
+            return false;
+        }
+
+        $sql = "UPDATE usuarios SET " . implode(', ', $fields) . " WHERE id = :id";
+        $stmt = $this->pdo->prepare($sql);
+
+        return $stmt->execute($params);
+    }
+
     public function authenticate(string $email, string $password): array {
         // Consulta optimizada - buscar solo campos necesarios
         $stmt = $this->pdo->prepare("SELECT id, farmacia_id, email, password_hash, rol FROM usuarios WHERE email = :email AND activo = 1 LIMIT 1");

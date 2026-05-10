@@ -38,7 +38,7 @@ class PharmaRouter
 {
     private string $method;
     private string $uri;
-    private array $publicRoutes = ['/api/auth/login', '/api/auth/register'];
+    private array $publicRoutes = ['/api/auth/login', '/api/auth/register', '/api/auth/recover', '/api/auth/reset'];
 
     public function __construct()
     {
@@ -91,6 +91,10 @@ class PharmaRouter
                 handleAuthLogin();
             } else if ($this->uri === '/api/auth/register') {
                 handleAuthRegister();
+            } else if ($this->uri === '/api/auth/recover') {
+                handleAuthRecover();
+            } else if ($this->uri === '/api/auth/reset') {
+                handleAuthReset();
             }
             return;
         }

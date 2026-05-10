@@ -13,6 +13,7 @@
         '/': HomePage,
         '/login': LoginPage,
         '/register': RegisterPage,
+        '/recover-password': RecoverPasswordPage,
         '/tienda': PublicStorePage,
         
         // Rutas administrativas (para ADMIN, FARMACEUTICO, AUXILIAR)

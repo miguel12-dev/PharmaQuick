@@ -68,6 +68,12 @@
                                     <label class="form-check-label" for="rememberMe">Recordarme</label>
                                 </div>
 
+                                <div class="mb-3 text-end">
+                                    <a href="/recover-password" class="text-muted small text-decoration-none">
+                                        <i class="bi bi-question-circle me-1"></i>¿Olvidaste tu contraseña?
+                                    </a>
+                                </div>
+
                                 <div id="loginError" class="alert alert-danger d-none" role="alert">
                                     <i class="bi bi-exclamation-triangle me-2"></i>
                                     <span id="errorMessage"></span>
@@ -89,6 +95,61 @@
                             <div class="text-center mt-4 pt-3 border-top">
                                 <p class="text-muted small mb-0">¿Aún no tienes una cuenta?</p>
                                 <a href="/register" class="btn btn-link text-primary fw-bold text-decoration-none p-0" onclick="event.preventDefault(); Router.navigate('/register')">Regístrate aquí</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <small class="text-muted">&copy; 2026 PharmaQuick v1.0</small>
+                    </div>
+                </div>
+            </div>
+    </template>
+
+    <!-- Template: Recover Password Page -->
+    <template id="template-recover-password">
+            <div class="row justify-content-center">
+                <div class="col-12 col-sm-8 col-md-6 col-lg-4">
+                    <div class="card login-card shadow-lg border-0">
+                        <div class="card-body">
+                            <div class="text-center mb-2">
+                                <img src="/image/logo_pharmaQuick.png" alt="PharmaQuick" style="height: 45px; max-width: 100%;" class="img-fluid">
+                            </div>
+                            <p class="text-center login-subtitle mb-4">
+                                Ingresa tu correo para recuperar tu contraseña.
+                            </p>
+
+                            <form id="recoverForm">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label fw-semibold">
+                                        <i class="bi bi-envelope me-2"></i>Correo Electrónico
+                                    </label>
+                                    <input type="email" class="form-control" id="email" required
+                                           placeholder="tu@email.com" autocomplete="email">
+                                </div>
+
+                                <div id="recoverError" class="alert alert-danger d-none" role="alert">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    <span id="recoverErrorMessage"></span>
+                                </div>
+
+                                <div id="recoverSuccess" class="alert alert-success d-none" role="alert">
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    <span id="recoverSuccessMessage"></span>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold" id="recoverBtn">
+                                    <span id="recoverBtnText">Enviar Enlace de Recuperación</span>
+                                    <span id="recoverBtnSpinner" class="spinner-border spinner-border-sm d-none" role="status">
+                                        <span class="visually-hidden">Cargando...</span>
+                                    </span>
+                                </button>
+                            </form>
+
+                            <div class="text-center mt-4 pt-3 border-top">
+                                <a href="#" class="btn btn-link text-primary fw-bold text-decoration-none p-0" onclick="event.preventDefault(); Router.navigate('/login')">
+                                    <i class="bi bi-arrow-left me-1"></i>Volver a Iniciar Sesión
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -616,6 +677,7 @@
     <!-- Pages -->
     <script src="frontend/pages/HomePage.js?v=home-v2"></script>
     <script src="frontend/pages/RegisterPage.js"></script>
+    <script src="frontend/pages/RecoverPasswordPage.js"></script>
     <script src="frontend/pages/LoginPage.js?v=home-modern"></script>
     <script src="frontend/pages/PublicStorePage.js"></script>
     <script src="frontend/pages/DashboardPage.js"></script>

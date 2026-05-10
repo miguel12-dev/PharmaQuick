@@ -74,6 +74,124 @@ class EmailService {
         
         return $this->sendWithEmbeddedImage($toEmail, $subject, $body);
     }
+
+    /**
+     * Enviar correo de recuperación de contraseña
+     */
+    public function sendPasswordRecoveryEmail(
+        string $toEmail,
+        string $token
+    ): bool {
+        if (!$this->isConfigured()) {
+            error_log("EmailService: SMTP no configurado");
+            return false;
+        }
+        
+        $subject = "Recupera tu contraseña - PharmaQuick";
+        
+        $body = $this->buildPasswordRecoveryEmailBody($toEmail, $token);
+        
+        return $this->sendWithEmbeddedImage($toEmail, $subject, $body);
+    }
+
+    /**
+     * Construir el cuerpo del correo de recuperación
+     */
+    private function buildPasswordRecoveryEmailBody(
+        string $email,
+        string $token
+    ): string {
+        $resetUrl = $this->appUrl . '/recover-password?token=' . $token;
+        
+        return <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recupera tu contraseña</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; background-color: #f5f7fa;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f5f7fa;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <!-- Contenedor principal -->
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width: 520px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);">
+                    <!-- Header con logo -->
+                    <tr>
+                        <td style="background: #ffffff; padding: 35px 30px 25px 30px; text-align: center;">
+                            <img src="cid:logo_pharmaquick" alt="PharmaQuick" style="width: 200px; height: auto; display: block; margin: 0 auto;" />
+                        </td>
+                    </tr>
+                    <!-- Barra decorativa -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); padding: 0 30px; height: 8px;"></td>
+                    </tr>
+                    
+                    <!-- Contenido -->
+                    <tr>
+                        <td style="padding: 40px 35px;">
+                            <!-- Badge -->
+                            <div style="background: linear-gradient(135deg, #e17055 0%, #d63031 100%); border-radius: 30px; padding: 10px 20px; text-align: center; margin-bottom: 30px;">
+                                <span style="color: #ffffff; font-size: 14px; font-weight: 600; letter-spacing: 0.5px;">🔐 RECUPERAR CONTRASEÑA</span>
+                            </div>
+                            
+                            <!-- Saludo -->
+                            <h1 style="margin: 0 0 15px 0; color: #1a1a2e; font-size: 24px; font-weight: 700; text-align: center;">
+                                ¿Olvidaste tu contraseña?
+                            </h1>
+                            <p style="margin: 0 0 30px 0; color: #636e72; font-size: 15px; line-height: 1.6; text-align: center;">
+                                Recebimos una solicitud para restablecer la contraseña de tu cuenta.
+                            </p>
+                            
+                            <!-- Aviso importante -->
+                            <div style="background: #fffbeb; border-radius: 12px; padding: 20px; border-left: 4px solid #f59e0b; margin-bottom: 30px;">
+                                <p style="margin: 0; color: #92400e; font-size: 14px;">
+                                    <strong>⚠️ Importante:</strong> Este enlace caduca en 1 hora. Si no solicitaste este cambio, ignora este correo.
+                                </p>
+                            </div>
+                            
+                            <!-- Botón CTA -->
+                            <div style="text-align: center; margin-bottom: 30px;">
+                                <a href="{$resetUrl}" style="display: inline-block; background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); color: #ffffff; padding: 16px 45px; border-radius: 30px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(0, 184, 148, 0.4);">Restablecer mi Contraseña</a>
+                            </div>
+                            
+                            <!-- Informações adicionales -->
+                            <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                                <p style="margin: 0 0 10px 0; color: #636e72; font-size: 13px;">
+                                    <strong>¿No solicitaste este cambio?</strong>
+                                </p>
+                                <p style="margin: 0; color: #636e72; font-size: 13px;">
+                                    Si no fuiste tú, te recomendamos cambiar tu contraseña inmediatamente.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background: #f8f9fa; padding: 25px 35px; text-align: center; border-top: 1px solid #e8e8e8;">
+                            <p style="margin: 0 0 8px 0; color: #636e72; font-size: 14px;">
+                                💊 <strong style="color: #00b894;">PharmaQuick</strong> - Tu salud, nuestra prioridad
+                            </p>
+                            <p style="margin: 0; color: #b2bec3; font-size: 12px;">
+                                Este correo fue enviado a {$email}
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+                
+                <!-- Copyright -->
+                <p style="margin: 25px 0 0 0; color: #b2bec3; font-size: 12px; text-align: center;">
+                    © 2026 PharmaQuick. Todos los derechos reservados.
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+HTML;
+    }
     
     /**
      * Enviar correo con imagen embebida

@@ -44,6 +44,12 @@ const LoginPage = {
                                     <label class="form-check-label" for="rememberMe">Recordarme</label>
                                 </div>
 
+                                <div class="mb-3 text-end">
+                                    <a href="/recover-password" class="text-muted small text-decoration-none">
+                                        <i class="bi bi-question-circle me-1"></i>¿Olvidaste tu contraseña?
+                                    </a>
+                                </div>
+
                                 <div id="loginError" class="alert alert-danger d-none" role="alert">
                                     <i class="bi bi-exclamation-triangle me-2"></i>
                                     <span id="errorMessage"></span>
