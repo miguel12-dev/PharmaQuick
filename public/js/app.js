@@ -28,7 +28,8 @@
         '/cliente/catalogo': ClientCatalogPage,
         // [DESHABILITADO] '/cliente/reservas': ClientReservationsPage,
         '/cliente/perfil': ClientProfilePage,
-        '/cliente/compras': ClientShoppingPage,  // Página de compras con checkout
+        '/cliente/compras': ClientShoppingPage,  // Página de historial de compras (solo lectura)
+        '/cliente/carrito': ClientCartPage,  // Página de carrito y checkout
         
         '/perfil': ProfilePage,
         '/404': NotFoundPage

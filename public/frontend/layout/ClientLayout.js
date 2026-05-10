@@ -81,6 +81,10 @@ const ClientLayout = {
                     <i class="fas fa-tags bottom-nav-icon"></i>
                     <span class="bottom-nav-label">Catálogo</span>
                 </a>
+                <a href="/cliente/carrito" class="bottom-nav-item ${activePage === 'carrito' ? 'active' : ''}">
+                    <i class="fas fa-shopping-cart bottom-nav-icon"></i>
+                    <span class="bottom-nav-label">Carrito</span>
+                </a>
                 <a href="/cliente/compras" class="bottom-nav-item ${activePage === 'compras' ? 'active' : ''}">
                     <i class="fas fa-shopping-bag bottom-nav-icon"></i>
                     <span class="bottom-nav-label">Mis Compras</span>

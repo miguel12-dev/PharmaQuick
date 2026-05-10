@@ -160,6 +160,33 @@ class CartService {
 
         return data.data;
     }
+
+    /**
+     * Procesar compra desde el carrito
+     * @param {Object} purchaseData - Datos de entrega y pago
+     * @returns {Promise}
+     */
+    async processPurchase(purchaseData) {
+        const response = await fetch(`${this.baseUrl}/carrito/comprar`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify({
+                direccion: purchaseData.deliveryAddress,
+                nombre: purchaseData.deliveryName,
+                telefono: purchaseData.deliveryPhone,
+                observaciones: purchaseData.deliveryNotes,
+                metodo_pago: purchaseData.paymentMethod
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Error al procesar la compra');
+        }
+
+        return data.data;
+    }
 }
 
 // Instancia global

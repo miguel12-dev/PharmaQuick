@@ -118,7 +118,7 @@ class PharmaRouter
         }
         
         // Rutas de carrito (públicas para testing - sin JWT)
-        if ($uriPath === '/api/carrito' || strpos($uriPath, '/api/carrito/') === 0) {
+        if ($uriPath === '/api/carrito' || $uriPath === '/api/carrito/comprar' || strpos($uriPath, '/api/carrito/') === 0) {
             $this->handleCarritoApi();
             return;
         }
@@ -222,6 +222,12 @@ class PharmaRouter
         // DELETE /api/carrito/{id} - Eliminar item
         if ($this->method === 'DELETE' && preg_match('#^/api/carrito/(\d+)$#', $this->uri, $matches)) {
             handleDeleteCarritoItem((int) $matches[1]);
+            return;
+        }
+        
+        // POST /api/carrito/comprar - Procesar compra desde el carrito
+        if ($this->uri === '/api/carrito/comprar' && $this->method === 'POST') {
+            handlePostCarritoCompra();
             return;
         }
         

@@ -307,3 +307,195 @@ function obtenerUsuarioIdConFallback() {
     
     return $usuarioId;
 }
+
+/**
+ * POST /api/carrito/comprar - Procesar compra desde el carrito
+ * Este endpoint obtiene los items del carrito, procesa el pago y crea la compra
+ */
+function handlePostCarritoCompra() {
+    try {
+        $input = json_decode(file_get_contents('php://input'), true);
+        
+        if (!$input) {
+            JsonResponse::error('Datos inválidos', 400);
+            return;
+        }
+        
+        // Normalizar nombres de campos - aceptar ambos formatos (frontend y backend)
+        $fieldAliases = [
+            'direccion' => ['deliveryAddress', 'direccion'],
+            'nombre' => ['deliveryName', 'nombre'],
+            'telefono' => ['deliveryPhone', 'telefono'],
+            'observaciones' => ['deliveryNotes', 'observaciones']
+        ];
+        
+        // Función helper para obtener valor con alias
+        $getFieldValue = function($fieldName) use ($input, $fieldAliases) {
+            if (isset($fieldAliases[$fieldName])) {
+                foreach ($fieldAliases[$fieldName] as $alias) {
+                    if (isset($input[$alias]) && is_string($input[$alias])) {
+                        $val = trim($input[$alias]);
+                        if ($val !== '') return $val;
+                    }
+                }
+            }
+            return null;
+        };
+        
+        // Extraer valores de campos de entrega
+        $deliveryAddress = $getFieldValue('direccion');
+        $deliveryName = $getFieldValue('nombre');
+        $deliveryPhone = $getFieldValue('telefono');
+        $deliveryNotes = $getFieldValue('observaciones');
+        
+        // Validar campos de entrega
+        if (!$deliveryAddress) {
+            JsonResponse::error("Campo requerido: direccion", 400);
+            return;
+        }
+        if (!$deliveryName) {
+            JsonResponse::error("Campo requerido: nombre", 400);
+            return;
+        }
+        if (!$deliveryPhone) {
+            JsonResponse::error("Campo requerido: telefono", 400);
+            return;
+        }
+        
+        // Validar método de pago
+        $metodoPago = strtoupper($input['metodo_pago'] ?? 'TARJETA');
+        if (!in_array($metodoPago, ['TARJETA', 'NEQUI'])) {
+            JsonResponse::error('Método de pago inválido', 400);
+            return;
+        }
+        
+        // Obtener usuario
+        $usuarioId = obtenerUsuarioIdConFallback();
+        
+        if (!$usuarioId) {
+            JsonResponse::error('Usuario no identificado', 400);
+            return;
+        }
+        
+        $pdo = PDOFactory::getMaster();
+        
+        // Obtener items del carrito
+        $stmtCarrito = $pdo->prepare("
+            SELECT 
+                id,
+                producto_id,
+                producto_nombre,
+                cantidad,
+                precio_unitario,
+                farmacia_id
+            FROM carritos
+            WHERE usuario_id = ?
+            ORDER BY created_at DESC
+        ");
+        
+        $stmtCarrito->execute([$usuarioId]);
+        $items = $stmtCarrito->fetchAll(\PDO::FETCH_ASSOC);
+        
+        if (count($items) === 0) {
+            JsonResponse::error('El carrito está vacío', 400);
+            return;
+        }
+        
+        // Calcular total
+        $total = 0;
+        foreach ($items as $item) {
+            $total += $item['cantidad'] * $item['precio_unitario'];
+        }
+        
+        // Generar código de pedido único
+        $codigoPedido = 'PED-' . strtoupper(bin2hex(random_bytes(4)));
+        
+        // Farmacia por defecto (primera del carrito o 1)
+        $farmaciaId = $items[0]['farmacia_id'] ?? 1;
+        
+        // Iniciar transacción
+        $pdo->beginTransaction();
+        
+        try {
+            // Insertar compra principal
+            $stmtCompra = $pdo->prepare("
+                INSERT INTO compras_cliente (
+                    usuario_id, 
+                    farmacia_id, 
+                    codigo_pedido, 
+                    total, 
+                    metodo_pago, 
+                    estado,
+                    direccion_envio, 
+                    nombre_recibe, 
+                    telefono_contacto,
+                    observaciones
+                ) VALUES (?, ?, ?, ?, ?, 'CONFIRMADA', ?, ?, ?, ?)
+            ");
+            
+            $stmtCompra->execute([
+                $usuarioId,
+                $farmaciaId,
+                $codigoPedido,
+                $total,
+                $metodoPago,
+                $deliveryAddress,
+                $deliveryName,
+                $deliveryPhone,
+                $deliveryNotes
+            ]);
+            
+            $compraId = $pdo->lastInsertId();
+            
+            // Insertar detalles de la compra
+            $stmtDetalle = $pdo->prepare("
+                INSERT INTO compras_detalle (
+                    compra_id,
+                    producto_id,
+                    producto_nombre,
+                    cantidad,
+                    precio_unitario,
+                    subtotal
+                ) VALUES (?, ?, ?, ?, ?, ?)
+            ");
+            
+            foreach ($items as $item) {
+                $stmtDetalle->execute([
+                    $compraId,
+                    $item['producto_id'],
+                    $item['producto_nombre'],
+                    $item['cantidad'],
+                    $item['precio_unitario'],
+                    $item['cantidad'] * $item['precio_unitario']
+                ]);
+            }
+            
+            // Vaciar el carrito después de la compra
+            $stmtVaciar = $pdo->prepare("DELETE FROM carritos WHERE usuario_id = ?");
+            $stmtVaciar->execute([$usuarioId]);
+            
+            // Confirmar transacción
+            $pdo->commit();
+            
+            JsonResponse::success([
+                'id' => $compraId,
+                'codigo_pedido' => $codigoPedido,
+                'total' => $total,
+                'metodo_pago' => $metodoPago,
+                'estado' => 'CONFIRMADA',
+                'direccion' => $deliveryAddress,
+                'nombre' => $deliveryName,
+                'telefono' => $deliveryPhone,
+                'items_count' => count($items),
+                'fecha' => date('Y-m-d H:i:s')
+            ], 'Compra procesada exitosamente');
+            
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+        
+    } catch (\Throwable $e) {
+        JsonResponse::error('Error al procesar la compra: ' . $e->getMessage(), 500);
+    }
+}

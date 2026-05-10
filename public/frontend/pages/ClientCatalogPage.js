@@ -868,7 +868,7 @@ removeFromCart(index) {
                     }
                 }
                 this.showToast('Compra realizada exitosamente', 'success');
-                Router.navigate('/cliente/compras');
+                Router.navigate('/cliente/carrito');
             }
         } catch (error) {
             this.showToast(error.message || 'Error al procesar compra', 'danger');
