@@ -127,7 +127,13 @@ const LoginPage = {
                 this.showSuccess('Autenticación exitosa, redireccionando...');
 
                 setTimeout(() => {
-                    Router.navigate('/dashboard');
+                    // Redirigir según el rol del usuario
+                    const session = JSON.parse(localStorage.getItem('pharmaSession') || '{}');
+                    if (session.rol === 'CLIENTE') {
+                        Router.navigate('/cliente/catalogo');
+                    } else {
+                        Router.navigate('/dashboard');
+                    }
                 }, 500);
             } catch (error) {
                 this.showError(error.message);

@@ -15,7 +15,7 @@ const ClientStorePage = {
             return;
         }
 
-        ClientLayout.render(container, 'tienda');
+        ClientLayout.render(container, 'catalogo');
         
         // Obtener parámetro de tab si existe
         const urlParams = new URLSearchParams(window.location.search);
