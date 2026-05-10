@@ -838,41 +838,13 @@ removeFromCart(index) {
     },
 
     async processPurchase() {
-        if (this.cart.length === 0) return;
-        
-        const httpClient = window.httpClient || window.HttpClient;
-        
-        try {
-            const items = this.cart.map(item => ({
-                producto_id: item.producto_id,
-                cantidad: item.cantidad,
-                precio: item.precio
-            }));
-            
-            const formData = new FormData();
-            formData.append('items', JSON.stringify(items));
-            formData.append('total', this.getCartTotal());
-            
-            const data = await httpClient.post('/ventas/create', formData);
-            
-            if (data.success) {
-                // Limpiar el carrito local
-                this.cart = [];
-                this.updateCart();
-                // Limpiar el carrito del backend
-                if (window.cartService) {
-                    try {
-                        await window.cartService.clearCart();
-                    } catch (clearError) {
-                        console.error('Error al limpiar carrito del backend:', clearError);
-                    }
-                }
-                this.showToast('Compra realizada exitosamente', 'success');
-                Router.navigate('/cliente/carrito');
-            }
-        } catch (error) {
-            this.showToast(error.message || 'Error al procesar compra', 'danger');
+        if (this.cart.length === 0) {
+            this.showToast('El carrito está vacío', 'warning');
+            return;
         }
+        
+        // Redirigir al carrito para completar la compra
+        Router.navigate('/cliente/carrito');
     },
 
     showToast(message, type = 'info') {

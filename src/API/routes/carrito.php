@@ -6,6 +6,10 @@
 
 require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
 require_once SRC_PATH . '/Core/JsonResponse.php';
+require_once SRC_PATH . '/Infrastructure/Services/EmailService.php';
+
+// Costo de envío por defecto
+define('SHIPPING_COST_DEFAULT', 3000);
 
 /**
  * GET /api/carrito - Obtener el carrito del usuario
@@ -309,6 +313,21 @@ function obtenerUsuarioIdConFallback() {
 }
 
 /**
+ * Obtener email del usuario desde la base de datos
+ */
+function obtenerEmailUsuario(int $usuarioId, $pdo): ?string {
+    try {
+        $stmt = $pdo->prepare("SELECT email FROM usuarios WHERE id = ? LIMIT 1");
+        $stmt->execute([$usuarioId]);
+        $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $user['email'] ?? null;
+    } catch (\Throwable $e) {
+        error_log("Error al obtener email del usuario: " . $e->getMessage());
+        return null;
+    }
+}
+
+/**
  * POST /api/carrito/comprar - Procesar compra desde el carrito
  * Este endpoint obtiene los items del carrito, procesa el pago y crea la compra
  */
@@ -369,6 +388,21 @@ function handlePostCarritoCompra() {
             return;
         }
         
+        // Validar método de entrega (ENVIO o RECOGER)
+        $metodoEntrega = strtoupper($input['metodo_entrega'] ?? 'ENVIO');
+        if (!in_array($metodoEntrega, ['ENVIO', 'RECOGER'])) {
+            JsonResponse::error('Método de entrega inválido', 400);
+            return;
+        }
+        
+        // Calcular costo de envío (solo si es ENVIO)
+        $costoEnvio = ($metodoEntrega === 'ENVIO') ? SHIPPING_COST_DEFAULT : 0;
+        
+        // Para método RECOGER, usar N/A
+        if ($metodoEntrega === 'RECOGER') {
+            $deliveryAddress = 'N/A - Recoger en tienda';
+        }
+        
         // Obtener usuario
         $usuarioId = obtenerUsuarioIdConFallback();
         
@@ -401,11 +435,12 @@ function handlePostCarritoCompra() {
             return;
         }
         
-        // Calcular total
-        $total = 0;
+        // Calcular total (incluyendo costo de envío si aplica)
+        $subtotal = 0;
         foreach ($items as $item) {
-            $total += $item['cantidad'] * $item['precio_unitario'];
+            $subtotal += $item['cantidad'] * $item['precio_unitario'];
         }
+        $total = $subtotal + $costoEnvio;
         
         // Generar código de pedido único
         $codigoPedido = 'PED-' . strtoupper(bin2hex(random_bytes(4)));
@@ -423,22 +458,28 @@ function handlePostCarritoCompra() {
                     usuario_id, 
                     farmacia_id, 
                     codigo_pedido, 
+                    subtotal,
+                    costo_envio,
                     total, 
                     metodo_pago, 
+                    metodo_entrega,
                     estado,
                     direccion_envio, 
                     nombre_recibe, 
                     telefono_contacto,
                     observaciones
-                ) VALUES (?, ?, ?, ?, ?, 'CONFIRMADA', ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'CONFIRMADA', ?, ?, ?, ?)
             ");
             
             $stmtCompra->execute([
                 $usuarioId,
                 $farmaciaId,
                 $codigoPedido,
+                $subtotal,
+                $costoEnvio,
                 $total,
                 $metodoPago,
+                $metodoEntrega,
                 $deliveryAddress,
                 $deliveryName,
                 $deliveryPhone,
@@ -459,10 +500,21 @@ function handlePostCarritoCompra() {
                 ) VALUES (?, ?, ?, ?, ?, ?)
             ");
             
+            // Verificar productos existentes
+            $stmtCheckProduct = $pdo->prepare("SELECT id FROM productos WHERE id = ?");
+            
             foreach ($items as $item) {
+                // Verificar si el producto existe
+                $productoId = $item['producto_id'];
+                $stmtCheckProduct->execute([$productoId]);
+                $productoExists = $stmtCheckProduct->fetch();
+                
+                // Si no existe, usar NULL
+                $insertProductoId = $productoExists ? $productoId : null;
+                
                 $stmtDetalle->execute([
                     $compraId,
-                    $item['producto_id'],
+                    $insertProductoId,
                     $item['producto_nombre'],
                     $item['cantidad'],
                     $item['precio_unitario'],
@@ -477,11 +529,32 @@ function handlePostCarritoCompra() {
             // Confirmar transacción
             $pdo->commit();
             
+            // Enviar correo de confirmación si el método de pago es NEQUI
+            if ($metodoPago === 'NEQUI') {
+                $userEmail = obtenerEmailUsuario($usuarioId, $pdo);
+                if ($userEmail) {
+                    $emailService = new EmailService();
+                    $emailService->sendPurchaseConfirmation(
+                        $userEmail,
+                        $deliveryName,
+                        $codigoPedido,
+                        $total,
+                        $metodoPago,
+                        $metodoEntrega,
+                        ($metodoEntrega === 'ENVIO') ? $deliveryAddress : null,
+                        $items
+                    );
+                }
+            }
+            
             JsonResponse::success([
                 'id' => $compraId,
                 'codigo_pedido' => $codigoPedido,
+                'subtotal' => $subtotal,
+                'costo_envio' => $costoEnvio,
                 'total' => $total,
                 'metodo_pago' => $metodoPago,
+                'metodo_entrega' => $metodoEntrega,
                 'estado' => 'CONFIRMADA',
                 'direccion' => $deliveryAddress,
                 'nombre' => $deliveryName,

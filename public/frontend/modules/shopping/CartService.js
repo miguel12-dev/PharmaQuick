@@ -175,7 +175,8 @@ class CartService {
                 nombre: purchaseData.deliveryName,
                 telefono: purchaseData.deliveryPhone,
                 observaciones: purchaseData.deliveryNotes,
-                metodo_pago: purchaseData.paymentMethod
+                metodo_pago: purchaseData.paymentMethod,
+                metodo_entrega: purchaseData.metodo_entrega || 'ENVIO'
             })
         });
 
