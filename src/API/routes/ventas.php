@@ -89,3 +89,59 @@ function handlePostVentasCrear(): void {
         JsonResponse::error($e->getMessage(), $code);
     }
 }
+
+/**
+ * Obtiene productos recomendados/top para el POS
+ */
+function handleGetPOSProductos(): void {
+    $farmaciaId = Auth::farmaciaId();
+    if (!$farmaciaId) {
+        JsonResponse::error('No autenticado', 401);
+        return;
+    }
+
+    try {
+        $pdo = PDOFactory::getCluster(1);
+        $ventaRepo = new VentaRepository($pdo);
+        
+        // Obtener top 12 productos de los últimos 30 días
+        $productos = $ventaRepo->topProductosByFarmacia($farmaciaId, 12, 30);
+        
+        // Si no hay suficientes, rellenar con productos con stock
+        if (count($productos) < 6) {
+            require_once SRC_PATH . '/Infrastructure/Persistence/ProductoRepository.php';
+            $prodRepo = new \PharmaQuick\Infrastructure\Persistence\ProductoRepository($pdo);
+            $stockProds = $prodRepo->findAllByFarmacia($farmaciaId);
+            
+            // Combinar y evitar duplicados
+            $existingIds = array_column($productos, 'id');
+            foreach ($stockProds as $p) {
+                if (!in_array($p['id'], $existingIds)) {
+                    $productos[] = [
+                        'id' => $p['id'],
+                        'nombre' => $p['nombre'],
+                        'presentacion' => $p['presentacion'],
+                        'categoria' => $p['categoria'],
+                        'imagen' => $p['imagen'],
+                        'precio_activo' => $p['precio_activo'],
+                        'stock_total' => $p['stock_total'],
+                        'unidades_vendidas' => 0
+                    ];
+                    if (count($productos) >= 12) break;
+                }
+            }
+        }
+
+        // Formatear imágenes
+        require_once SRC_PATH . '/API/routes/productos.php';
+        foreach ($productos as &$p) {
+            $p['imagen_url'] = buildProductoImagenUrl($p['imagen'] ?? null);
+            $p['precio_venta'] = $p['precio_activo'] ?? 0;
+        }
+        unset($p);
+
+        JsonResponse::success(['productos' => $productos]);
+    } catch (Throwable $e) {
+        JsonResponse::error('Error: ' . $e->getMessage(), 500);
+    }
+}

@@ -270,6 +270,10 @@
                     <i class="fas fa-pills"></i>
                     <span class="nav-text">Productos</span>
                 </a>
+                <a class="nav-link" href="/ventas" data-page="ventas">
+                    <i class="fas fa-cash-register"></i>
+                    <span class="nav-text">Vender (POS)</span>
+                </a>
                 <a class="nav-link" href="/inventario" data-page="inventario">
                     <i class="fas fa-boxes-stacked"></i>
                     <span class="nav-text">Inventario</span>
@@ -435,7 +439,7 @@
                         </a>
                     </div>
                     <div class="col-6 col-md-3">
-                        <a href="#" class="quick-access-card">
+                        <a href="/ventas" class="quick-access-card">
                             <i class="bi bi-cart-plus fs-3"></i>
                             <h6 class="mt-2 mb-0">Nueva Venta</h6>
                         </a>
@@ -730,9 +734,9 @@
     <script src="frontend/modules/inventory/InventoryService.js"></script>
     <script src="frontend/modules/inventory/InventoryController.js"></script>
     <script src="frontend/modules/inventory/InventoryView.js"></script>
-    <script src="frontend/modules/sales/SalesService.js"></script>
-    <script src="frontend/modules/sales/SalesController.js"></script>
-    <script src="frontend/modules/sales/SalesView.js"></script>
+    <script src="frontend/modules/sales/SalesService.js?v=pos-fix-5"></script>
+    <script src="frontend/modules/sales/SalesController.js?v=pos-fix-5"></script>
+    <script src="frontend/modules/sales/SalesView.js?v=pos-fix-5"></script>
     <script src="frontend/modules/sales/SalesHistoryController.js"></script>
     <script src="frontend/modules/sales/SalesHistoryView.js"></script>
     <!-- [DESHABILITADO] Scripts de reservas - Deshabilitado por no utilizarse

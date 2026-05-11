@@ -143,8 +143,10 @@ function handleGetFefo(): void {
                 l.stock_actual AS stock,
                 l.stock_reservado,
                 l.costo_unitario,
-                DATEDIFF(l.fecha_vencimiento, CURDATE()) AS dias_restantes
+                DATEDIFF(l.fecha_vencimiento, CURDATE()) AS dias_restantes,
+                pr.precio AS precio_venta
             FROM lotes l FORCE INDEX (idx_fefo_lookup)
+            LEFT JOIN precios pr ON pr.producto_id = l.producto_id AND pr.farmacia_id = l.farmacia_id AND pr.activo = 1
             WHERE l.farmacia_id = :farmacia_id
               AND l.producto_id = :producto_id
               AND l.stock_actual > 0

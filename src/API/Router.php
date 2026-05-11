@@ -465,6 +465,12 @@ class PharmaRouter
         // ===================
         // VENTAS Y RESERVAS
         // ===================
+        if ($this->uri === '/api/ventas/pos-productos' && $this->method === 'GET') {
+            require_once ROUTES_PATH . '/ventas.php';
+            handleGetPOSProductos();
+            return;
+        }
+
         if ($this->uri === '/api/ventas/top-productos' && $this->method === 'GET') {
             require_once ROUTES_PATH . '/public.php';
             handleGetTopProductosAuth();
