@@ -24,6 +24,15 @@ services:
       - PHP_MEMORY_LIMIT=256M
       - PHP_UPLOAD_MAX_FILESIZE=50M
       - PHP_POST_MAX_SIZE=50M
+      - MAIL_HOST=smtp.gmail.com
+      - MAIL_PORT=587
+      - MAIL_USERNAME=pharmaquick2@gmail.com
+      - MAIL_PASSWORD=zioidtrzjmotlmmv
+      - MAIL_ENCRYPTION=tls
+      - MAIL_FROM_ADDRESS=pharmaquick2@gmail.com
+      - MAIL_FROM_NAME=PharmaQuick
+      - APP_URL=http://localhost:8080
+      - APP_NAME=PharmaQuick
     networks:
       - pharma_network
     depends_on:

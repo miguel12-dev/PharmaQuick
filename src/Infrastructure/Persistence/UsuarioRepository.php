@@ -22,16 +22,88 @@ class UsuarioRepository {
             VALUES (:farmacia_id, :email, :password_hash, :nombre, :rol, :activo)
         ");
 
-        $stmt->execute([
-            ':farmacia_id' => $data['farmacia_id'] ?? null,
-            ':email' => $data['email'],
-            ':password_hash' => $data['password_hash'],
-            ':nombre' => $data['nombre'] ?? null,
-            ':rol' => $data['rol'] ?? 'CLIENTE',
-            ':activo' => $data['activo'] ?? 1
-        ]);
+        try {
+            $stmt->execute([
+                ':farmacia_id' => $data['farmacia_id'] ?? null,
+                ':email' => $data['email'],
+                ':password_hash' => $data['password_hash'],
+                ':nombre' => $data['nombre'] ?? null,
+                ':rol' => $data['rol'] ?? 'CLIENTE',
+                ':activo' => $data['activo'] ?? 1
+            ]);
+        } catch (\PDOException $e) {
+            // Si es error de email duplicado, lanzar excepción amigable
+            if ($e->getCode() === '23000' && strpos($e->getMessage(), 'Duplicate entry') !== false) {
+                throw new AuthenticationException('El email ya esta registrado');
+            }
+            throw $e;
+        }
 
         return (int) $this->pdo->lastInsertId();
+    }
+
+    /**
+     * Verifica si un email ya existe en la base de datos
+     */
+    public function existsByEmail(string $email): bool {
+        $stmt = $this->pdo->prepare("SELECT 1 FROM usuarios WHERE email = :email LIMIT 1");
+        $stmt->execute([':email' => $email]);
+        return $stmt->fetchColumn() !== false;
+    }
+
+    /**
+     * Busca un usuario por email
+     */
+    public function findByEmail(string $email): ?array {
+        $stmt = $this->pdo->prepare("
+            SELECT id, farmacia_id, email, password_hash, rol, recover_token, recover_expires_at
+            FROM usuarios 
+            WHERE email = :email AND activo = 1
+            LIMIT 1
+        ");
+        $stmt->execute([':email' => $email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $user ?: null;
+    }
+
+    /**
+     * Busca un usuario por token de recuperación
+     */
+    public function findByRecoverToken(string $token): ?array {
+        $tokenHash = hash('sha256', $token);
+        $stmt = $this->pdo->prepare("
+            SELECT id, farmacia_id, email, password_hash, rol, recover_token, recover_expires_at
+            FROM usuarios 
+            WHERE recover_token = :token AND activo = 1
+            LIMIT 1
+        ");
+        $stmt->execute([':token' => $tokenHash]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $user ?: null;
+    }
+
+    /**
+     * Actualiza un usuario
+     */
+    public function update(int $userId, array $data): bool {
+        $fields = [];
+        $params = [':id' => $userId];
+
+        foreach ($data as $key => $value) {
+            $fields[] = "{$key} = :{$key}";
+            $params[":{$key}"] = $value;
+        }
+
+        if (empty($fields)) {
+            return false;
+        }
+
+        $sql = "UPDATE usuarios SET " . implode(', ', $fields) . " WHERE id = :id";
+        $stmt = $this->pdo->prepare($sql);
+
+        return $stmt->execute($params);
     }
 
     public function authenticate(string $email, string $password): array {

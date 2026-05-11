@@ -77,23 +77,21 @@ const ClientLayout = {
     <nav class="bottom-nav fixed-bottom">
         <div class="container-fluid px-2 px-lg-4">
             <div class="bottom-nav-inner" style="margin-bottom: 16px;">
-                <a href="/cliente" class="bottom-nav-item ${activePage === 'inicio' ? 'active' : ''}">
-                    <i class="fas fa-home bottom-nav-icon"></i>
-                    <span class="bottom-nav-label">Inicio</span>
-                </a>
                 <a href="/cliente/catalogo" class="bottom-nav-item ${activePage === 'catalogo' ? 'active' : ''}">
                     <i class="fas fa-tags bottom-nav-icon"></i>
                     <span class="bottom-nav-label">Catálogo</span>
                 </a>
-                <!-- [DESHABILITADO] Link de Reservas - Deshabilitado por no utilizarse
-                <a href="/cliente/reservas" class="bottom-nav-item ${activePage === 'reservas' ? 'active' : ''}">
-                    <i class="fas fa-calendar-check bottom-nav-icon"></i>
-                    <span class="bottom-nav-label">Reservas</span>
+                <a href="/cliente/carrito" class="bottom-nav-item ${activePage === 'carrito' ? 'active' : ''}">
+                    <i class="fas fa-shopping-cart bottom-nav-icon"></i>
+                    <span class="bottom-nav-label">Carrito</span>
                 </a>
-                -->
                 <a href="/cliente/compras" class="bottom-nav-item ${activePage === 'compras' ? 'active' : ''}">
                     <i class="fas fa-shopping-bag bottom-nav-icon"></i>
-                    <span class="bottom-nav-label">Compras</span>
+                    <span class="bottom-nav-label">Mis Compras</span>
+                </a>
+                <a href="/cliente/perfil" class="bottom-nav-item ${activePage === 'perfil' ? 'active' : ''}">
+                    <i class="fas fa-user bottom-nav-icon"></i>
+                    <span class="bottom-nav-label">Mi Perfil</span>
                 </a>
             </div>
         </div>

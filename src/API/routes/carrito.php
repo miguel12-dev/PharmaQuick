@@ -6,35 +6,18 @@
 
 require_once SRC_PATH . '/Infrastructure/Persistence/PDOFactory.php';
 require_once SRC_PATH . '/Core/JsonResponse.php';
+require_once SRC_PATH . '/Infrastructure/Services/EmailService.php';
 
-// Debug: Registrar entrada a las funciones
-error_log("=== Carrito API chamada ===");
-error_log("Method: " . ($_SERVER['REQUEST_METHOD'] ?? 'unknown'));
-error_log("URI: " . ($_SERVER['REQUEST_URI'] ?? 'unknown'));
-error_log("Authorization: " . ($_SERVER['HTTP_AUTHORIZATION'] ?? 'NO HEADER'));
+// Costo de envío por defecto
+define('SHIPPING_COST_DEFAULT', 3000);
 
 /**
  * GET /api/carrito - Obtener el carrito del usuario
  */
 function handleGetCarrito() {
     try {
-        // Intentar obtener desde JWT primero, luego desde query param
-        $usuarioId = obtenerUsuarioIdDesdeJWT();
-        
-        // Si no hay JWT, usar el usuario_id del query param (para testing)
-        if (!$usuarioId && isset($_GET['usuario_id'])) {
-            $usuarioId = (int) $_GET['usuario_id'];
-        }
-        
-        // Si aún no hay usuario, usar el primero disponible (fallback para testing)
-        if (!$usuarioId) {
-            $pdo = PDOFactory::getMaster();
-            $stmtUser = $pdo->query("SELECT id FROM usuarios WHERE activo = 1 LIMIT 1");
-            $user = $stmtUser->fetch(\PDO::FETCH_ASSOC);
-            if ($user) {
-                $usuarioId = $user['id'];
-            }
-        }
+        // Usar helper con fallback
+        $usuarioId = obtenerUsuarioIdConFallback();
         
         if (!$usuarioId) {
             JsonResponse::error('Usuario no identificado', 400);
@@ -90,30 +73,13 @@ function handlePostCarrito() {
             return;
         }
         
-        // Intentar obtener desde JWT primero, luego desde input
-        $usuarioId = obtenerUsuarioIdDesdeJWT();
-        
-        // Si no hay JWT, usar el usuario_id del input directamente (para testing)
-        if (!$usuarioId && isset($input['usuario_id'])) {
-            $usuarioId = (int) $input['usuario_id'];
-        }
-        
-        // Si aún no hay usuario, intentar con el primero disponible (fallback para testing)
-        if (!$usuarioId) {
-            $pdo = PDOFactory::getMaster();
-            $stmtUser = $pdo->query("SELECT id FROM usuarios WHERE activo = 1 LIMIT 1");
-            $user = $stmtUser->fetch(\PDO::FETCH_ASSOC);
-            if ($user) {
-                $usuarioId = $user['id'];
-            }
-        }
+        // Usar helper con fallback
+        $usuarioId = obtenerUsuarioIdConFallback();
         
         if (!$usuarioId) {
             JsonResponse::error('Usuario no identificado', 400);
             return;
         }
-        
-        error_log("handlePostCarrito: usuarioId = " . $usuarioId);
         
         // Validar campos requeridos
         if (!isset($input['producto_id']) || !isset($input['producto_nombre']) || 
@@ -256,10 +222,10 @@ function handlePutCarritoItem($itemId) {
  */
 function handleDeleteCarritoItem($itemId) {
     try {
-        $usuarioId = obtenerUsuarioIdDesdeJWT();
+        $usuarioId = obtenerUsuarioIdConFallback();
         
         if (!$usuarioId) {
-            JsonResponse::error('Usuario no autenticado', 401);
+            JsonResponse::error('Usuario no identificado', 400);
             return;
         }
         
@@ -285,10 +251,10 @@ function handleDeleteCarritoItem($itemId) {
  */
 function handleDeleteCarrito() {
     try {
-        $usuarioId = obtenerUsuarioIdDesdeJWT();
+        $usuarioId = obtenerUsuarioIdConFallback();
         
         if (!$usuarioId) {
-            JsonResponse::error('Usuario no autenticado', 401);
+            JsonResponse::error('Usuario no identificado', 400);
             return;
         }
         
@@ -309,36 +275,304 @@ function handleDeleteCarrito() {
  */
 function obtenerUsuarioIdDesdeJWT() {
     $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-    error_log("obtenerUsuarioIdDesdeJWT: Auth header: " . substr($authHeader, 0, 50));
     
     if (!preg_match('/Bearer\s+(.+)$/i', $authHeader, $matches)) {
-        error_log("obtenerUsuarioIdDesdeJWT: No hay Bearer token, buscando en input");
-        // Si no hay JWT, intentar desde el input
-        $input = json_decode(file_get_contents('php://input'), true);
-        $userId = $input['usuario_id'] ?? null;
-        error_log("obtenerUsuarioIdDesdeJWT: usuario_id desde input: " . var_export($userId, true));
-        return $userId;
+        return null;
     }
     
     $token = $matches[1];
-    error_log("obtenerUsuarioIdDesdeJWT: Token: " . substr($token, 0, 30) . "...");
-    
     $tokenParts = explode('.', $token);
     
     if (count($tokenParts) !== 3) {
-        error_log("obtenerUsuarioIdDesdeJWT: Token no tiene 3 partes");
         return null;
     }
     
     $payload = json_decode(base64_decode($tokenParts[1]), true);
-    error_log("obtenerUsuarioIdDesdeJWT: Payload: " . json_encode($payload));
     
     if (!$payload) {
         return null;
     }
     
     // Retornar el ID del usuario desde el JWT
-    $userId = $payload['sub'] ?? $payload['user_id'] ?? $payload['id'] ?? null;
-    error_log("obtenerUsuarioIdDesdeJWT: Usuario ID encontrado: " . var_export($userId, true));
-    return $userId;
+    return $payload['sub'] ?? $payload['user_id'] ?? $payload['id'] ?? null;
+}
+
+/**
+ * Función helper para obtener el usuario con fallback a query param
+ */
+function obtenerUsuarioIdConFallback() {
+    // Primero intentar desde JWT
+    $usuarioId = obtenerUsuarioIdDesdeJWT();
+    
+    // Si no hay JWT, intentar desde query param
+    if (!$usuarioId && isset($_GET['usuario_id'])) {
+        $usuarioId = (int) $_GET['usuario_id'];
+    }
+    
+    return $usuarioId;
+}
+
+/**
+ * Obtener email del usuario desde la base de datos
+ */
+function obtenerEmailUsuario(int $usuarioId, $pdo): ?string {
+    try {
+        $stmt = $pdo->prepare("SELECT email FROM usuarios WHERE id = ? LIMIT 1");
+        $stmt->execute([$usuarioId]);
+        $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $user['email'] ?? null;
+    } catch (\Throwable $e) {
+        error_log("Error al obtener email del usuario: " . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * POST /api/carrito/comprar - Procesar compra desde el carrito
+ * Este endpoint obtiene los items del carrito, procesa el pago y crea la compra
+ */
+function handlePostCarritoCompra() {
+    try {
+        $input = json_decode(file_get_contents('php://input'), true);
+        
+        if (!$input) {
+            JsonResponse::error('Datos inválidos', 400);
+            return;
+        }
+        
+        // Normalizar nombres de campos - aceptar ambos formatos (frontend y backend)
+        $fieldAliases = [
+            'direccion' => ['deliveryAddress', 'direccion'],
+            'nombre' => ['deliveryName', 'nombre'],
+            'telefono' => ['deliveryPhone', 'telefono'],
+            'observaciones' => ['deliveryNotes', 'observaciones']
+        ];
+        
+        // Función helper para obtener valor con alias
+        $getFieldValue = function($fieldName) use ($input, $fieldAliases) {
+            if (isset($fieldAliases[$fieldName])) {
+                foreach ($fieldAliases[$fieldName] as $alias) {
+                    if (isset($input[$alias]) && is_string($input[$alias])) {
+                        $val = trim($input[$alias]);
+                        if ($val !== '') return $val;
+                    }
+                }
+            }
+            return null;
+        };
+        
+        // Extraer valores de campos de entrega
+        $deliveryAddress = $getFieldValue('direccion');
+        $deliveryName = $getFieldValue('nombre');
+        $deliveryPhone = $getFieldValue('telefono');
+        $deliveryNotes = $getFieldValue('observaciones');
+        
+        // Validar campos de entrega
+        if (!$deliveryAddress) {
+            JsonResponse::error("Campo requerido: direccion", 400);
+            return;
+        }
+        if (!$deliveryName) {
+            JsonResponse::error("Campo requerido: nombre", 400);
+            return;
+        }
+        if (!$deliveryPhone) {
+            JsonResponse::error("Campo requerido: telefono", 400);
+            return;
+        }
+        
+        // Validar método de pago
+        $metodoPago = strtoupper($input['metodo_pago'] ?? 'TARJETA');
+        if (!in_array($metodoPago, ['TARJETA', 'NEQUI'])) {
+            JsonResponse::error('Método de pago inválido', 400);
+            return;
+        }
+        
+        // Validar método de entrega (ENVIO o RECOGER)
+        $metodoEntrega = strtoupper($input['metodo_entrega'] ?? 'ENVIO');
+        if (!in_array($metodoEntrega, ['ENVIO', 'RECOGER'])) {
+            JsonResponse::error('Método de entrega inválido', 400);
+            return;
+        }
+        
+        // Calcular costo de envío (solo si es ENVIO)
+        $costoEnvio = ($metodoEntrega === 'ENVIO') ? SHIPPING_COST_DEFAULT : 0;
+        
+        // Para método RECOGER, usar N/A
+        if ($metodoEntrega === 'RECOGER') {
+            $deliveryAddress = 'N/A - Recoger en tienda';
+        }
+        
+        // Obtener usuario
+        $usuarioId = obtenerUsuarioIdConFallback();
+        
+        if (!$usuarioId) {
+            JsonResponse::error('Usuario no identificado', 400);
+            return;
+        }
+        
+        $pdo = PDOFactory::getMaster();
+        
+        // Obtener items del carrito
+        $stmtCarrito = $pdo->prepare("
+            SELECT 
+                id,
+                producto_id,
+                producto_nombre,
+                cantidad,
+                precio_unitario,
+                farmacia_id
+            FROM carritos
+            WHERE usuario_id = ?
+            ORDER BY created_at DESC
+        ");
+        
+        $stmtCarrito->execute([$usuarioId]);
+        $items = $stmtCarrito->fetchAll(\PDO::FETCH_ASSOC);
+        
+        if (count($items) === 0) {
+            JsonResponse::error('El carrito está vacío', 400);
+            return;
+        }
+        
+        // Calcular total (incluyendo costo de envío si aplica)
+        $subtotal = 0;
+        foreach ($items as $item) {
+            $subtotal += $item['cantidad'] * $item['precio_unitario'];
+        }
+        $total = $subtotal + $costoEnvio;
+        
+        // Generar código de pedido único
+        $codigoPedido = 'PED-' . strtoupper(bin2hex(random_bytes(4)));
+        
+        // Farmacia por defecto (primera del carrito o 1)
+        $farmaciaId = $items[0]['farmacia_id'] ?? 1;
+        
+        // Iniciar transacción
+        $pdo->beginTransaction();
+        
+        try {
+            // Insertar compra principal
+            $stmtCompra = $pdo->prepare("
+                INSERT INTO compras_cliente (
+                    usuario_id, 
+                    farmacia_id, 
+                    codigo_pedido, 
+                    subtotal,
+                    costo_envio,
+                    total, 
+                    metodo_pago, 
+                    metodo_entrega,
+                    estado,
+                    direccion_envio, 
+                    nombre_recibe, 
+                    telefono_contacto,
+                    observaciones
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'CONFIRMADA', ?, ?, ?, ?)
+            ");
+            
+            $stmtCompra->execute([
+                $usuarioId,
+                $farmaciaId,
+                $codigoPedido,
+                $subtotal,
+                $costoEnvio,
+                $total,
+                $metodoPago,
+                $metodoEntrega,
+                $deliveryAddress,
+                $deliveryName,
+                $deliveryPhone,
+                $deliveryNotes
+            ]);
+            
+            $compraId = $pdo->lastInsertId();
+            
+            // Insertar detalles de la compra
+            $stmtDetalle = $pdo->prepare("
+                INSERT INTO compras_detalle (
+                    compra_id,
+                    producto_id,
+                    producto_nombre,
+                    cantidad,
+                    precio_unitario,
+                    subtotal
+                ) VALUES (?, ?, ?, ?, ?, ?)
+            ");
+            
+            // Verificar productos existentes
+            $stmtCheckProduct = $pdo->prepare("SELECT id FROM productos WHERE id = ?");
+            
+            foreach ($items as $item) {
+                // Verificar si el producto existe
+                $productoId = $item['producto_id'];
+                $stmtCheckProduct->execute([$productoId]);
+                $productoExists = $stmtCheckProduct->fetch();
+                
+                // Si no existe, usar NULL
+                $insertProductoId = $productoExists ? $productoId : null;
+                
+                $stmtDetalle->execute([
+                    $compraId,
+                    $insertProductoId,
+                    $item['producto_nombre'],
+                    $item['cantidad'],
+                    $item['precio_unitario'],
+                    $item['cantidad'] * $item['precio_unitario']
+                ]);
+            }
+            
+            // Vaciar el carrito después de la compra
+            $stmtVaciar = $pdo->prepare("DELETE FROM carritos WHERE usuario_id = ?");
+            $stmtVaciar->execute([$usuarioId]);
+            
+            // Confirmar transacción
+            $pdo->commit();
+            
+            // Enviar correo de confirmación de compra (siempre, sin importar método de pago)
+            // Envuelto en try-catch para que un fallo en el email no afecte la compra ya confirmada
+            try {
+                $userEmail = obtenerEmailUsuario($usuarioId, $pdo);
+                if ($userEmail) {
+                    $emailService = new EmailService();
+                    $emailService->sendPurchaseConfirmation(
+                        $userEmail,
+                        $deliveryName,
+                        $codigoPedido,
+                        $total,
+                        $metodoPago,
+                        $metodoEntrega,
+                        ($metodoEntrega === 'ENVIO') ? $deliveryAddress : null,
+                        $items
+                    );
+                }
+            } catch (\Throwable $e) {
+                error_log("Error al enviar correo de confirmación de compra {$codigoPedido}: " . $e->getMessage());
+                // No se relanza: la compra ya fue confirmada en BD, el correo es notificación secundaria
+            }
+            
+            JsonResponse::success([
+                'id' => $compraId,
+                'codigo_pedido' => $codigoPedido,
+                'subtotal' => $subtotal,
+                'costo_envio' => $costoEnvio,
+                'total' => $total,
+                'metodo_pago' => $metodoPago,
+                'metodo_entrega' => $metodoEntrega,
+                'estado' => 'CONFIRMADA',
+                'direccion' => $deliveryAddress,
+                'nombre' => $deliveryName,
+                'telefono' => $deliveryPhone,
+                'items_count' => count($items),
+                'fecha' => date('Y-m-d H:i:s')
+            ], 'Compra procesada exitosamente');
+            
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+        
+    } catch (\Throwable $e) {
+        JsonResponse::error('Error al procesar la compra: ' . $e->getMessage(), 500);
+    }
 }

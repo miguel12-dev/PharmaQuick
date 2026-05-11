@@ -227,9 +227,10 @@ function handleSearchProductos(): void {
 
     $query = isset($_GET['q']) ? trim($_GET['q']) : (isset($_GET['search']) ? trim($_GET['search']) : '');
     $categoria = isset($_GET['categoria']) ? trim($_GET['categoria']) : '';
+    $stockOnly = isset($_GET['stock_only']) && $_GET['stock_only'] == '1';
     
     if (strlen($query) < 2 && $categoria === '') {
-        JsonResponse::error('Buscar mínimo 2 caracteres o seleccionar una categoría. Debug: ' . json_encode($_GET), 400);
+        JsonResponse::error('Buscar mínimo 2 caracteres o seleccionar una categoría.', 400);
         return;
     }
 
@@ -240,11 +241,18 @@ function handleSearchProductos(): void {
         $pdo = PDOFactory::getCluster(1);
         $repo = new ProductoRepository($pdo);
         
-        // Usar searchGlobal para permitir encontrar productos que no tienen lotes aún
-        $productos = $repo->searchGlobal($query, $categoria);
+        if ($stockOnly) {
+            // Usar search restrictivo para POS (solo productos con stock en esta farmacia)
+            $productos = $repo->search($query, $farmaciaId);
+        } else {
+            // Usar searchGlobal para permitir encontrar productos que no tienen lotes aún
+            $productos = $repo->searchGlobal($query, $categoria);
+        }
 
         foreach ($productos as &$p) {
             $p['imagen_url'] = buildProductoImagenUrl($p['imagen'] ?? null);
+            // Asegurar que el precio_venta esté disponible para el frontend (alias de precio_activo)
+            $p['precio_venta'] = $p['precio_activo'] ?? 0;
         }
         unset($p);
 
@@ -252,7 +260,8 @@ function handleSearchProductos(): void {
             'productos' => $productos,
             'total' => count($productos),
             'query' => $query,
-            'categoria' => $categoria
+            'categoria' => $categoria,
+            'stock_only' => $stockOnly
         ]);
 
     } catch (\Throwable $e) {

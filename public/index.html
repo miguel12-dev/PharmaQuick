@@ -22,6 +22,7 @@
     <link href="css/login.css?v=home-modern" rel="stylesheet">
     <link href="css/public-store.css" rel="stylesheet">
     <link href="frontend/styles/client-catalog.css" rel="stylesheet">
+    <link href="frontend/styles/client-shopping.css" rel="stylesheet">
 </head>
 <body class="bg-light">
     <!-- Contenedor principal SPA -->
@@ -33,6 +34,9 @@
                 <div class="col-12 col-sm-8 col-md-6 col-lg-4">
                     <div class="card login-card shadow-lg border-0">
                         <div class="card-body">
+                            <div class="text-center mb-2">
+                                <img src="image/logo_pharmaQuick.png" alt="PharmaQuick" style="height: 45px; max-width: 100%;" class="img-fluid">
+                            </div>
                             <p class="text-center login-subtitle mb-4 mb-lg-4">
                                 Ingresa con tu cuenta de farmacia para continuar.
                             </p>
@@ -64,6 +68,12 @@
                                     <label class="form-check-label" for="rememberMe">Recordarme</label>
                                 </div>
 
+                                <div class="mb-3 text-end">
+                                    <a href="/recover-password" class="text-muted small text-decoration-none">
+                                        <i class="bi bi-question-circle me-1"></i>¿Olvidaste tu contraseña?
+                                    </a>
+                                </div>
+
                                 <div id="loginError" class="alert alert-danger d-none" role="alert">
                                     <i class="bi bi-exclamation-triangle me-2"></i>
                                     <span id="errorMessage"></span>
@@ -81,6 +91,153 @@
                                     </span>
                                 </button>
                             </form>
+
+                            <div class="text-center mt-4 pt-3 border-top">
+                                <p class="text-muted small mb-0">¿Aún no tienes una cuenta?</p>
+                                <a href="/register" class="btn btn-link text-primary fw-bold text-decoration-none p-0" onclick="event.preventDefault(); Router.navigate('/register')">Regístrate aquí</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <small class="text-muted">&copy; 2026 PharmaQuick v1.0</small>
+                    </div>
+                </div>
+            </div>
+    </template>
+
+    <!-- Template: Recover Password Page -->
+    <template id="template-recover-password">
+            <div class="row justify-content-center">
+                <div class="col-12 col-sm-8 col-md-6 col-lg-4">
+                    <div class="card login-card shadow-lg border-0">
+                        <div class="card-body">
+                            <div class="text-center mb-2">
+                                <img src="/image/logo_pharmaQuick.png" alt="PharmaQuick" style="height: 45px; max-width: 100%;" class="img-fluid">
+                            </div>
+                            <p class="text-center login-subtitle mb-4">
+                                Ingresa tu correo para recuperar tu contraseña.
+                            </p>
+
+                            <form id="recoverForm">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label fw-semibold">
+                                        <i class="bi bi-envelope me-2"></i>Correo Electrónico
+                                    </label>
+                                    <input type="email" class="form-control" id="email" required
+                                           placeholder="tu@email.com" autocomplete="email">
+                                </div>
+
+                                <div id="recoverError" class="alert alert-danger d-none" role="alert">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    <span id="recoverErrorMessage"></span>
+                                </div>
+
+                                <div id="recoverSuccess" class="alert alert-success d-none" role="alert">
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    <span id="recoverSuccessMessage"></span>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold" id="recoverBtn">
+                                    <span id="recoverBtnText">Enviar Enlace de Recuperación</span>
+                                    <span id="recoverBtnSpinner" class="spinner-border spinner-border-sm d-none" role="status">
+                                        <span class="visually-hidden">Cargando...</span>
+                                    </span>
+                                </button>
+                            </form>
+
+                            <div class="text-center mt-4 pt-3 border-top">
+                                <a href="#" class="btn btn-link text-primary fw-bold text-decoration-none p-0" onclick="event.preventDefault(); Router.navigate('/login')">
+                                    <i class="bi bi-arrow-left me-1"></i>Volver a Iniciar Sesión
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <small class="text-muted">&copy; 2026 PharmaQuick v1.0</small>
+                    </div>
+                </div>
+            </div>
+    </template>
+
+    <!-- Template: Register Page -->
+    <template id="template-register">
+            <div class="row justify-content-center">
+                <div class="col-12 col-sm-8 col-md-6 col-lg-4">
+                    <div class="card login-card shadow-lg border-0">
+                        <div class="card-body">
+                            <div class="text-center mb-2">
+                                <img src="/image/logo_pharmaQuick.png" alt="PharmaQuick" style="height: 45px; max-width: 100%;" class="img-fluid">
+                            </div>
+                                Crea tu cuenta de farmacia para comenzar a ordenar.
+                            </p>
+
+                            <form id="registerForm">
+                                <div class="mb-3">
+                                    <label for="nombre" class="form-label fw-semibold">
+                                        <i class="bi bi-person me-2"></i>Nombre Completo
+                                    </label>
+                                    <input type="text" class="form-control" id="nombre" required
+                                           placeholder="Ej: Juan Pérez" autocomplete="name">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="email" class="form-label fw-semibold">
+                                        <i class="bi bi-envelope me-2"></i>Correo Electrónico
+                                    </label>
+                                    <input type="email" class="form-control" id="email" required
+                                           placeholder="nombre@ejemplo.com" autocomplete="email">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="password" class="form-label fw-semibold">
+                                        <i class="bi bi-key me-2"></i>Contraseña
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="password" required
+                                               placeholder="Mínimo 6 caracteres" minlength="6" autocomplete="new-password">
+                                        <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                            <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="confirm_password" class="form-label fw-semibold">
+                                        <i class="bi bi-key-fill me-2"></i>Confirmar Contraseña
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="confirm_password" required
+                                               placeholder="Repite tu contraseña" autocomplete="new-password">
+                                        <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword">
+                                            <i class="bi bi-eye" id="toggleConfirmPasswordIcon"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div id="registerError" class="alert alert-danger d-none" role="alert">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    <span id="registerErrorMessage"></span>
+                                </div>
+
+                                <div id="registerSuccess" class="alert alert-success d-none" role="alert">
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    <span id="registerSuccessMessage"></span>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold" id="registerBtn">
+                                    <span id="registerBtnText">Crear Cuenta</span>
+                                    <span id="registerBtnSpinner" class="spinner-border spinner-border-sm d-none" role="status">
+                                        <span class="visually-hidden">Cargando...</span>
+                                    </span>
+                                </button>
+                            </form>
+
+                            <div class="text-center mt-4 pt-2 border-top">
+                                <p class="text-muted small mb-0">¿Ya tienes una cuenta?</p>
+                                <a href="/login" class="btn btn-link text-primary fw-bold text-decoration-none p-0" onclick="event.preventDefault(); Router.navigate('/login')">Inicia Sesión</a>
+                            </div>
                         </div>
                     </div>
 
@@ -113,22 +270,19 @@
                     <i class="fas fa-pills"></i>
                     <span class="nav-text">Productos</span>
                 </a>
+                <a class="nav-link" href="/ventas" data-page="ventas">
+                    <i class="fas fa-cash-register"></i>
+                    <span class="nav-text">Vender (POS)</span>
+                </a>
                 <a class="nav-link" href="/inventario" data-page="inventario">
                     <i class="fas fa-boxes-stacked"></i>
                     <span class="nav-text">Inventario</span>
                 </a>
-                <a class="nav-link" href="/clientes" data-page="clientes">
-                    <i class="fas fa-users"></i>
-                    <span class="nav-text">Clientes</span>
+                <a class="nav-link" href="/mis-ventas" data-page="mis-ventas">
+                    <i class="fas fa-receipt"></i>
+                    <span class="nav-text">Mis Ventas</span>
                 </a>
-                <a class="nav-link" href="/proveedores" data-page="proveedores">
-                    <i class="fas fa-truck-medical"></i>
-                    <span class="nav-text">Proveedores</span>
-                </a>
-                <a class="nav-link" href="/ventas" data-page="ventas">
-                    <i class="fas fa-cash-register"></i>
-                    <span class="nav-text">Ventas</span>
-                </a>
+
                 <!-- [DESHABILITADO] Reservas - Deshabilitado por no utilizarse
                 <a class="nav-link" href="/reservas" data-page="reservas">
                     <i class="fas fa-calendar-alt"></i>
@@ -136,10 +290,7 @@
                 </a>
                 -->
                 <hr class="mx-3 my-2 text-white-50">
-                <a class="nav-link" href="/configuracion" data-page="configuracion">
-                    <i class="fas fa-cog"></i>
-                    <span class="nav-text">Configuración</span>
-                </a>
+
                 <a class="nav-link" href="/perfil" data-page="perfil">
                     <i class="fas fa-user"></i>
                     <span class="nav-text">Perfil</span>
@@ -288,7 +439,7 @@
                         </a>
                     </div>
                     <div class="col-6 col-md-3">
-                        <a href="#" class="quick-access-card">
+                        <a href="/ventas" class="quick-access-card">
                             <i class="bi bi-cart-plus fs-3"></i>
                             <h6 class="mt-2 mb-0">Nueva Venta</h6>
                         </a>
@@ -422,6 +573,88 @@
             </div>
         </div>
     </template>
+    
+    <!-- Template: Historial de Ventas -->
+    <template id="template-historial-ventas">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h5 class="fw-bold m-0"><i class="fas fa-history text-primary me-2"></i>Historial de Ventas</h5>
+                        <p class="text-muted small m-0 mt-1">Consulta todas las transacciones realizadas en la farmacia</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button id="btnRefreshVentas" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-sync-alt me-1"></i> Actualizar
+                        </button>
+                        <a href="/ventas" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i> Nueva Venta (POS)
+                        </a>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle" id="historyTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th>Vendedor</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                                <th class="text-end">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <tr><td colspan="6" class="text-center text-muted py-4">Cargando ventas...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Detalles de Venta -->
+        <div class="modal fade" id="modalVentaDetalles" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-primary text-white border-0">
+                        <h5 class="modal-title"><i class="fas fa-file-invoice me-2"></i>Detalle de Venta</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div id="ventaDetallesHeader" class="mb-4">
+                            <!-- Se llena dinámicamente -->
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Lote</th>
+                                        <th class="text-center">Cant.</th>
+                                        <th class="text-end">Precio</th>
+                                        <th class="text-end">Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ventaDetallesBody">
+                                    <!-- Se llena dinámicamente -->
+                                </tbody>
+                                <tfoot id="ventaDetallesFooter">
+                                    <!-- Se llena dinámicamente -->
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-primary" id="btnImprimirTicket">
+                            <i class="fas fa-print me-1"></i> Imprimir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
 
     <!-- [DESHABILITADO] Template: Reservas - Deshabilitado por no utilizarse
     <template id="template-reservas">
@@ -477,7 +710,7 @@
     
     <!-- Core -->
     <script src="frontend/core/config/env.js"></script>
-    <script src="frontend/core/router/Router.js?v=home-route"></script>
+    <script src="frontend/core/router/Router.js?v=home-v2"></script>
     <script src="frontend/core/auth/AuthService.js"></script>
     <script src="frontend/core/api/HttpClient.js"></script>
     <script src="frontend/core/api/HttpErrorHandler.js"></script>
@@ -501,9 +734,11 @@
     <script src="frontend/modules/inventory/InventoryService.js"></script>
     <script src="frontend/modules/inventory/InventoryController.js"></script>
     <script src="frontend/modules/inventory/InventoryView.js"></script>
-    <script src="frontend/modules/sales/SalesService.js"></script>
-    <script src="frontend/modules/sales/SalesController.js"></script>
-    <script src="frontend/modules/sales/SalesView.js"></script>
+    <script src="frontend/modules/sales/SalesService.js?v=pos-fix-7"></script>
+    <script src="frontend/modules/sales/SalesController.js?v=pos-fix-7"></script>
+    <script src="frontend/modules/sales/SalesView.js?v=pos-fix-7"></script>
+    <script src="frontend/modules/sales/SalesHistoryController.js"></script>
+    <script src="frontend/modules/sales/SalesHistoryView.js"></script>
     <!-- [DESHABILITADO] Scripts de reservas - Deshabilitado por no utilizarse
     <script src="frontend/modules/reservations/ReservationService.js"></script>
     <script src="frontend/modules/reservations/ReservationController.js"></script>
@@ -516,16 +751,18 @@
     <script src="frontend/layout/LayoutHelper.js"></script>
     <script src="frontend/layout/SiteHeader.js?v=home-modern"></script>
     <!-- Client Layout (E-commerce) -->
-    <script src="frontend/layout/ClientLayout.js"></script>
+    <script src="frontend/layout/ClientLayout.js?v=home-v2"></script>
     <!-- Pages -->
-    <script src="frontend/pages/HomePage.js?v=home-route"></script>
+    <script src="frontend/pages/HomePage.js?v=home-v2"></script>
     <script src="frontend/pages/RegisterPage.js"></script>
+    <script src="frontend/pages/RecoverPasswordPage.js"></script>
     <script src="frontend/pages/LoginPage.js?v=home-modern"></script>
     <script src="frontend/pages/PublicStorePage.js"></script>
-    <script src="frontend/pages/DashboardPage.js"></script>
+    <script src="frontend/pages/DashboardPage.js?v=premium-v3"></script>
     <script src="frontend/pages/ProductsPage.js"></script>
     <script src="frontend/pages/InventoryPage.js"></script>
     <script src="frontend/pages/SalesPage.js"></script>
+    <script src="frontend/pages/SalesHistoryPage.js"></script>
     <!-- [DESHABILITADO] <script src="frontend/pages/ReservationsPage.js"></script> -->
     <script src="frontend/pages/ProfilePage.js"></script>
     <script src="frontend/pages/NotFoundPage.js"></script>
@@ -536,11 +773,12 @@
     <script src="frontend/pages/ClientCatalogPage.js"></script>
     <script src="frontend/pages/ClientProfilePage.js"></script>
     <script src="frontend/pages/ClientShoppingPage.js"></script>
+    <script src="frontend/pages/ClientCartPage.js"></script>
     <script src="frontend/modules/shopping/ShoppingService.js"></script>
     <script src="frontend/modules/shopping/CartService.js"></script>
     <!-- [DESHABILITADO] <script src="frontend/pages/ClientReservationsPage.js"></script> -->
     
     <!-- App -->
-    <script src="js/app.js?v=home-route"></script>
+    <script src="js/app.js?v=home-v2"></script>
 </body>
 </html>

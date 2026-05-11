@@ -170,4 +170,4 @@ class HttpClient {
     }
 }
 
-const httpClient = HttpClient.getInstance();
+window.httpClient = HttpClient.getInstance();

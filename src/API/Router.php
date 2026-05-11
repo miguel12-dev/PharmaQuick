@@ -38,7 +38,7 @@ class PharmaRouter
 {
     private string $method;
     private string $uri;
-    private array $publicRoutes = ['/api/auth/login', '/api/auth/register'];
+    private array $publicRoutes = ['/api/auth/login', '/api/auth/register', '/api/auth/recover', '/api/auth/reset'];
 
     public function __construct()
     {
@@ -91,6 +91,10 @@ class PharmaRouter
                 handleAuthLogin();
             } else if ($this->uri === '/api/auth/register') {
                 handleAuthRegister();
+            } else if ($this->uri === '/api/auth/recover') {
+                handleAuthRecover();
+            } else if ($this->uri === '/api/auth/reset') {
+                handleAuthReset();
             }
             return;
         }
@@ -118,7 +122,7 @@ class PharmaRouter
         }
         
         // Rutas de carrito (públicas para testing - sin JWT)
-        if ($uriPath === '/api/carrito' || strpos($uriPath, '/api/carrito/') === 0) {
+        if ($uriPath === '/api/carrito' || $uriPath === '/api/carrito/comprar' || strpos($uriPath, '/api/carrito/') === 0) {
             $this->handleCarritoApi();
             return;
         }
@@ -222,6 +226,12 @@ class PharmaRouter
         // DELETE /api/carrito/{id} - Eliminar item
         if ($this->method === 'DELETE' && preg_match('#^/api/carrito/(\d+)$#', $this->uri, $matches)) {
             handleDeleteCarritoItem((int) $matches[1]);
+            return;
+        }
+        
+        // POST /api/carrito/comprar - Procesar compra desde el carrito
+        if ($this->uri === '/api/carrito/comprar' && $this->method === 'POST') {
+            handlePostCarritoCompra();
             return;
         }
         
@@ -455,15 +465,36 @@ class PharmaRouter
         // ===================
         // VENTAS Y RESERVAS
         // ===================
+        if ($this->uri === '/api/ventas/pos-productos' && $this->method === 'GET') {
+            require_once ROUTES_PATH . '/ventas.php';
+            handleGetPOSProductos();
+            return;
+        }
+
         if ($this->uri === '/api/ventas/top-productos' && $this->method === 'GET') {
             require_once ROUTES_PATH . '/public.php';
             handleGetTopProductosAuth();
             return;
         }
 
+        // ===================
+        // DASHBOARD
+        // ===================
+        if ($this->uri === '/api/dashboard' && $this->method === 'GET') {
+            require_once ROUTES_PATH . '/dashboard.php';
+            handleGetDashboardData();
+            return;
+        }
+
         if ($this->uri === '/api/ventas' && $this->method === 'GET') {
             require_once ROUTES_PATH . '/ventas.php';
             handleGetVentas();
+            return;
+        }
+
+        if ($this->method === 'GET' && preg_match('#^/api/ventas/(\d+)/detalles$#', $this->uri, $matches)) {
+            require_once ROUTES_PATH . '/ventas.php';
+            handleGetVentaDetalles((int) $matches[1]);
             return;
         }
 

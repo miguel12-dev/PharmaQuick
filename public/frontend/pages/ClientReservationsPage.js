@@ -102,7 +102,7 @@ const ClientReservationsPage = {
             <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
             <h5>No tienes reservas</h5>
             <p class="text-muted">Visita la tienda para reservar tus medicamentos</p>
-            <a href="/cliente/tienda" class="btn btn-primary">
+            <a href="/cliente/catalogo" class="btn btn-primary">
                 <i class="fas fa-store me-2"></i> Ir a la Tienda
             </a>
         </div>

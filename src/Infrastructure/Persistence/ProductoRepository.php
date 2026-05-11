@@ -124,7 +124,7 @@ class ProductoRepository {
             WHERE l.farmacia_id = :farmacia_id 
                 AND p.activo = 1
                 AND l.stock_actual > 0
-                AND (p.nombre LIKE :query OR p.codigo_barras LIKE :query)
+                AND (p.nombre LIKE :query OR p.codigo_barras LIKE :query OR p.presentacion LIKE :query OR p.categoria LIKE :query)
             GROUP BY p.id, p.nombre, p.codigo_barras, p.descripcion, p.categoria, p.presentacion, p.activo, p.imagen, pr.precio, pr.id
             ORDER BY p.nombre ASC
             LIMIT 50

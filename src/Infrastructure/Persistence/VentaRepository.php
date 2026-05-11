@@ -53,15 +53,43 @@ class VentaRepository {
 
     public function getVentasByFarmacia(int $farmaciaId, int $limit = 50, int $offset = 0): array {
         $stmt = $this->pdo->prepare("
-            SELECT v.id, v.cliente_nombre, v.cliente_documento, v.total, v.descuento, v.estado, v.creado_en, u.nombre as vendedor
-            FROM ventas v
-            LEFT JOIN usuarios u ON u.id = v.usuario_id
-            WHERE v.farmacia_id = :farmacia_id
-            ORDER BY v.creado_en DESC
+            SELECT * FROM (
+                SELECT 
+                    v.id, 
+                    v.cliente_nombre, 
+                    v.cliente_documento, 
+                    v.total, 
+                    v.descuento, 
+                    v.estado, 
+                    v.creado_en, 
+                    u.nombre as vendedor,
+                    'VENTA' as tipo
+                FROM ventas v
+                LEFT JOIN usuarios u ON u.id = v.usuario_id
+                WHERE v.farmacia_id = :farmacia_id
+
+                UNION ALL
+
+                SELECT 
+                    c.id, 
+                    u.nombre as cliente_nombre, 
+                    c.codigo_pedido as cliente_documento, 
+                    c.total, 
+                    0 as descuento, 
+                    c.estado, 
+                    c.created_at as creado_en, 
+                    'E-commerce' as vendedor,
+                    'COMPRA' as tipo
+                FROM pharma_master.compras_cliente c
+                INNER JOIN pharma_master.usuarios u ON u.id = c.usuario_id
+                WHERE c.farmacia_id = :farmacia_id_2
+            ) AS combined_sales
+            ORDER BY creado_en DESC
             LIMIT :limit OFFSET :offset
         ");
         
         $stmt->bindValue(':farmacia_id', $farmaciaId, PDO::PARAM_INT);
+        $stmt->bindValue(':farmacia_id_2', $farmaciaId, PDO::PARAM_INT);
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
@@ -79,6 +107,17 @@ class VentaRepository {
         ");
         
         $stmt->execute([':venta_id' => $ventaId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function getDetallesByCompra(int $compraId): array {
+        $stmt = $this->pdo->prepare("
+            SELECT cd.id, cd.cantidad, cd.precio_unitario as precio, cd.subtotal, 'N/A' as codigo_lote, cd.producto_nombre as producto
+            FROM pharma_master.compras_detalle cd
+            WHERE cd.compra_id = :compra_id
+        ");
+        
+        $stmt->execute([':compra_id' => $compraId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 

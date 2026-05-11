@@ -5,9 +5,25 @@ class SalesController {
         this.searchTimeout = null;
     }
 
+    async loadInitialProducts() {
+        try {
+            const response = await SalesService.getPOSProductos();
+            // Soporta { success: true, data: { productos: [] } } o { success: true, data: [] }
+            const products = response.data?.productos || (Array.isArray(response.data) ? response.data : []);
+            this.initialProducts = products;
+            
+            if (response.success && products.length > 0) {
+                SalesView.renderInitialProducts(products, (product) => this.addToCart(product));
+            }
+        } catch (error) {
+            console.error('Error cargando productos iniciales:', error);
+        }
+    }
+
     async init() {
         SalesView.bindSearchInput(this.handleSearch.bind(this));
         SalesView.bindCompleteSale(this.handleCompleteSale.bind(this));
+        await this.loadInitialProducts();
         
         // Hide search results if clicked outside
         document.addEventListener('click', (e) => {
@@ -32,7 +48,7 @@ class SalesController {
         const productId = urlParams.get('producto');
         if (productId) {
             try {
-                const response = await productService.getById(productId);
+                const response = await ProductService.getById(productId);
                 if (response.success && response.data) {
                     this.addToCart(response.data);
                 }
@@ -76,7 +92,7 @@ class SalesController {
             }
         ).catch(err => {
             console.error("Error starting scanner", err);
-            Toast.showError("No se pudo acceder a la cámara");
+            Toast.error("No se pudo acceder a la cámara");
             this.toggleScanner();
         });
     }
@@ -91,6 +107,9 @@ class SalesController {
         clearTimeout(this.searchTimeout);
         if (!query || query.length < 2) {
             SalesView.showSearchResults([]);
+            if (this.initialProducts) {
+                SalesView.renderInitialProducts(this.initialProducts, (product) => this.addToCart(product));
+            }
             return;
         }
 
@@ -98,13 +117,19 @@ class SalesController {
             try {
                 const response = await SalesService.searchProducts(query);
                 if (response.success && response.data) {
-                    const exactMatch = response.data.find(p => p.codigo_barras === query);
-                    if (exactMatch && response.data.length === 1) {
+                    // Soporta { success: true, data: { productos: [] } } o { success: true, data: [] }
+                    const products = response.data.productos || (Array.isArray(response.data) ? response.data : []);
+                    
+                    const exactMatch = products.find(p => p.codigo === query || p.codigo_barras === query);
+                    if (exactMatch && products.length === 1) {
                         this.addToCart(exactMatch);
                         document.getElementById('posSearchProduct').value = '';
                         SalesView.showSearchResults([]);
+                        if (this.initialProducts) {
+                            SalesView.renderInitialProducts(this.initialProducts, (p) => this.addToCart(p));
+                        }
                     } else {
-                        SalesView.showSearchResults(response.data, this.addToCart.bind(this));
+                        SalesView.showSearchResults(products, this.addToCart.bind(this));
                     }
                 }
             } catch (error) {
@@ -121,7 +146,7 @@ class SalesController {
             const item = this.cart[existingIndex];
             item.cantidad++;
             if (item.lote && item.cantidad > item.lote.stock_actual) {
-                Toast.showWarning(`Stock insuficiente. Disponible: ${item.lote.stock_actual}`);
+                Toast.warning(`Stock insuficiente. Disponible: ${item.lote.stock_actual}`);
                 item.cantidad = item.lote.stock_actual;
             }
             this.updateView();
@@ -143,11 +168,26 @@ class SalesController {
 
         try {
             const response = await SalesService.getFefoBatch(product.id);
-            if (response.success && response.data && response.data.lote) {
-                cartItem.lote = response.data.lote;
+            // La respuesta tiene los lotes en response.data.lotes
+            if (response.success && response.data && response.data.lotes && response.data.lotes.length > 0) {
+                // Filtrar lotes bloqueados por vencimiento si el backend no lo hizo
+                const availableLotes = response.data.lotes.filter(l => !l.bloqueado && l.stock > 0);
+                if (availableLotes.length > 0) {
+                    const bestLote = availableLotes[0];
+                    cartItem.lote = {
+                        id: bestLote.lote_id,
+                        codigo_lote: bestLote.codigo_lote,
+                        fecha_vencimiento: bestLote.fecha_venc,
+                        stock_actual: bestLote.stock,
+                        precio: bestLote.precio_venta || cartItem.precio
+                    };
+                } else {
+                    cartItem.noStock = true;
+                    Toast.warning(`No hay lotes aptos para la venta para ${product.nombre}`);
+                }
             } else {
                 cartItem.noStock = true;
-                Toast.showWarning(`No hay stock disponible para ${product.nombre}`);
+                Toast.warning(`No hay stock disponible para ${product.nombre}`);
             }
         } catch (error) {
             console.error("Error getting FEFO batch", error);
@@ -182,11 +222,11 @@ class SalesController {
         });
 
         const taxes = 0;
-        const total = subtotal + taxes;
+        this.total = subtotal + taxes;
         
         const canComplete = this.cart.length > 0 && !hasNoStockItems && !hasLoadingItems;
         
-        SalesView.updateTotals(subtotal, taxes, total, canComplete);
+        SalesView.updateTotals(subtotal, taxes, this.total, canComplete);
     }
 
     async handleCompleteSale(paymentMethod) {
@@ -198,7 +238,7 @@ class SalesController {
                 producto_id: item.producto.id,
                 lote_id: item.lote.id,
                 cantidad: item.cantidad,
-                precio_unitario: item.precio
+                precio: item.precio
             }));
 
             const saleData = {
@@ -206,16 +246,24 @@ class SalesController {
                 metodo_pago: paymentMethod,
                 impuestos: 0
             };
-
             const response = await SalesService.createSale(saleData);
             if (response.success) {
-                Toast.showSuccess('Venta completada con éxito');
+                const saleSummary = {
+                    items: this.cart.map(item => ({...item})),
+                    total: this.total,
+                    metodo_pago: paymentMethod
+                };
+                
+                SalesView.showSaleSuccess(response.data.venta_id, saleSummary, () => {
+                    // Acción opcional para "Nueva Venta"
+                    document.getElementById('posSearchProduct').focus();
+                });
                 this.cart = [];
                 this.updateView();
             }
         } catch (error) {
             console.error('Error completing sale:', error);
-            Toast.showError('Error al procesar la venta: ' + error.message);
+            Toast.error('Error al procesar la venta: ' + error.message);
         } finally {
             this.updateView();
             document.getElementById('btnCompleteSale').innerHTML = '<i class="fas fa-check-circle me-2"></i>Completar Venta';

@@ -18,41 +18,26 @@ const HomePage = {
     },
 
 setupEventListeners(container, loggedIn) {
-        // Obtener rol del usuario
-        const session = JSON.parse(localStorage.getItem('pharmaSession') || '{}');
-        const isCliente = session.rol === 'CLIENTE';
-        
-        // Ruta según rol
-        const dashboardRoute = isCliente ? '/cliente' : '/dashboard';
-        
-        container.querySelectorAll('[data-home-action="primary"]').forEach((btn) => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                Router.navigate(loggedIn ? dashboardRoute : '/login');
-            });
+        // Botón principal (CTA)
+        container.querySelector('[data-home-action="primary"]')?.addEventListener('click', () => {
+            const session = JSON.parse(localStorage.getItem('pharmaSession') || '{}');
+            const isCliente = session.rol === 'CLIENTE';
+            const dashboardRoute = isCliente ? '/cliente/catalogo' : '/dashboard';
+            const buyRoute = isCliente ? '/cliente/catalogo' : '/ventas';
+
+            if (loggedIn) {
+                Router.navigate(dashboardRoute);
+            } else {
+                Router.navigate('/login');
+            }
         });
 
-        // Search handler
-        const searchInput = container.querySelector('#homeSearchInput');
-        if (searchInput) {
-            let timeout;
-            searchInput.addEventListener('input', (e) => {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                    this.loadCatalog(container, e.target.value.trim());
-                }, 300);
-            });
-        }
-        
-        // Action handlers (Buy/Reserve) - Redirigir según rol
-        container.addEventListener('click', (e) => {
-            const buyBtn = e.target.closest('.action-buy');
-            // [DESHABILITADO] const reserveBtn = e.target.closest('.action-reserve');
-            
-            // Rutas según rol del usuario
-            const buyRoute = isCliente ? '/cliente/tienda' : '/ventas';
-            // [DESHABILITADO] const reserveRoute = isCliente ? '/cliente/reservas' : '/reservas';
-            
+        // Botón de comprar en productos
+        container.querySelectorAll('.action-buy').forEach(buyBtn => {
+            const session = JSON.parse(localStorage.getItem('pharmaSession') || '{}');
+            const isCliente = session.rol === 'CLIENTE';
+            const buyRoute = isCliente ? '/cliente/catalogo' : '/ventas';
+
             if (buyBtn) {
                 const id = buyBtn.dataset.id;
                 if (loggedIn) {
@@ -62,18 +47,20 @@ setupEventListeners(container, loggedIn) {
                     Router.navigate(`/login?next=${nextUrl}`);
                 }
             }
-            
-            // [DESHABILITADO] Manejo de clicks en botón de reservas
-            // if (reserveBtn) {
-            //     const id = reserveBtn.dataset.id;
-            //     if (loggedIn) {
-            //         Router.navigate(`${reserveRoute}?producto=${id}`);
-            //     } else {
-            //         const nextUrl = encodeURIComponent(`${reserveRoute}?producto=${id}`);
-            //         Router.navigate(`/login?next=${nextUrl}`);
-            //     }
-            // }
         });
+
+        // Búsqueda en homepage
+        const searchInput = container.querySelector('#homeSearchInput');
+        if (searchInput) {
+            let searchTimeout;
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                const query = e.target.value.trim();
+                searchTimeout = setTimeout(() => {
+                    this.loadCatalog(container, query);
+                }, 400);
+            });
+        }
     },
 
     async loadCatalog(container, query = '') {
@@ -173,7 +160,7 @@ setupEventListeners(container, loggedIn) {
             try {
                 const session = JSON.parse(localStorage.getItem('pharmaSession') || '{}');
                 isCliente = session.rol === 'CLIENTE';
-                dashboardRoute = isCliente ? '/cliente' : '/dashboard';
+                dashboardRoute = isCliente ? '/cliente/catalogo' : '/dashboard';
                 primaryLabel = isCliente ? 'Mi Cuenta' : 'Ir al panel';
             } catch (e) {
                 primaryLabel = 'Ir al panel';

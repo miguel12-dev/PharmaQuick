@@ -13,6 +13,7 @@
         '/': HomePage,
         '/login': LoginPage,
         '/register': RegisterPage,
+        '/recover-password': RecoverPasswordPage,
         '/tienda': PublicStorePage,
         
         // Rutas administrativas (para ADMIN, FARMACEUTICO, AUXILIAR)
@@ -20,15 +21,17 @@
         '/productos': ProductsPage,
         '/inventario': InventoryPage,
         '/ventas': SalesPage,
+        '/mis-ventas': SalesHistoryPage,
         // [DESHABILITADO] '/reservas': ReservationsPage,
         
         // Rutas de cliente (CLIENTE)
-        '/cliente': ClientDashboardPage,
-        '/cliente/tienda': ClientCatalogPage, // Antigua tienda ahora es catálogo
-        '/cliente/catalogo': ClientCatalogPage, // Nueva ruta de catálogo
+        // [ELIMINADO] '/cliente': ClientDashboardPage, -- Ya no es ruta predeterminada
+        // [ELIMINADO] '/cliente/tienda': ClientCatalogPage, -- Unificado con catálogo
+        '/cliente/catalogo': ClientCatalogPage,
         // [DESHABILITADO] '/cliente/reservas': ClientReservationsPage,
         '/cliente/perfil': ClientProfilePage,
-        '/cliente/compras': ClientShoppingPage,  // Página de compras con checkout
+        '/cliente/compras': ClientShoppingPage,  // Página de historial de compras (solo lectura)
+        '/cliente/carrito': ClientCartPage,  // Página de carrito y checkout
         
         '/perfil': ProfilePage,
         '/404': NotFoundPage
@@ -74,9 +77,21 @@
             return true;
         }
         
-        // Redirigir /mi-cuenta a /cliente para clientes
+        // Redirigir /mi-cuenta a /cliente/catalogo para clientes
         if (rol === 'CLIENTE' && path.startsWith('/mi-cuenta')) {
-            Router.navigate('/cliente');
+            Router.navigate('/cliente/catalogo');
+            return true;
+        }
+        
+        // Si cliente accede a /cliente sin subruta, redirigir a catálogo
+        if (rol === 'CLIENTE' && path === '/cliente') {
+            Router.navigate('/cliente/catalogo');
+            return true;
+        }
+        
+        // Si cliente accede a /cliente/tienda (ruta antigua), redirigir a catálogo
+        if (rol === 'CLIENTE' && path === '/cliente/tienda') {
+            Router.navigate('/cliente/catalogo');
             return true;
         }
         

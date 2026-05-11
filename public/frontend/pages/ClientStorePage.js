@@ -15,7 +15,7 @@ const ClientStorePage = {
             return;
         }
 
-        ClientLayout.render(container, 'tienda');
+        ClientLayout.render(container, 'catalogo');
         
         // Obtener parámetro de tab si existe
         const urlParams = new URLSearchParams(window.location.search);
@@ -40,7 +40,7 @@ const ClientStorePage = {
                     precio: item.precio_unitario,
                     cantidad: item.cantidad
                 }));
-                console.log('Carrito cargado desde backend:', this.cart.length, 'items');
+                // console.log('Carrito cargado desde backend:', this.cart.length, 'items');
             } else {
                 // Si no hay servicio, carrito vacío
                 this.cart = [];
@@ -258,9 +258,9 @@ const ClientStorePage = {
         return this.cart.reduce((total, item) => total + (item.precio * item.cantidad), 0);
     },
 
-    // El carrito ahora se guarda en la base de datos, no en localStorage
+    // El carrito se guarda en el backend - no necesita método local
     saveCart() {
-        console.log('Carrito guardado en memoria (el持久存储 está en el backend)');
+        // Carrito sincronizado con backend vía cartService
     },
 
     switchTab(tab) {
