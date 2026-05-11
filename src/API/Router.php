@@ -477,6 +477,15 @@ class PharmaRouter
             return;
         }
 
+        // ===================
+        // DASHBOARD
+        // ===================
+        if ($this->uri === '/api/dashboard' && $this->method === 'GET') {
+            require_once ROUTES_PATH . '/dashboard.php';
+            handleGetDashboardData();
+            return;
+        }
+
         if ($this->uri === '/api/ventas' && $this->method === 'GET') {
             require_once ROUTES_PATH . '/ventas.php';
             handleGetVentas();

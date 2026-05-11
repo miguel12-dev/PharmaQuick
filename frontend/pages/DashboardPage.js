@@ -1,6 +1,6 @@
 /**
  * PharmaQuick - Dashboard Page
- * Página de dashboard para SPA con renderizado dinámico
+ * Página de dashboard para SPA con renderizado dinámico y estética premium.
  */
 
 const DashboardPage = {
@@ -13,324 +13,298 @@ const DashboardPage = {
             Router.navigate('/login');
             return;
         }
+
+        // Cargar CSS específico si no está cargado
+        this.loadStyles();
         
-        // Renderizar layout
+        // Renderizar layout base
         this.renderLayout(container);
         
-        // Inicializar layout después de renderizar
+        // Inicializar interactividad del layout
         this.initLayout();
         
-        // Cargar estadísticas
-        await this.loadStats();
+        // Cargar y mostrar datos reales
+        await this.refreshData();
+    },
+
+    /**
+     * Cargar estilos dinámicamente
+     */
+    loadStyles() {
+        if (!document.getElementById('dashboard-styles')) {
+            const link = document.createElement('link');
+            link.id = 'dashboard-styles';
+            link.rel = 'stylesheet';
+            link.href = '/styles/dashboard.css';
+            document.head.appendChild(link);
+        }
     },
     
     /**
-     * Renderizar layout (navbar + sidebar + content)
+     * Renderizar layout
      */
     renderLayout(container) {
-        const template = document.getElementById('template-layout');
-        const dashboardTemplate = document.getElementById('template-dashboard');
+        // Usar LayoutHelper para renderizar el layout base e inicializar el sidebar
+        LayoutHelper.render(container, 'dashboard');
         
-        if (template) {
-            container.innerHTML = template.innerHTML;
-        } else {
-            container.innerHTML = this.getLayoutHtml();
-        }
-        
-        // Insertar contenido de dashboard en el contenedor correcto
         const pageContent = container.querySelector('.page-content');
-        if (pageContent && dashboardTemplate) {
-            pageContent.innerHTML = dashboardTemplate.innerHTML;
-        } else if (pageContent) {
-            pageContent.innerHTML = this.getDashboardContentHtml();
+        if (pageContent) {
+            pageContent.innerHTML = this.getSkeletonHtml();
         }
-        
-        // Cargar info del usuario
-        this.loadUserInfo();
+    },
+
+    /**
+     * Skeleton loader para el dashboard
+     */
+    getSkeletonHtml() {
+        return `
+            <div class="dashboard-container">
+                <div class="welcome-header">
+                    <h1 class="placeholder-glow"><span class="placeholder col-4"></span></h1>
+                    <p class="placeholder-glow"><span class="placeholder col-6"></span></p>
+                </div>
+                <div class="stats-grid">
+                    ${Array(4).fill('<div class="stat-card placeholder" style="height: 140px"></div>').join('')}
+                </div>
+            </div>
+        `;
     },
     
     /**
-     * Obtener HTML del layout
+     * Obtener el contenido completo del dashboard con los datos
      */
-    getLayoutHtml() {
-        return `
-            <nav class="navbar navbar-expand-lg navbar-light fixed-top">
-                <div class="container-fluid">
-                    <button class="navbar-toggler me-2" type="button" id="sidebarToggle">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
-                    <a class="navbar-brand" href="/dashboard">
-                        <i class="bi bi-capsule me-2"></i>PharmaQuick
+    renderDashboardContent(data) {
+        const container = document.querySelector('.page-content');
+        if (!container) return;
+
+        const stats = data.stats || { ventas_hoy: 0, transacciones_hoy: 0, productos_stock: 0, alertas_stock: 0 };
+        const session = AuthService.getSession();
+        const userName = session ? (session.nombre || session.usuario) : 'Administrador';
+
+        container.innerHTML = `
+            <div class="dashboard-container">
+                <div class="welcome-header">
+                    <h1>Hola, ${userName} 👋</h1>
+                    <p class="text-muted">Esto es lo que está pasando hoy en tu farmacia.</p>
+                </div>
+
+                <div class="quick-actions">
+                    <a href="/ventas/nueva" class="action-btn">
+                        <i class="bi bi-cart-plus"></i> Nueva Venta
                     </a>
-                    <div class="d-flex align-items-center ms-auto">
-                        <div class="dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                                <i class="bi bi-person-circle me-1"></i>
-                                <span id="userName">Usuario</span>
+                    <a href="/productos" class="action-btn secondary">
+                        <i class="bi bi-plus-circle"></i> Agregar Producto
+                    </a>
+                    <a href="/inventario" class="action-btn secondary">
+                        <i class="bi bi-box-seam"></i> Ver Inventario
+                    </a>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card primary">
+                        <div class="stat-icon"><i class="bi bi-currency-dollar"></i></div>
+                        <div class="stat-value" id="val-ventas">$${this.formatCurrency(stats.ventas_hoy)}</div>
+                        <div class="stat-label">Ventas de Hoy</div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="stat-icon"><i class="bi bi-receipt"></i></div>
+                        <div class="stat-value" id="val-trans">${stats.transacciones_hoy}</div>
+                        <div class="stat-label">Transacciones</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="stat-icon"><i class="bi bi-box-seam"></i></div>
+                        <div class="stat-value" id="val-prod">${stats.productos_stock}</div>
+                        <div class="stat-label">Productos en Stock</div>
+                    </div>
+                    <div class="stat-card danger">
+                        <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                        <div class="stat-value" id="val-alert">${stats.alertas_stock}</div>
+                        <div class="stat-label">Alertas de Stock</div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="panel-card">
+                        <div class="panel-header">
+                            <h3>Tendencia de Ventas (7 días)</h3>
+                        </div>
+                        <div class="chart-container">
+                            ${this.renderChart(data.sales_trend || [])}
+                        </div>
+                    </div>
+
+                    <div class="panel-card">
+                        <div class="panel-header">
+                            <h3>Ventas Recientes</h3>
+                        </div>
+                        <div class="activity-list">
+                            ${this.renderRecentSales(data.recent_sales || [])}
+                        </div>
+                        <div class="mt-4 text-center">
+                            <a href="/ventas" class="text-primary text-decoration-none fw-bold" style="font-size: 0.8rem">
+                                Ver todo el historial <i class="bi bi-arrow-right"></i>
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="#">Perfil</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#" id="logoutBtn">Cerrar Sesión</a></li>
-                            </ul>
                         </div>
                     </div>
                 </div>
-            </nav>
 
-            <nav class="sidebar" id="sidebar">
-                <div class="py-3">
-                    <div class="px-3 mb-3">
-                        <small class="text-muted text-uppercase fw-bold">Menú</small>
+                <div class="panel-card mt-4">
+                    <div class="panel-header">
+                        <h3>Productos más vendidos</h3>
                     </div>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link active" href="/dashboard" data-page="dashboard">
-                                <i class="bi bi-speedometer2"></i>Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/productos" data-page="productos">
-                                <i class="bi bi-box-seam"></i>Productos
-                            </a>
-                        </li>
-                    </ul>
+                    <div class="table-responsive">
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Categoría</th>
+                                    <th>Unidades</th>
+                                    <th>Total Generado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${this.renderTopProducts(data.top_products || [])}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </nav>
-
-            <main class="main-content" id="mainContent">
-                <div class="container-fluid">
-                    <div class="page-content"></div>
-                </div>
-            </main>
+            </div>
         `;
+
+        // Trigger animations
+        this.animateCounters();
     },
-    
+
     /**
-     * Obtener HTML del contenido del dashboard
+     * Renderiza las barras del gráfico (Vanilla CSS/SVG style)
      */
-    getDashboardContentHtml() {
-        return `
-            <div class="welcome-card card mb-4">
-                <div class="card-body py-4">
-                    <h2 class="mb-1">Bienvenido a PharmaQuick</h2>
-                    <p class="text-muted mb-0">Gestión integral para tu farmacia</p>
-                </div>
-            </div>
+    renderChart(trend) {
+        if (!trend || trend.length === 0) {
+            return '<div class="text-center w-100 py-5 text-muted">No hay datos suficientes</div>';
+        }
 
-            <div class="row g-3 mb-4">
-                <div class="col-6 col-lg-3">
-                    <div class="card stats-card h-100">
-                        <div class="card-body">
-                            <h6 class="text-muted">Ventas Hoy</h6>
-                            <h4 class="mb-0" id="ventasHoy">$0</h4>
-                        </div>
-                    </div>
+        const max = Math.max(...trend.map(t => parseFloat(t.total)), 1);
+        
+        return trend.map(t => {
+            const percentage = (parseFloat(t.total) / max) * 100;
+            const date = new Date(t.fecha);
+            const label = date.toLocaleDateString('es-ES', { weekday: 'short' });
+            
+            return `
+                <div class="chart-bar-wrapper">
+                    <div class="chart-bar" style="height: ${percentage}%" title="$${t.total}"></div>
+                    <div class="chart-label">${label}</div>
                 </div>
-                <div class="col-6 col-lg-3">
-                    <div class="card stats-card h-100">
-                        <div class="card-body">
-                            <h6 class="text-muted">Transacciones</h6>
-                            <h4 class="mb-0" id="transacciones">0</h4>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6 col-lg-3">
-                    <div class="card stats-card h-100">
-                        <div class="card-body">
-                            <h6 class="text-muted">Productos</h6>
-                            <h4 class="mb-0" id="productos">0</h4>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6 col-lg-3">
-                    <div class="card stats-card h-100">
-                        <div class="card-body">
-                            <h6 class="text-muted">Alertas</h6>
-                            <h4 class="mb-0" id="alertas">0</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card mb-4">
-                <div class="card-header"><h5 class="mb-0">Acceso Rápido</h5></div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-6 col-md-3">
-                            <a href="/productos" class="quick-access-card">
-                                <i class="bi bi-box-seam fs-3"></i>
-                                <h6 class="mt-2 mb-0">Productos</h6>
-                            </a>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <a href="#" class="quick-access-card">
-                                <i class="bi bi-cart-plus fs-3"></i>
-                                <h6 class="mt-2 mb-0">Nueva Venta</h6>
-                            </a>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <a href="#" class="quick-access-card">
-                                <i class="bi bi-box-seam-fill fs-3"></i>
-                                <h6 class="mt-2 mb-0">Inventario</h6>
-                            </a>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <a href="#" class="quick-access-card">
-                                <i class="bi bi-people fs-3"></i>
-                                <h6 class="mt-2 mb-0">Clientes</h6>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row g-3">
-                <div class="col-12 col-lg-8">
-                    <div class="card">
-                        <div class="card-header"><h5 class="mb-0">Últimas Ventas</h5></div>
-                        <div class="card-body">
-                            <table class="table">
-                                <thead><tr><th>ID</th><th>Fecha</th><th>Total</th><th>Estado</th></tr></thead>
-                                <tbody id="ventasTable"><tr><td colspan="4" class="text-muted">Cargando...</td></tr></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-lg-4">
-                    <div class="card">
-                        <div class="card-header"><h5 class="mb-0">Actividad</h5></div>
-                        <div class="card-body">
-                            <div class="activity-item"><div class="content"><div class="title">Venta registrada</div><div class="time">Hace 5 min</div></div></div>
-                            <div class="activity-item"><div class="content"><div class="title">Inventario bajo</div><div class="time">Hace 15 min</div></div></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="main-footer text-center mt-4">
-                <small class="text-muted">&copy; 2024 PharmaQuick</small>
-            </div>
-        `;
+            `;
+        }).join('');
     },
-    
+
     /**
-     * Inicializar layout (toggle sidebar, etc)
+     * Renderiza la lista de ventas recientes
+     */
+    renderRecentSales(sales) {
+        if (sales.length === 0) return '<p class="text-muted text-center py-3">No hay ventas registradas</p>';
+
+        return sales.map(sale => `
+            <div class="activity-item">
+                <div class="activity-dot status-success"></div>
+                <div class="activity-content">
+                    <div class="d-flex justify-content-between">
+                        <span class="activity-title">Venta #${sale.id}</span>
+                        <span class="fw-bold">$${this.formatCurrency(sale.total)}</span>
+                    </div>
+                    <div class="activity-time">${sale.cliente_nombre || 'Consumidor Final'} • ${this.formatTime(sale.creado_en)}</div>
+                </div>
+            </div>
+        `).join('');
+    },
+
+    /**
+     * Renderiza la tabla de productos top
+     */
+    renderTopProducts(products) {
+        if (products.length === 0) return '<tr><td colspan="4" class="text-center py-4">No hay datos</td></tr>';
+
+        return products.map(p => `
+            <tr>
+                <td class="fw-bold">${p.nombre}</td>
+                <td><span class="badge bg-light text-dark">${p.categoria || 'Sin categoría'}</span></td>
+                <td class="text-center">${this.formatQuantity(p.total_vendido)}</td>
+                <td class="fw-bold text-success">$${this.formatCurrency(p.revenue)}</td>
+            </tr>
+        `).join('');
+    },
+
+    /**
+     * Cargar datos desde la API
+     */
+    async refreshData() {
+        const token = AuthService.getToken();
+        if (!token) return;
+
+        try {
+            const response = await fetch('/api/dashboard', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                this.renderDashboardContent(result.data);
+            } else {
+                console.error('Error en API:', result.message);
+            }
+        } catch (error) {
+            console.error('Error cargando datos del dashboard:', error);
+        }
+    },
+
+    /**
+     * Utilidad: Formatear moneda
+     */
+    formatCurrency(value) {
+        return parseFloat(value).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    },
+
+    /**
+     * Utilidad: Formatear cantidad (eliminar decimales innecesarios)
+     */
+    formatQuantity(value) {
+        const num = parseFloat(value);
+        return Number.isInteger(num) ? num.toString() : num.toFixed(2).replace(/\.?0+$/, "");
+    },
+
+    /**
+     * Utilidad: Formatear hora relativa o corta
+     */
+    formatTime(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    },
+
+    /**
+     * Inicializar interactividad del layout
      */
     initLayout() {
-        const sidebar = document.getElementById('sidebar');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const mainContent = document.getElementById('mainContent');
-        
-        if (sidebarToggle && sidebar) {
-            let isMobile = window.innerWidth <= 768;
-            
-            sidebarToggle.addEventListener('click', () => {
-                if (isMobile) {
-                    sidebar.classList.toggle('show');
-                } else if (mainContent) {
-                    mainContent.classList.toggle('sidebar-open');
-                }
-            });
-            
-            window.addEventListener('resize', () => {
-                const wasMobile = isMobile;
-                isMobile = window.innerWidth <= 768;
-                
-                if (wasMobile !== isMobile) {
-                    if (!isMobile) {
-                        sidebar.classList.remove('show');
-                        if (mainContent) mainContent.classList.remove('sidebar-open');
-                    }
-                }
-            });
-            
-            // Cerrar sidebar al hacer click fuera en móvil
-            document.addEventListener('click', (e) => {
-                if (isMobile && sidebar.classList.contains('show')) {
-                    if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
-                        sidebar.classList.remove('show');
-                    }
-                }
-            });
-        }
-        
-        // Logout
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                Router.logout();
-            });
-        }
-        
-        // Set active nav
-        this.setActiveNav('dashboard');
+        // LayoutHelper ya inicializa el sidebar y los botones básicos.
+        // Aquí agregamos comportamientos específicos del dashboard si es necesario.
     },
-    
+
     /**
-     * Cargar información del usuario
+     * Cargar info del usuario en el navbar
      */
     loadUserInfo() {
         const session = AuthService.getSession();
-        
         const userNameEl = document.getElementById('userName');
         if (userNameEl && session) {
             userNameEl.textContent = session.nombre || session.usuario || 'Usuario';
         }
     },
-    
+
     /**
-     * Establecer enlace activo
+     * Animación de contadores
      */
-    setActiveNav(page) {
-        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
-            link.classList.remove('active');
-            
-            const dataPage = link.dataset.page;
-            if (dataPage === page) {
-                link.classList.add('active');
-            }
-        });
-    },
-    
-    /**
-     * Cargar estadísticas del dashboard
-     */
-    async loadStats() {
-        const token = AuthService.getToken();
-        
-        if (!token) {
-            this.updateProductCount(0);
-            return;
-        }
-        
-        try {
-            const response = await fetch('/api/productos', {
-                headers: {
-                    'Authorization': 'Bearer ' + token
-                }
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                this.updateProductCount(data.data?.total || data.data?.productos?.length || 0);
-            }
-        } catch (error) {
-            console.error('Error cargando stats:', error);
-            this.updateProductCount(0);
-        }
-    },
-    
-    /**
-     * Actualizar conteo de productos
-     */
-    updateProductCount(count) {
-        const el = document.getElementById('productos');
-        if (el) {
-            el.textContent = count;
-        }
+    animateCounters() {
+        // Implementación simple de animación de números si se desea
     }
 };
 
