@@ -21,6 +21,7 @@
         '/productos': ProductsPage,
         '/inventario': InventoryPage,
         '/ventas': SalesPage,
+        '/mis-ventas': SalesHistoryPage,
         // [DESHABILITADO] '/reservas': ReservationsPage,
         
         // Rutas de cliente (CLIENTE)

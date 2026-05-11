@@ -274,6 +274,10 @@
                     <i class="fas fa-boxes-stacked"></i>
                     <span class="nav-text">Inventario</span>
                 </a>
+                <a class="nav-link" href="/mis-ventas" data-page="mis-ventas">
+                    <i class="fas fa-receipt"></i>
+                    <span class="nav-text">Mis Ventas</span>
+                </a>
 
                 <!-- [DESHABILITADO] Reservas - Deshabilitado por no utilizarse
                 <a class="nav-link" href="/reservas" data-page="reservas">
@@ -565,6 +569,88 @@
             </div>
         </div>
     </template>
+    
+    <!-- Template: Historial de Ventas -->
+    <template id="template-historial-ventas">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h5 class="fw-bold m-0"><i class="fas fa-history text-primary me-2"></i>Historial de Ventas</h5>
+                        <p class="text-muted small m-0 mt-1">Consulta todas las transacciones realizadas en la farmacia</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button id="btnRefreshVentas" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-sync-alt me-1"></i> Actualizar
+                        </button>
+                        <a href="/ventas" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i> Nueva Venta (POS)
+                        </a>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle" id="historyTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th>Vendedor</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                                <th class="text-end">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <tr><td colspan="6" class="text-center text-muted py-4">Cargando ventas...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Detalles de Venta -->
+        <div class="modal fade" id="modalVentaDetalles" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-primary text-white border-0">
+                        <h5 class="modal-title"><i class="fas fa-file-invoice me-2"></i>Detalle de Venta</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div id="ventaDetallesHeader" class="mb-4">
+                            <!-- Se llena dinámicamente -->
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Lote</th>
+                                        <th class="text-center">Cant.</th>
+                                        <th class="text-end">Precio</th>
+                                        <th class="text-end">Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ventaDetallesBody">
+                                    <!-- Se llena dinámicamente -->
+                                </tbody>
+                                <tfoot id="ventaDetallesFooter">
+                                    <!-- Se llena dinámicamente -->
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-primary" id="btnImprimirTicket">
+                            <i class="fas fa-print me-1"></i> Imprimir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
 
     <!-- [DESHABILITADO] Template: Reservas - Deshabilitado por no utilizarse
     <template id="template-reservas">
@@ -647,6 +733,8 @@
     <script src="frontend/modules/sales/SalesService.js"></script>
     <script src="frontend/modules/sales/SalesController.js"></script>
     <script src="frontend/modules/sales/SalesView.js"></script>
+    <script src="frontend/modules/sales/SalesHistoryController.js"></script>
+    <script src="frontend/modules/sales/SalesHistoryView.js"></script>
     <!-- [DESHABILITADO] Scripts de reservas - Deshabilitado por no utilizarse
     <script src="frontend/modules/reservations/ReservationService.js"></script>
     <script src="frontend/modules/reservations/ReservationController.js"></script>
@@ -670,6 +758,7 @@
     <script src="frontend/pages/ProductsPage.js"></script>
     <script src="frontend/pages/InventoryPage.js"></script>
     <script src="frontend/pages/SalesPage.js"></script>
+    <script src="frontend/pages/SalesHistoryPage.js"></script>
     <!-- [DESHABILITADO] <script src="frontend/pages/ReservationsPage.js"></script> -->
     <script src="frontend/pages/ProfilePage.js"></script>
     <script src="frontend/pages/NotFoundPage.js"></script>

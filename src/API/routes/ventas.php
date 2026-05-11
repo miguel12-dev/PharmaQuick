@@ -34,6 +34,31 @@ function handleGetVentas(): void {
     }
 }
 
+function handleGetVentaDetalles(int $ventaId): void {
+    $farmaciaId = Auth::farmaciaId();
+    if (!$farmaciaId) {
+        JsonResponse::error('No autenticado', 401);
+        return;
+    }
+
+    try {
+        $pdo = PDOFactory::getCluster(1);
+        $ventaRepo = new VentaRepository($pdo);
+        
+        $tipo = $_GET['tipo'] ?? 'VENTA';
+        
+        if ($tipo === 'COMPRA') {
+            $detalles = $ventaRepo->getDetallesByCompra($ventaId);
+        } else {
+            $detalles = $ventaRepo->getDetallesByVenta($ventaId);
+        }
+
+        JsonResponse::success(['detalles' => $detalles]);
+    } catch (Throwable $e) {
+        JsonResponse::error('Error: ' . $e->getMessage(), 500);
+    }
+}
+
 function handlePostVentasCrear(): void {
     $farmaciaId = Auth::farmaciaId();
     if (!$farmaciaId) {

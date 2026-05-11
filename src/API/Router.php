@@ -477,6 +477,12 @@ class PharmaRouter
             return;
         }
 
+        if ($this->method === 'GET' && preg_match('#^/api/ventas/(\d+)/detalles$#', $this->uri, $matches)) {
+            require_once ROUTES_PATH . '/ventas.php';
+            handleGetVentaDetalles((int) $matches[1]);
+            return;
+        }
+
         if ($this->uri === '/api/ventas/crear' && $this->method === 'POST') {
             require_once ROUTES_PATH . '/ventas.php';
             handlePostVentasCrear();
