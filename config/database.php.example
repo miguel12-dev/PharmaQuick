@@ -1,0 +1,40 @@
+<?php
+/**
+ * PharmaQuick - Configuración de Base de Datos (Plantilla)
+ * 
+ * COPIA este archivo a: config/database.php
+ * Y completa con tus credenciales
+ */
+
+// ============================================
+// CONFIGURACIÓN DE PRODUCCIÓN
+// ============================================
+
+return [
+    // Master DB (farmacias, usuarios, logs)
+    'master' => [
+        'host'     => 'localhost',
+        'port'     => '3306',
+        'database' => 'u631215701_pharmaquick',
+        'username' => 'u631215701_pharmaquick',
+        'password' => 'Pharmaquick_2314',
+    ],
+
+    // Clusters - bases de datos separadas
+    'clusters' => [
+        'db_cluster_1' => [
+            'host'     => 'localhost',
+            'port'     => '3306',
+            'database' => 'u631215701_pharmaCluster1',
+            'username' => 'u631215701_pharmaCluster1',
+            'password' => 'PharmaCluster1_2314',
+        ],
+        'db_cluster_2' => [
+            'host'     => 'localhost',
+            'port'     => '3306',
+            'database' => 'u631215701_pharmaquick_cluster2',
+            'username' => 'u631215701_pharmaquick',
+            'password' => 'Pharmaquick_2314',
+        ],
+    ],
+];

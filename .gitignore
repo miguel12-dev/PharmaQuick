@@ -26,7 +26,9 @@ docker/nginx/logs/*.log
 # Configuración sensible (no subir al repositorio)
 # ------------------------------------------------------------
 config/database.php
-config/*.php
+config/database-local.php
+config/database-hosting.php
+!config/database.php.example
 
 # ------------------------------------------------------------
 # IDE
