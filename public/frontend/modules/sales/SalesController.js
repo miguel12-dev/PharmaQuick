@@ -222,11 +222,11 @@ class SalesController {
         });
 
         const taxes = 0;
-        const total = subtotal + taxes;
+        this.total = subtotal + taxes;
         
         const canComplete = this.cart.length > 0 && !hasNoStockItems && !hasLoadingItems;
         
-        SalesView.updateTotals(subtotal, taxes, total, canComplete);
+        SalesView.updateTotals(subtotal, taxes, this.total, canComplete);
     }
 
     async handleCompleteSale(paymentMethod) {
@@ -246,10 +246,18 @@ class SalesController {
                 metodo_pago: paymentMethod,
                 impuestos: 0
             };
-
             const response = await SalesService.createSale(saleData);
             if (response.success) {
-                Toast.success('Venta completada con éxito');
+                const saleSummary = {
+                    items: this.cart.map(item => ({...item})),
+                    total: this.total,
+                    metodo_pago: paymentMethod
+                };
+                
+                SalesView.showSaleSuccess(response.data.venta_id, saleSummary, () => {
+                    // Acción opcional para "Nueva Venta"
+                    document.getElementById('posSearchProduct').focus();
+                });
                 this.cart = [];
                 this.updateView();
             }

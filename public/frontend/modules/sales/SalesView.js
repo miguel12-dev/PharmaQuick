@@ -197,5 +197,71 @@ class SalesView {
         col.querySelector('.btn-select-product').addEventListener('click', () => onSelect(product));
         return col;
     }
+
+    static showSaleSuccess(ventaId, summary, onNewSale) {
+        const itemsHtml = summary.items.map(item => `
+            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-light">
+                <div class="text-start">
+                    <div class="fw-bold small text-dark">${item.producto.nombre}</div>
+                    <small class="text-muted">${item.cantidad} x $${parseFloat(item.precio).toLocaleString('es-CO')}</small>
+                </div>
+                <div class="fw-bold text-dark">$${(item.cantidad * item.precio).toLocaleString('es-CO')}</div>
+            </div>
+        `).join('');
+
+        const content = `
+            <div class="text-center py-2">
+                <div class="mb-3">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-success-soft text-success rounded-circle" style="width: 60px; height: 60px;">
+                        <i class="fas fa-check fa-2x"></i>
+                    </div>
+                </div>
+                <h4 class="fw-bold text-dark mb-1">¡Venta Exitosa!</h4>
+                <p class="text-muted small mb-3">Comprobante <span class="badge bg-light text-dark border">#${ventaId}</span></p>
+                
+                <div class="bg-light rounded-3 p-3 mb-4 text-start" style="max-height: 250px; overflow-y: auto;">
+                    <div class="small text-uppercase fw-bold text-muted mb-2 x-small">Resumen de Productos</div>
+                    ${itemsHtml}
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top border-secondary border-opacity-10">
+                        <div class="fw-bold text-dark">TOTAL</div>
+                        <div class="fw-bold text-primary fs-5">$${parseFloat(summary.total).toLocaleString('es-CO')}</div>
+                    </div>
+                    <div class="mt-2 text-center">
+                        <span class="badge bg-white text-muted border small">Pago: ${summary.metodo_pago === 'EFECTIVO' ? 'Efectivo' : 'Transferencia'}</span>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary btn-lg py-3 rounded-3 shadow-sm btn-new-sale">
+                        <i class="fas fa-plus-circle me-2"></i>Nueva Venta
+                    </button>
+                    <button class="btn btn-link text-muted btn-close-modal">Cerrar</button>
+                </div>
+            </div>
+        `;
+
+        const modal = new Modal({
+            title: '',
+            content: content,
+            size: 'md',
+            showFooter: false
+        });
+
+        modal.open();
+
+        // Eventos
+        const btnNew = modal.element.querySelector('.btn-new-sale');
+        if (btnNew) {
+            btnNew.addEventListener('click', () => {
+                modal.close();
+                onNewSale();
+            });
+        }
+
+        const btnClose = modal.element.querySelector('.btn-close-modal');
+        if (btnClose) {
+            btnClose.addEventListener('click', () => modal.close());
+        }
+    }
 }
 window.SalesView = SalesView;
