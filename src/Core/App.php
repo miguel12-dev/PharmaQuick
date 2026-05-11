@@ -7,8 +7,9 @@ declare(strict_types=1);
  */
 
 class App {
-    const BASE_PATH = '/var/www/html';
-    const SRC_PATH = '/var/www/html/src';
+    // Detectar automáticamente la ruta base
+    const BASE_PATH = __DIR__ . '/../../..';
+    const SRC_PATH = __DIR__ . '/../..';
     const TIMEZONE = 'America/Bogota';
     const DEBUG = true;
 

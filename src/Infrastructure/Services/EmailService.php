@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 // Cargar PHPMailer via autoload global
-require_once '/var/www/html/vendor/autoload.php';
+require_once dirname(__DIR__, 3) . '/vendor/autoload.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
@@ -215,7 +215,7 @@ HTML;
             $mail->addReplyTo($this->fromAddress, 'Soporte PharmaQuick');
             
             // Adjuntar logo como imagen embebida
-            $logoPath = '/var/www/html/public/image/logo_pharmaQuick.png';
+            $logoPath = dirname(__DIR__, 3) . '/public/image/logo_pharmaQuick.png';
             if (file_exists($logoPath)) {
                 $mail->addEmbeddedImage($logoPath, 'logo_pharmaquick', 'logo_pharmaQuick.png', 'base64', 'image/png');
             }

@@ -6,7 +6,7 @@ declare(strict_types=1);
  * PharmaQuick - Test Login con JWT
  */
 
-define('BASE_PATH', '/var/www/html');
+define('BASE_PATH', dirname(__DIR__));
 define('SRC_PATH', BASE_PATH . '/src');
 
 require_once SRC_PATH . '/Core/Exceptions.php';

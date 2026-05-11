@@ -1,10 +1,11 @@
 <?php
 // Debug script
-require '/var/www/html/src/Core/Exceptions.php';
-require '/var/www/html/src/Infrastructure/Persistence/PDOFactory.php';
-require '/var/www/html/src/Infrastructure/Persistence/UsuarioRepository.php';
-require '/var/www/html/src/Infrastructure/Services/JwtService.php';
-require '/var/www/html/src/Infrastructure/Services/AuthService.php';
+define('BASE_PATH', dirname(__FILE__));
+require BASE_PATH . '/src/Core/Exceptions.php';
+require BASE_PATH . '/src/Infrastructure/Persistence/PDOFactory.php';
+require BASE_PATH . '/src/Infrastructure/Persistence/UsuarioRepository.php';
+require BASE_PATH . '/src/Infrastructure/Services/JwtService.php';
+require BASE_PATH . '/src/Infrastructure/Services/AuthService.php';
 
 echo "=== DEBUG LOGIN ===\n";
 
